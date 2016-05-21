@@ -9,13 +9,16 @@ from ctypes import c_void_p
 null = c_void_p(0)
 
 
-class HelloTriangle(QtOpenGL.QGLWidget):
+class VertexColors(QtOpenGL.QGLWidget):
 
     def __init__(self):
         super().__init__()
-        self.vertices = array([0.75, 0.75, 0.0, 1.0,
-                               0.75, -0.75, 0.0, 1.0,
-                               -0.75, -0.75, 0.0, 1.0], dtype=float32)
+        self.vertices = array([0.0,  0.5,   0.0, 1.0,
+                               0.5, -0.366, 0.0, 1.0,
+                              -0.5, -0.366, 0.0, 1.0,
+                               1.0,  0.0,   0.0, 1.0,
+                               0.0,  1.0,   0.0, 1.0,
+                               0.0,  0.0,   1.0, 1.0], dtype=float32)
         self.program = None
         self.buffer = None
 
@@ -31,15 +34,21 @@ class HelloTriangle(QtOpenGL.QGLWidget):
         self.program = compileProgram(
             compileShader('''
 #version 330
-layout(location = 0) in vec4 position;
-void main() {
-   gl_Position = position;
+layout (location = 0) in vec4 position;
+layout (location = 1) in vec4 color;
+smooth out vec4 theColor;
+void main()
+{
+	gl_Position = position;
+	theColor = color;
 }''', GL_VERTEX_SHADER),
             compileShader('''
 #version 330
+smooth in vec4 theColor;
 out vec4 outputColor;
-void main() {
-    outputColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+void main()
+{
+	outputColor = theColor;
 }''', GL_FRAGMENT_SHADER))
 
     def initializeVertexBuffer(self):
@@ -62,13 +71,16 @@ void main() {
         glUseProgram(self.program)
         glBindBuffer(GL_ARRAY_BUFFER, self.buffer)
         glEnableVertexAttribArray(0)
+        glEnableVertexAttribArray(1)
         glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, null)
-        glDrawArrays(GL_TRIANGLES, 0, len(self.vertices) // 4)
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, c_void_p(3 * 4 * 4))
+        glDrawArrays(GL_TRIANGLES, 0, 3)
         glDisableVertexAttribArray(0)
+        glDisableVertexAttribArray(1)
         glUseProgram(0)
 
 
 app = QtGui.QApplication(sys.argv)
-widget = HelloTriangle()
+widget = VertexColors()
 widget.show()
 app.exec_()
