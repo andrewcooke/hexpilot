@@ -27,3 +27,8 @@ tests/*
 !tests/*.h
 !tests/*.c
 !tests/*.am
+
+src/*
+!src/*.h
+!src/*.c
+!src/*.am
