@@ -4,7 +4,7 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC_C99
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.0])
 AX_CHECK_GL
-AC_CHECK_LIB([GLU], [gluPerspective], [], [AC_MSG_ERROR([No libGLU found])])
+dnl AC_CHECK_LIB([GLU], [gluPerspective], [], [AC_MSG_ERROR([No libGLU found])])
 AC_CHECK_LIB([glfw], [glfwInit], [], [AC_MSG_ERROR([No libGLFW found])])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile])
