@@ -26,8 +26,6 @@ int main_loop(lulog *log) {
     LU_STATUS
     GLFWwindow *window = NULL;
 
-    LU_ASSERT(glfwInit(),
-            HP_ERR_GLFW, log, "Could not start GLFW")
     LU_ASSERT(window = glfwCreateWindow(320, 320, "hexpilot", NULL, NULL),
             HP_ERR_GLFW, log, "Could not create window")
 
@@ -54,6 +52,7 @@ int main(int argc, char** argv) {
     LU_STATUS
     lulog_mkstderr(&LOG, lulog_level_debug);
     glfwSetErrorCallback(on_error);
+    LU_ASSERT(glfwInit(), HP_ERR_GLFW, LOG, "Could not start GLFW")
     LU_CHECK(main_loop(LOG))
 LU_CLEANUP
     return status ? 1 : 0;
