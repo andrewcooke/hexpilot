@@ -7,7 +7,7 @@
 #include "lu/status.h"
 
 
-static int display(lulog *log) {
+static int display(const lulog *log) {
     LU_STATUS
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -36,7 +36,7 @@ static const char* fragment_shader =
         "  outputColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
         "}\n";
 
-static const char *shader_type_str(lulog *log, GLenum shader_type) {
+static const char *shader_type_str(const lulog *log, GLenum shader_type) {
     switch (shader_type) {
     case GL_COMPUTE_SHADER: return "compute";
     case GL_VERTEX_SHADER: return "vertex";
@@ -50,9 +50,9 @@ static const char *shader_type_str(lulog *log, GLenum shader_type) {
     }
 }
 
-int create_shader(lulog *log, GLenum shader_type, const char *source, GLuint *shader) {
+static int compile_shader(const lulog *log, GLenum shader_type, const char *source, GLuint *shader) {
     LU_STATUS
-    ludebug(log, "Creating %s shader:", shader_type_str(log, shader_type));
+    ludebug(log, "Compiling %s shader:", shader_type_str(log, shader_type));
     lulog_lines(log, lulog_level_debug, source);
     HP_GLCHECK(*shader = glCreateShader(shader_type))
     HP_GLCHECK(glShaderSource(*shader, 1, &source, NULL))
@@ -69,19 +69,49 @@ int create_shader(lulog *log, GLenum shader_type, const char *source, GLuint *sh
         status = HP_ERR_OPENGL;
         goto exit;
     }
-    luinfo(log, "Created %s shader", shader_type_str(log, shader_type));
+    luinfo(log, "Compiled %s shader", shader_type_str(log, shader_type));
     LU_NO_CLEANUP
 }
 
-int init(lulog *log) {
+static int link_program(const lulog *log, const GLuint *shaders, size_t n_shaders) {
+    LU_STATUS
+    HP_GLCHECK(GLuint program = glCreateProgram())
+    for (size_t i = 0; i < n_shaders; ++i) {
+        HP_GLCHECK(glAttachShader(program, shaders[i]))
+    }
+    HP_GLCHECK(glLinkProgram(program))
+    GLint link_status;
+    HP_GLCHECK(glGetProgramiv(program, GL_LINK_STATUS, &link_status))
+    if (!link_status) {
+        luerror(log, "Failed to link program");
+        GLint log_length;
+        HP_GLCHECK(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length))
+        GLchar log_text[log_length];
+        HP_GLCHECK(glGetProgramInfoLog(program, log_length, NULL, log_text))
+        lulog_lines(log, lulog_level_debug, log_text);
+        status = HP_ERR_OPENGL;
+        goto exit;
+    }
+    for (size_t i = 0; i < n_shaders; ++i) {
+        HP_GLCHECK(glDetachShader(program, shaders[i]))
+    }
+    luinfo(log, "Linked program with %zu shaders", n_shaders);
+    LU_NO_CLEANUP
+}
+
+static int init(const lulog *log) {
     LU_STATUS
     GLuint shaders[2];
-    LU_CHECK(create_shader(log, GL_VERTEX_SHADER, vertex_shader, &shaders[0]))
-    LU_CHECK(create_shader(log, GL_FRAGMENT_SHADER, fragment_shader, &shaders[1]))
+    LU_CHECK(compile_shader(log, GL_VERTEX_SHADER, vertex_shader, &shaders[0]))
+    LU_CHECK(compile_shader(log, GL_FRAGMENT_SHADER, fragment_shader, &shaders[1]))
+    LU_CHECK(link_program(log, shaders, 2));
+    for (size_t i = 0; i < 2; ++i) {
+        HP_GLCHECK(glDeleteShader(shaders[i]))
+    }
     LU_NO_CLEANUP
 }
 
-int main_loop(lulog *log) {
+static int main_loop(const lulog *log) {
 
     LU_STATUS
     GLFWwindow *window = NULL;
@@ -117,7 +147,7 @@ LU_CLEANUP
 
 static lulog *LOG = NULL;
 
-void on_error(int error, const char *message) {
+static void on_error(int error, const char *message) {
     luerror(LOG, "%d: %s", error, message);
 }
 
