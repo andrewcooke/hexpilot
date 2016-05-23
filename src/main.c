@@ -36,28 +36,48 @@ static const char* fragment_shader =
         "  outputColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
         "}\n";
 
-int createShader(lulog *log, GLenum shaderType, const char *source, GLuint *shader) {
+static const char *shader_type_str(lulog *log, GLenum shader_type) {
+    switch (shader_type) {
+    case GL_COMPUTE_SHADER: return "compute";
+    case GL_VERTEX_SHADER: return "vertex";
+    case GL_TESS_CONTROL_SHADER: return "tess control";
+    case GL_TESS_EVALUATION_SHADER: return "tess evaluation";
+    case GL_GEOMETRY_SHADER: return "geometry";
+    case GL_FRAGMENT_SHADER: return "fragment";
+    default:
+        luwarn(log, "Unexpected shader type: %x", shader_type);
+        return "unknown";
+    }
+}
+
+int create_shader(lulog *log, GLenum shader_type, const char *source, GLuint *shader) {
     LU_STATUS
-    HP_GLCHECK(*shader = glCreateShader(shaderType))
+    ludebug(log, "Creating %s shader:", shader_type_str(log, shader_type));
+    lulog_lines(log, lulog_level_debug, source);
+    HP_GLCHECK(*shader = glCreateShader(shader_type))
     HP_GLCHECK(glShaderSource(*shader, 1, &source, NULL))
     HP_GLCHECK(glCompileShader(*shader))
     GLint compile_status;
     HP_GLCHECK(glGetShaderiv(*shader, GL_COMPILE_STATUS, &compile_status))
     if (!compile_status) {
+        luerror(log, "Failed to compile %s shader", shader_type_str(log, shader_type));
         GLint log_length;
         HP_GLCHECK(glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &log_length))
         GLchar log_text[log_length];
         HP_GLCHECK(glGetShaderInfoLog(*shader, log_length, NULL, log_text))
         lulog_lines(log, lulog_level_debug, log_text);
+        status = HP_ERR_OPENGL;
+        goto exit;
     }
+    luinfo(log, "Created %s shader", shader_type_str(log, shader_type));
     LU_NO_CLEANUP
 }
 
 int init(lulog *log) {
     LU_STATUS
     GLuint shaders[2];
-    LU_CHECK(createShader(log, GL_VERTEX_SHADER, vertex_shader, &shaders[0]))
-    LU_CHECK(createShader(log, GL_FRAGMENT_SHADER, fragment_shader, &shaders[1]))
+    LU_CHECK(create_shader(log, GL_VERTEX_SHADER, vertex_shader, &shaders[0]))
+    LU_CHECK(create_shader(log, GL_FRAGMENT_SHADER, fragment_shader, &shaders[1]))
     LU_NO_CLEANUP
 }
 
@@ -75,6 +95,13 @@ int main_loop(lulog *log) {
             HP_ERR_GLFW, log, "Could not create window")
 
     glfwMakeContextCurrent(window);
+    LU_ASSERT(gladLoadGLLoader((GLADloadproc) glfwGetProcAddress),
+            HP_ERR_GLAD, log, "Could not load OpenGL via glad")
+    LU_ASSERT(GLVersion.major > 1, HP_ERR_OPENGL, log,
+            "Bad OpenGL version: %d.%d", GLVersion.major, GLVersion.minor)
+    luinfo(log, "OpenGL %s, GLSL %s",
+            glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+
     LU_CHECK(init(log))
     while (!glfwWindowShouldClose(window)) {
         LU_CHECK(display(log))
