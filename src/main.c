@@ -1,4 +1,5 @@
 
+#include "glad.h"
 #include <GLFW/glfw3.h>
 
 #include "error_codes.h"
@@ -19,6 +20,10 @@ static int display(lulog *log) {
     glEnd();
     glFlush();
     LU_NO_CLEANUP
+}
+
+int createShader(GLenum shaderType) {
+    glCreateShader(shaderType);
 }
 
 int main_loop(lulog *log) {
