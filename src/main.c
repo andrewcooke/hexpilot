@@ -37,14 +37,17 @@ static const char* fragment_shader =
 
 static int build_program(const lulog *log) {
     LU_STATUS
-    GLuint shaders[2];
-    LU_CHECK(compile_shader(log, GL_VERTEX_SHADER, vertex_shader, &shaders[0]))
-    LU_CHECK(compile_shader(log, GL_FRAGMENT_SHADER, fragment_shader, &shaders[1]))
-    LU_CHECK(link_program(log, shaders, 2));
-    for (size_t i = 0; i < 2; ++i) {
-        HP_GLCHECK(glDeleteShader(shaders[i]))
+    luarray_gluint *shaders = NULL;
+    LU_CHECK(luarray_mkgluintn(log, &shaders, 2))
+    LU_CHECK(compile_shader(log, GL_VERTEX_SHADER, vertex_shader, shaders))
+    LU_CHECK(compile_shader(log, GL_FRAGMENT_SHADER, fragment_shader, shaders))
+    LU_CHECK(link_program(log, shaders));
+    for (size_t i = 0; i < shaders->mem.used; ++i) {
+        HP_GLCHECK(glDeleteShader(shaders->i[i]))
     }
-    LU_NO_CLEANUP
+LU_CLEANUP
+    status = luarray_freegluint(&shaders, status);
+    LU_RETURN
 }
 
 static int with_glfw(const lulog *log) {
