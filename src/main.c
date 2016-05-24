@@ -12,10 +12,12 @@ static int display(const lulog *log, GLuint program, luarray_gluint *buffers) {
     HP_GLCHECK(glClear(GL_COLOR_BUFFER_BIT))
     HP_GLCHECK(glUseProgram(program))
     HP_GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, buffers->i[0]))
+    HP_GLCHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers->i[1]))
     HP_GLCHECK(glEnableVertexAttribArray(0))
     HP_GLCHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
-    HP_GLCHECK(glDrawArrays(GL_TRIANGLES, 0, 3))
+    HP_GLCHECK(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)0))
     HP_GLCHECK(glDisableVertexAttribArray(0))
+    HP_GLCHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0))
     HP_GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, 0))
     HP_GLCHECK(glUseProgram(0))
     LU_NO_CLEANUP
@@ -27,13 +29,18 @@ static const float vertices[] = {
         -0.75f, -0.75f, 0.0f, 1.0f,
 };
 
-static int load_data(const lulog *log, const void *data, size_t size, luarray_gluint *buffers) {
+static const unsigned int indices[] = {
+        0, 1, 2,
+};
+
+static int load_data(const lulog *log, GLenum target,
+        const void *data, size_t size, luarray_gluint *buffers) {
     LU_STATUS
     GLuint buffer;
     HP_GLCHECK(glGenBuffers(1, &buffer))
-    HP_GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, buffer))
-    HP_GLCHECK(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW))
-    HP_GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, 0))
+    HP_GLCHECK(glBindBuffer(target, buffer))
+    HP_GLCHECK(glBufferData(target, size, data, GL_STATIC_DRAW))
+    HP_GLCHECK(glBindBuffer(target, 0))
     LU_CHECK(luarray_pushgluint(log, buffers, buffer))
     luinfo(log, "Loaded %zu bytes to buffer %d", size, buffers->mem.used);
     LU_NO_CLEANUP
@@ -41,8 +48,9 @@ static int load_data(const lulog *log, const void *data, size_t size, luarray_gl
 
 static int build_data(const lulog *log, luarray_gluint *buffers) {
     LU_STATUS
-    LU_CHECK(load_data(log, vertices, sizeof(vertices), buffers))
-    // create and select this, since only one is neede
+    LU_CHECK(load_data(log, GL_ARRAY_BUFFER, vertices, sizeof(vertices), buffers))
+    LU_CHECK(load_data(log, GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(indices), buffers))
+    // create and select this, since only one is needed
     GLuint vao;
     HP_GLCHECK(glGenVertexArrays(1, &vao))
     HP_GLCHECK(glBindVertexArray(vao))
