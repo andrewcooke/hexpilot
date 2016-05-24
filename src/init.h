@@ -18,7 +18,7 @@ int luarray_pushgluint(const lulog *log, luarray_gluint *i, GLuint u);
 int create_glfw_context(const lulog *log, GLFWwindow **window);
 int load_opengl_functions(const lulog *log);
 const char *shader_type_str(const lulog *log, GLenum shader_type);
-int compile_shader(const lulog *log, GLenum shader_type, const char *source, luarray_gluint *sharders);
-int link_program(const lulog *log, luarray_gluint *shaders);
+int compile_shader(const lulog *log, GLenum shader_type, const char *source, luarray_gluint *shaders);
+int link_program(const lulog *log, luarray_gluint *shaders, GLuint *program);
 
 #endif

@@ -81,27 +81,27 @@ int compile_shader(const lulog *log, GLenum shader_type, const char *source, lua
     LU_NO_CLEANUP
 }
 
-int link_program(const lulog *log, luarray_gluint *shaders) {
+int link_program(const lulog *log, luarray_gluint *shaders, GLuint *program) {
     LU_STATUS
-    HP_GLCHECK(GLuint program = glCreateProgram())
+    HP_GLCHECK(*program = glCreateProgram())
     for (size_t i = 0; i < shaders->mem.used; ++i) {
-        HP_GLCHECK(glAttachShader(program, shaders->i[i]))
+        HP_GLCHECK(glAttachShader(*program, shaders->i[i]))
     }
-    HP_GLCHECK(glLinkProgram(program))
+    HP_GLCHECK(glLinkProgram(*program))
     GLint link_status;
-    HP_GLCHECK(glGetProgramiv(program, GL_LINK_STATUS, &link_status))
+    HP_GLCHECK(glGetProgramiv(*program, GL_LINK_STATUS, &link_status))
     if (!link_status) {
         luerror(log, "Failed to link program");
         GLint log_length;
-        HP_GLCHECK(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length))
+        HP_GLCHECK(glGetProgramiv(*program, GL_INFO_LOG_LENGTH, &log_length))
         GLchar log_text[log_length];
-        HP_GLCHECK(glGetProgramInfoLog(program, log_length, NULL, log_text))
+        HP_GLCHECK(glGetProgramInfoLog(*program, log_length, NULL, log_text))
         lulog_lines(log, lulog_level_debug, log_text);
         status = HP_ERR_OPENGL;
         goto exit;
     }
     for (size_t i = 0; i < shaders->mem.used; ++i) {
-        HP_GLCHECK(glDetachShader(program, shaders->i[i]))
+        HP_GLCHECK(glDetachShader(*program, shaders->i[i]))
     }
     luinfo(log, "Linked program with %zu shaders", shaders->mem.used);
     LU_NO_CLEANUP
