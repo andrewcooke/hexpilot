@@ -1,4 +1,4 @@
 
 bin_PROGRAMS = hexpilot
-hexpilot_SOURCES = main.c init.c glad.c
+hexpilot_SOURCES = main.c shaders.c buffers.c glfw.c glad.c
 

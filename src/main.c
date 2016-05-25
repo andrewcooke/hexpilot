@@ -1,9 +1,12 @@
 
+#include <glfw.h>
 #include "lu/log.h"
 #include "lu/status.h"
 #include "lu/arrays.h"
 
-#include "init.h"
+#include "glfw.h"
+#include "shaders.h"
+#include "buffers.h"
 #include "error_codes.h"
 
 
@@ -35,23 +38,10 @@ static const unsigned int indices[] = {
         0, 1, 2,
 };
 
-static int load_data(const lulog *log, GLenum target,
-        const void *data, size_t size, luarray_uint *buffers) {
+static int build_buffers(const lulog *log, luarray_uint *buffers) {
     LU_STATUS
-    GLuint buffer;
-    HP_GLCHECK(glGenBuffers(1, &buffer))
-    HP_GLCHECK(glBindBuffer(target, buffer))
-    HP_GLCHECK(glBufferData(target, size, data, GL_STATIC_DRAW))
-    HP_GLCHECK(glBindBuffer(target, 0))
-    LU_CHECK(luarray_pushuint(log, buffers, buffer))
-    luinfo(log, "Loaded %zu bytes to buffer %d", size, buffers->mem.used);
-    LU_NO_CLEANUP
-}
-
-static int build_data(const lulog *log, luarray_uint *buffers) {
-    LU_STATUS
-    LU_CHECK(load_data(log, GL_ARRAY_BUFFER, vertices, sizeof(vertices), buffers))
-    LU_CHECK(load_data(log, GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(indices), buffers))
+    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, vertices, sizeof(vertices), buffers))
+    LU_CHECK(load_buffer(log, GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(indices), buffers))
     // create and select this, since only one is needed
     GLuint vao;
     HP_GLCHECK(glGenVertexArrays(1, &vao))
@@ -97,7 +87,7 @@ static int with_glfw(const lulog *log) {
     LU_CHECK(build_program(log, &program))
     luarray_uint *buffers = NULL;
     LU_CHECK(luarray_mkuintn(log, &buffers, 1));
-    LU_CHECK(build_data(log, buffers))
+    LU_CHECK(build_buffers(log, buffers))
     while (!glfwWindowShouldClose(window)) {
         LU_CHECK(display(log, program, buffers))
         glfwSwapBuffers(window);
