@@ -11,37 +11,40 @@
 #include "error_codes.h"
 
 
-static int display(lulog *log, GLuint program, luarray_uint *buffers, luarray_uint *offsets) {
+static int display(lulog *log, GLuint program, luarray_buffer *buffers, luarray_uint *offsets) {
     LU_STATUS
     HP_GLCHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     HP_GLCHECK(glClear(GL_COLOR_BUFFER_BIT))
     HP_GLCHECK(glUseProgram(program))
-    HP_GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, buffers->i[0]))
-    HP_GLCHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers->i[1]))
+    for (size_t i = 0; i < buffers->mem.used; ++i) {
+        HP_GLCHECK(glBindBuffer(buffers->b[i].target, buffers->b[i].name))
+    }
     HP_GLCHECK(glEnableVertexAttribArray(0))
     HP_GLCHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
     for (size_t i = 0; i < offsets->mem.used-1; ++i) {
         HP_GLCHECK(glDrawElements(GL_TRIANGLE_STRIP, offsets->i[i+1] - offsets->i[i],
-                GL_UNSIGNED_INT, (void*)(offsets->i[i] * sizeof(unsigned int))))
+                GL_UNSIGNED_INT, (void*)(offsets->i[i] * buffers->b[1].chunk)))
     }
     HP_GLCHECK(glDisableVertexAttribArray(0))
-    HP_GLCHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0))
+    for (size_t i = 0; i < buffers->mem.used; ++i) {
+        HP_GLCHECK(glBindBuffer(buffers->b[i].target, 0))
+    }
     HP_GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, 0))
     HP_GLCHECK(glUseProgram(0))
     LU_NO_CLEANUP
 }
 
-static int build_buffers(lulog *log, luarray_uint **buffers, luarray_uint **offsets) {
+static int build_buffers(lulog *log, luarray_buffer **buffers, luarray_uint **offsets) {
     LU_STATUS
     luarray_fxyzw *vertices = NULL;
     luarray_uint *indices = NULL;
     LU_CHECK(hexagon(log, 0, 3, 3, 0.1, 1.0, &vertices, &indices, offsets))
-    LU_CHECK(luarray_mkuintn(log, buffers, 2));
-    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER,
-            vertices->fxyzw, luarray_sizefxyzw(vertices), *buffers))
+    LU_CHECK(luarray_mkbuffern(log, buffers, 2));
+    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+            vertices->fxyzw, vertices->mem.used, sizeof(*vertices->fxyzw), *buffers));
     LU_CHECK(luarray_dumpfxyzw(log, vertices, "vertices", 2))
-    LU_CHECK(load_buffer(log, GL_ELEMENT_ARRAY_BUFFER,
-            indices->i, luarray_sizeuint(indices), *buffers))
+    LU_CHECK(load_buffer(log, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW,
+            indices->i, indices->mem.used, sizeof(*indices->i), *buffers))
     LU_CHECK(luarray_dumpuint(log, indices, "indices", 2))
     // create and select this, since only one is needed
     GLuint vao;
@@ -85,7 +88,8 @@ LU_CLEANUP
 static int with_glfw(lulog *log) {
     LU_STATUS
     GLFWwindow *window = NULL;
-    luarray_uint *buffers = NULL, *offsets = NULL;
+    luarray_buffer *buffers = NULL;
+    luarray_uint *offsets = NULL;
     LU_CHECK(create_glfw_context(log, &window))
     LU_CHECK(load_opengl_functions(log))
     GLuint program;
@@ -99,7 +103,7 @@ static int with_glfw(lulog *log) {
     ludebug(log, "Clean exit");
 LU_CLEANUP
     glfwTerminate();
-    status = luarray_freeuint(&buffers, status);
+    status = luarray_freebuffer(&buffers, status);
     status = luarray_freeuint(&offsets, status);
     LU_RETURN
 }
