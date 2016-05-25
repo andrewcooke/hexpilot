@@ -8,7 +8,7 @@
 #include "error_codes.h"
 
 
-const char *shader_type_str(const lulog *log, GLenum shader_type) {
+const char *shader_type_str(lulog *log, GLenum shader_type) {
     switch (shader_type) {
     case GL_COMPUTE_SHADER: return "compute";
     case GL_VERTEX_SHADER: return "vertex";
@@ -22,7 +22,7 @@ const char *shader_type_str(const lulog *log, GLenum shader_type) {
     }
 }
 
-int compile_shader(const lulog *log, GLenum shader_type, const char *source, luarray_uint *shaders) {
+int compile_shader(lulog *log, GLenum shader_type, const char *source, luarray_uint *shaders) {
     LU_STATUS
     ludebug(log, "Compiling %s shader:", shader_type_str(log, shader_type));
     lulog_lines(log, lulog_level_debug, source);
@@ -46,7 +46,7 @@ int compile_shader(const lulog *log, GLenum shader_type, const char *source, lua
     LU_NO_CLEANUP
 }
 
-int link_program(const lulog *log, luarray_uint *shaders, GLuint *program) {
+int link_program(lulog *log, luarray_uint *shaders, GLuint *program) {
     LU_STATUS
     HP_GLCHECK(*program = glCreateProgram())
     for (size_t i = 0; i < shaders->mem.used; ++i) {

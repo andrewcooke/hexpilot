@@ -10,7 +10,7 @@
 #include "error_codes.h"
 
 
-static int display(const lulog *log, GLuint program, luarray_uint *buffers) {
+static int display(lulog *log, GLuint program, luarray_uint *buffers) {
     LU_STATUS
     HP_GLCHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     HP_GLCHECK(glClear(GL_COLOR_BUFFER_BIT))
@@ -38,7 +38,7 @@ static const unsigned int indices[] = {
         0, 1, 2,
 };
 
-static int build_buffers(const lulog *log, luarray_uint *buffers) {
+static int build_buffers(lulog *log, luarray_uint *buffers) {
     LU_STATUS
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, vertices, sizeof(vertices), buffers))
     LU_CHECK(load_buffer(log, GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(indices), buffers))
@@ -63,7 +63,7 @@ static const char* fragment_shader =
         "  outputColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
         "}\n";
 
-static int build_program(const lulog *log, GLuint *program) {
+static int build_program(lulog *log, GLuint *program) {
     LU_STATUS
     luarray_uint *shaders = NULL;
     LU_CHECK(luarray_mkuintn(log, &shaders, 2))
@@ -78,7 +78,7 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int with_glfw(const lulog *log) {
+static int with_glfw(lulog *log) {
     LU_STATUS
     GLFWwindow *window = NULL;
     LU_CHECK(create_glfw_context(log, &window))
@@ -86,7 +86,7 @@ static int with_glfw(const lulog *log) {
     GLuint program;
     LU_CHECK(build_program(log, &program))
     luarray_uint *buffers = NULL;
-    LU_CHECK(luarray_mkuintn(log, &buffers, 1));
+    LU_CHECK(luarray_mkuintn(log, &buffers, 2));
     LU_CHECK(build_buffers(log, buffers))
     while (!glfwWindowShouldClose(window)) {
         LU_CHECK(display(log, program, buffers))

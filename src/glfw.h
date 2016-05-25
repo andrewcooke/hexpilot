@@ -8,7 +8,7 @@
 #include "lu/log.h"
 
 
-int create_glfw_context(const lulog *log, GLFWwindow **window);
-int load_opengl_functions(const lulog *log);
+int create_glfw_context(lulog *log, GLFWwindow **window);
+int load_opengl_functions(lulog *log);
 
 #endif

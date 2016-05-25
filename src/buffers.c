@@ -5,7 +5,8 @@
 #include "error_codes.h"
 #include "buffers.h"
 
-int load_buffer(const lulog *log, GLenum target,
+
+int load_buffer(lulog *log, GLenum target,
         const void *data, size_t size, luarray_uint *buffers) {
     LU_STATUS
     GLuint buffer;

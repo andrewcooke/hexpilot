@@ -9,8 +9,8 @@
 #include "lu/arrays.h"
 
 
-const char *shader_type_str(const lulog *log, GLenum shader_type);
-int compile_shader(const lulog *log, GLenum shader_type, const char *source, luarray_uint *shaders);
-int link_program(const lulog *log, luarray_uint *shaders, GLuint *program);
+const char *shader_type_str(lulog *log, GLenum shader_type);
+int compile_shader(lulog *log, GLenum shader_type, const char *source, luarray_uint *shaders);
+int link_program(lulog *log, luarray_uint *shaders, GLuint *program);
 
 #endif

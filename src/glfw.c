@@ -10,7 +10,7 @@
 #include "error_codes.h"
 
 
-int create_glfw_context(const lulog *log, GLFWwindow **window) {
+int create_glfw_context(lulog *log, GLFWwindow **window) {
     LU_STATUS
     // not clear to me to what extent these duplicate or conflict with glad
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -23,7 +23,7 @@ int create_glfw_context(const lulog *log, GLFWwindow **window) {
     LU_NO_CLEANUP
 }
 
-int load_opengl_functions(const lulog *log) {
+int load_opengl_functions(lulog *log) {
     LU_STATUS
     LU_ASSERT(gladLoadGLLoader((GLADloadproc) glfwGetProcAddress),
             HP_ERR_GLAD, log, "Could not load OpenGL via glad")
