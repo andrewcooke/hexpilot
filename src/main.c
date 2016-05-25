@@ -21,7 +21,7 @@ static int display(lulog *log, GLuint program, luarray_uint *buffers, luarray_ui
     HP_GLCHECK(glEnableVertexAttribArray(0))
     HP_GLCHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
     for (size_t i = 0; i < offsets->mem.used-1; ++i) {
-        HP_GLCHECK(glDrawElements(GL_TRIANGLES, offsets->i[i+1] - offsets->i[i],
+        HP_GLCHECK(glDrawElements(GL_TRIANGLE_STRIP, offsets->i[i+1] - offsets->i[i],
                 GL_UNSIGNED_INT, (void*)(offsets->i[i] * sizeof(unsigned int))))
     }
     HP_GLCHECK(glDisableVertexAttribArray(0))
@@ -33,20 +33,22 @@ static int display(lulog *log, GLuint program, luarray_uint *buffers, luarray_ui
 
 static int build_buffers(lulog *log, luarray_uint **buffers, luarray_uint **offsets) {
     LU_STATUS
-    luarray_xyzw *vertices = NULL;
+    luarray_fxyzw *vertices = NULL;
     luarray_uint *indices = NULL;
-    LU_CHECK(hexagon(log, 0, 2, 1, 0.1, 1.0, &vertices, &indices, offsets))
+    LU_CHECK(hexagon(log, 0, 3, 3, 0.1, 1.0, &vertices, &indices, offsets))
     LU_CHECK(luarray_mkuintn(log, buffers, 2));
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER,
-            vertices->xyzw, sizeof(ludata_xyz) * vertices->mem.used, *buffers))
+            vertices->fxyzw, luarray_sizefxyzw(vertices), *buffers))
+    LU_CHECK(luarray_dumpfxyzw(log, vertices, "vertices", 2))
     LU_CHECK(load_buffer(log, GL_ELEMENT_ARRAY_BUFFER,
-            indices->i, sizeof(unsigned int) * indices->mem.used, *buffers))
+            indices->i, luarray_sizeuint(indices), *buffers))
+    LU_CHECK(luarray_dumpuint(log, indices, "indices", 2))
     // create and select this, since only one is needed
     GLuint vao;
     HP_GLCHECK(glGenVertexArrays(1, &vao))
     HP_GLCHECK(glBindVertexArray(vao))
 LU_CLEANUP
-    status = luarray_freexyzw(&vertices, status);
+    status = luarray_freefxyzw(&vertices, status);
     status = luarray_freeuint(&indices, status);
     LU_RETURN
 }
@@ -62,7 +64,7 @@ static const char* fragment_shader =
         "#version 330\n"
         "out vec4 outputColor;\n"
         "void main(){\n"
-        "  outputColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+        "  outputColor = vec4(0.5f, 0.0f, 0.0f, 1.0f);\n"
         "}\n";
 
 static int build_program(lulog *log, GLuint *program) {
