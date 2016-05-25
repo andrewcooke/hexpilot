@@ -1,12 +1,13 @@
 
 #include "lu/log.h"
 #include "lu/status.h"
+#include "lu/arrays.h"
 
 #include "init.h"
 #include "error_codes.h"
 
 
-static int display(const lulog *log, GLuint program, luarray_gluint *buffers) {
+static int display(const lulog *log, GLuint program, luarray_uint *buffers) {
     LU_STATUS
     HP_GLCHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     HP_GLCHECK(glClear(GL_COLOR_BUFFER_BIT))
@@ -27,6 +28,7 @@ static const float vertices[] = {
         0.75f, 0.75f, 0.0f, 1.0f,
         0.75f, -0.75f, 0.0f, 1.0f,
         -0.75f, -0.75f, 0.0f, 1.0f,
+        -0.75f, 0.75f, 0.0f, 1.0f,
 };
 
 static const unsigned int indices[] = {
@@ -34,19 +36,19 @@ static const unsigned int indices[] = {
 };
 
 static int load_data(const lulog *log, GLenum target,
-        const void *data, size_t size, luarray_gluint *buffers) {
+        const void *data, size_t size, luarray_uint *buffers) {
     LU_STATUS
     GLuint buffer;
     HP_GLCHECK(glGenBuffers(1, &buffer))
     HP_GLCHECK(glBindBuffer(target, buffer))
     HP_GLCHECK(glBufferData(target, size, data, GL_STATIC_DRAW))
     HP_GLCHECK(glBindBuffer(target, 0))
-    LU_CHECK(luarray_pushgluint(log, buffers, buffer))
+    LU_CHECK(luarray_pushuint(log, buffers, buffer))
     luinfo(log, "Loaded %zu bytes to buffer %d", size, buffers->mem.used);
     LU_NO_CLEANUP
 }
 
-static int build_data(const lulog *log, luarray_gluint *buffers) {
+static int build_data(const lulog *log, luarray_uint *buffers) {
     LU_STATUS
     LU_CHECK(load_data(log, GL_ARRAY_BUFFER, vertices, sizeof(vertices), buffers))
     LU_CHECK(load_data(log, GL_ELEMENT_ARRAY_BUFFER, indices, sizeof(indices), buffers))
@@ -73,8 +75,8 @@ static const char* fragment_shader =
 
 static int build_program(const lulog *log, GLuint *program) {
     LU_STATUS
-    luarray_gluint *shaders = NULL;
-    LU_CHECK(luarray_mkgluintn(log, &shaders, 2))
+    luarray_uint *shaders = NULL;
+    LU_CHECK(luarray_mkuintn(log, &shaders, 2))
     LU_CHECK(compile_shader(log, GL_VERTEX_SHADER, vertex_shader, shaders))
     LU_CHECK(compile_shader(log, GL_FRAGMENT_SHADER, fragment_shader, shaders))
     LU_CHECK(link_program(log, shaders, program));
@@ -82,7 +84,7 @@ static int build_program(const lulog *log, GLuint *program) {
         HP_GLCHECK(glDeleteShader(shaders->i[i]))
     }
 LU_CLEANUP
-    status = luarray_freegluint(&shaders, status);
+    status = luarray_freeuint(&shaders, status);
     LU_RETURN
 }
 
@@ -93,17 +95,18 @@ static int with_glfw(const lulog *log) {
     LU_CHECK(load_opengl_functions(log))
     GLuint program;
     LU_CHECK(build_program(log, &program))
-    luarray_gluint *buffers = NULL;
-    LU_CHECK(luarray_mkgluintn(log, &buffers, 1));
+    luarray_uint *buffers = NULL;
+    LU_CHECK(luarray_mkuintn(log, &buffers, 1));
     LU_CHECK(build_data(log, buffers))
     while (!glfwWindowShouldClose(window)) {
         LU_CHECK(display(log, program, buffers))
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    ludebug(log, "Clean exit");
 LU_CLEANUP
     glfwTerminate();
-    status = luarray_freegluint(&buffers, status);
+    status = luarray_freeuint(&buffers, status);
     LU_RETURN
 }
 
@@ -118,6 +121,8 @@ int main(int argc, char** argv) {
     LU_STATUS
     lulog_mkstderr(&LOG, lulog_level_debug);
     glfwSetErrorCallback(on_error);
+    LU_ASSERT(sizeof(GLuint) == sizeof(unsigned int), HP_ERR, LOG,
+            "Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(unsigned int))
     LU_ASSERT(glfwInit(), HP_ERR_GLFW, LOG, "Could not start GLFW")
     LU_CHECK(with_glfw(LOG))
 LU_CLEANUP

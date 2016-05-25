@@ -3,21 +3,12 @@
 #include <string.h>
 
 #include "lu/log.h"
-#include "lu/array_macros.h"
 #include "lu/status.h"
+#include "lu/arrays.h"
 
 #include "init.h"
 #include "error_codes.h"
 
-
-LUARRAY_MKBASE(gluint, luarray_gluint, GLuint, i)
-
-int luarray_pushgluint(const lulog *log, luarray_gluint *i, GLuint u) {
-    LU_STATUS
-    LU_CHECK(luarray_reservegluint(log, i, 1))
-    i->i[i->mem.used++] = u;
-    LU_NO_CLEANUP
-}
 
 int create_glfw_context(const lulog *log, GLFWwindow **window) {
     LU_STATUS
@@ -57,7 +48,7 @@ const char *shader_type_str(const lulog *log, GLenum shader_type) {
     }
 }
 
-int compile_shader(const lulog *log, GLenum shader_type, const char *source, luarray_gluint *shaders) {
+int compile_shader(const lulog *log, GLenum shader_type, const char *source, luarray_uint *shaders) {
     LU_STATUS
     ludebug(log, "Compiling %s shader:", shader_type_str(log, shader_type));
     lulog_lines(log, lulog_level_debug, source);
@@ -76,12 +67,12 @@ int compile_shader(const lulog *log, GLenum shader_type, const char *source, lua
         status = HP_ERR_OPENGL;
         goto exit;
     }
-    LU_CHECK(luarray_pushgluint(log, shaders, shader))
+    LU_CHECK(luarray_pushuint(log, shaders, shader))
     luinfo(log, "Compiled %s shader", shader_type_str(log, shader_type));
     LU_NO_CLEANUP
 }
 
-int link_program(const lulog *log, luarray_gluint *shaders, GLuint *program) {
+int link_program(const lulog *log, luarray_uint *shaders, GLuint *program) {
     LU_STATUS
     HP_GLCHECK(*program = glCreateProgram())
     for (size_t i = 0; i < shaders->mem.used; ++i) {

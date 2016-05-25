@@ -3,9 +3,10 @@
 #define HP_ERROR_CODES_H
 
 #define HP_OFFSET 0x100
-#define HP_ERR_GLFW (HP_OFFSET | 1)
-#define HP_ERR_GLAD (HP_OFFSET | 2)
-#define HP_ERR_OPENGL (HP_OFFSET | 3)
+#define HP_ERR (HP_OFFSET | 1)
+#define HP_ERR_GLFW (HP_OFFSET | 2)
+#define HP_ERR_GLAD (HP_OFFSET | 3)
+#define HP_ERR_OPENGL (HP_OFFSET | 4)
 
 // warning - this generates two statements.
 // (chosen to allow declarations in operation that remain in-scope)
