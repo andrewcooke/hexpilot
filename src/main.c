@@ -16,9 +16,7 @@ static int display(lulog *log, GLuint program, luarray_buffer *buffers, luarray_
     HP_GLCHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     HP_GLCHECK(glClear(GL_COLOR_BUFFER_BIT))
     HP_GLCHECK(glUseProgram(program))
-    for (size_t i = 0; i < buffers->mem.used; ++i) {
-        HP_GLCHECK(glBindBuffer(buffers->b[i].target, buffers->b[i].name))
-    }
+    LU_CHECK(bind_buffers(log, buffers))
     HP_GLCHECK(glEnableVertexAttribArray(0))
     HP_GLCHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
     for (size_t i = 0; i < offsets->mem.used-1; ++i) {
@@ -26,9 +24,7 @@ static int display(lulog *log, GLuint program, luarray_buffer *buffers, luarray_
                 GL_UNSIGNED_INT, (void*)(offsets->i[i] * buffers->b[1].chunk)))
     }
     HP_GLCHECK(glDisableVertexAttribArray(0))
-    for (size_t i = 0; i < buffers->mem.used; ++i) {
-        HP_GLCHECK(glBindBuffer(buffers->b[i].target, 0))
-    }
+    LU_CHECK(unbind_buffers(log, buffers))
     HP_GLCHECK(glUseProgram(0))
     LU_NO_CLEANUP
 }
