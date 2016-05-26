@@ -29,7 +29,6 @@ static int display(lulog *log, GLuint program, luarray_buffer *buffers, luarray_
     for (size_t i = 0; i < buffers->mem.used; ++i) {
         HP_GLCHECK(glBindBuffer(buffers->b[i].target, 0))
     }
-    HP_GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, 0))
     HP_GLCHECK(glUseProgram(0))
     LU_NO_CLEANUP
 }
