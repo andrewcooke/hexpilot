@@ -39,12 +39,11 @@ static int build_buffers(lulog *log, luarray_buffer **buffers, luarray_uint **of
     luarray_fxyzw *vertices = NULL;
     luarray_uint *indices = NULL;
     LU_CHECK(hexagon(log, 0, 3, 3, 0.1, 1.0, &vertices, &indices, offsets))
-    LU_CHECK(luarray_mkbuffern(log, buffers, 2));
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
-            vertices->fxyzw, vertices->mem.used, sizeof(*vertices->fxyzw), *buffers));
+            vertices->fxyzw, vertices->mem.used, sizeof(*vertices->fxyzw), buffers));
     LU_CHECK(luarray_dumpfxyzw(log, vertices, "vertices", 2))
     LU_CHECK(load_buffer(log, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW,
-            indices->i, indices->mem.used, sizeof(*indices->i), *buffers))
+            indices->i, indices->mem.used, sizeof(*indices->i), buffers))
     LU_CHECK(luarray_dumpuint(log, indices, "indices", 2))
     // create and select this, since only one is needed
     GLuint vao;
@@ -73,15 +72,11 @@ static const char* fragment_shader =
 static int build_program(lulog *log, GLuint *program) {
     LU_STATUS
     luarray_uint *shaders = NULL;
-    LU_CHECK(luarray_mkuintn(log, &shaders, 2))
-    LU_CHECK(compile_shader(log, GL_VERTEX_SHADER, vertex_shader, shaders))
-    LU_CHECK(compile_shader(log, GL_FRAGMENT_SHADER, fragment_shader, shaders))
+    LU_CHECK(compile_shader(log, GL_VERTEX_SHADER, vertex_shader, &shaders))
+    LU_CHECK(compile_shader(log, GL_FRAGMENT_SHADER, fragment_shader, &shaders))
     LU_CHECK(link_program(log, shaders, program));
-    for (size_t i = 0; i < shaders->mem.used; ++i) {
-        HP_GLCHECK(glDeleteShader(shaders->i[i]))
-    }
 LU_CLEANUP
-    status = luarray_freeuint(&shaders, status);
+    status = free_shaders(log, &shaders, status);
     LU_RETURN
 }
 

@@ -10,7 +10,8 @@
 
 
 const char *shader_type_str(lulog *log, GLenum shader_type);
-int compile_shader(lulog *log, GLenum shader_type, const char *source, luarray_uint *shaders);
+int compile_shader(lulog *log, GLenum shader_type, const char *source, luarray_uint **shaders);
 int link_program(lulog *log, luarray_uint *shaders, GLuint *program);
+int free_shaders(lulog *log, luarray_uint **shaders, int status);
 
 #endif
