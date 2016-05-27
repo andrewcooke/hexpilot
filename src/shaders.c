@@ -22,7 +22,7 @@ const char *shader_type_str(lulog *log, GLenum shader_type) {
     }
 }
 
-int compile_shader(lulog *log, GLenum shader_type, const char *source, luarray_uint **shaders) {
+int compile_shader(lulog *log, GLenum shader_type, const char *source, luarray_uint32 **shaders) {
     LU_STATUS
     ludebug(log, "Compiling %s shader:", shader_type_str(log, shader_type));
     lulog_lines(log, lulog_level_debug, source);
@@ -42,14 +42,14 @@ int compile_shader(lulog *log, GLenum shader_type, const char *source, luarray_u
         goto exit;
     }
     if (!*shaders) {
-        LU_CHECK(luarray_mkuintn(log, shaders, 1))
+        LU_CHECK(luarray_mkuint32n(log, shaders, 1))
     }
-    LU_CHECK(luarray_pushuint(log, *shaders, shader))
+    LU_CHECK(luarray_pushuint32(log, *shaders, shader))
     luinfo(log, "Compiled %s shader", shader_type_str(log, shader_type));
     LU_NO_CLEANUP
 }
 
-int link_program(lulog *log, luarray_uint *shaders, GLuint *program) {
+int link_program(lulog *log, luarray_uint32 *shaders, GLuint *program) {
     LU_STATUS
     GL_CHECK(*program = glCreateProgram())
     for (size_t i = 0; i < shaders->mem.used; ++i) {
@@ -75,7 +75,7 @@ int link_program(lulog *log, luarray_uint *shaders, GLuint *program) {
     LU_NO_CLEANUP
 }
 
-int free_shaders(lulog *log, luarray_uint **shaders, int prev_status) {
+int free_shaders(lulog *log, luarray_uint32 **shaders, int prev_status) {
     LU_STATUS
     if (shaders) {
         for (size_t i = 0; i < (*shaders)->mem.used; ++i) {
@@ -83,6 +83,6 @@ int free_shaders(lulog *log, luarray_uint **shaders, int prev_status) {
         }
     }
 LU_CLEANUP
-    status = luarray_freeuint(shaders, status);
+    status = luarray_freeuint32(shaders, status);
     LU_RETURN2(prev_status)
 }
