@@ -1,6 +1,7 @@
 
 #include <glfw.h>
 #include "lu/log.h"
+#include "lu/tiles.h"
 #include "lu/status.h"
 #include "lu/arrays.h"
 
@@ -11,7 +12,12 @@
 #include "error_codes.h"
 
 
-static int display(lulog *log, GLuint program, luarray_buffer *buffers, luarray_uint32 *offsets) {
+static int display(lulog *log, GLuint program,
+		luarray_buffer *buffers, luarray_uint32 *offsets, luarray_int32 *counts) {
+	uint32_t xx[] = {21};
+	int64_t yy[] = {0,84};
+	ludebug(log, "%zu", sizeof(GLsizei));
+	void *z = yy; //offsets->i;
     LU_STATUS
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
@@ -19,18 +25,21 @@ static int display(lulog *log, GLuint program, luarray_buffer *buffers, luarray_
     LU_CHECK(bind_buffers(log, buffers))
     GL_CHECK(glEnableVertexAttribArray(0))
     GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
+	GL_CHECK(glMultiDrawElements(GL_TRIANGLE_STRIP, counts->i, GL_UNSIGNED_INT,
+			z, 2));//counts->mem.used))
     // this should use glMultiDrawElements
-    for (size_t i = 0; i < offsets->mem.used-1; ++i) {
-        GL_CHECK(glDrawElements(GL_TRIANGLE_STRIP, offsets->i[i+1] - offsets->i[i],
-                GL_UNSIGNED_INT, (void*)(offsets->i[i] * buffers->b[1].chunk)))
-    }
+//    for (size_t i = 0; i < offsets->mem.used-1; ++i) {
+//        GL_CHECK(glDrawElements(GL_TRIANGLE_STRIP, offsets->i[i+1] - offsets->i[i],
+//                GL_UNSIGNED_INT, (void*)(offsets->i[i] * buffers->b[1].chunk)))
+//    }
     GL_CHECK(glDisableVertexAttribArray(0))
     LU_CHECK(unbind_buffers(log, buffers))
     GL_CHECK(glUseProgram(0))
     LU_NO_CLEANUP
 }
 
-static int build_buffers(lulog *log, luarray_buffer **buffers, luarray_uint32 **offsets) {
+static int build_buffers(lulog *log, luarray_buffer **buffers,
+		luarray_uint32 **offsets, luarray_int32 **counts) {
     LU_STATUS
     luarray_fxyzw *vertices = NULL;
     luarray_uint32 *indices = NULL;
@@ -41,6 +50,9 @@ static int build_buffers(lulog *log, luarray_buffer **buffers, luarray_uint32 **
     LU_CHECK(load_buffer(log, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW,
             indices->i, indices->mem.used, sizeof(*indices->i), buffers))
     LU_CHECK(luarray_dumpuint32(log, indices, "indices", 2))
+    LU_CHECK(lutile_offsets2counts(log, (*buffers)->b[1].chunk, *offsets, counts))
+    LU_CHECK(luarray_dumpuint32(log, *offsets, "offsets", 2))
+    LU_CHECK(luarray_dumpint32(log, *counts, "counts", 2))
     // create and select this, since only one is needed
     GLuint vao;
     GL_CHECK(glGenVertexArrays(1, &vao))
@@ -81,13 +93,14 @@ static int with_glfw(lulog *log) {
     GLFWwindow *window = NULL;
     luarray_buffer *buffers = NULL;
     luarray_uint32 *offsets = NULL;
+    luarray_int32 *counts = NULL;
     LU_CHECK(create_glfw_context(log, &window))
     LU_CHECK(load_opengl_functions(log))
     GLuint program;
     LU_CHECK(build_program(log, &program))
-    LU_CHECK(build_buffers(log, &buffers, &offsets))
+    LU_CHECK(build_buffers(log, &buffers, &offsets, &counts))
     while (!glfwWindowShouldClose(window)) {
-        LU_CHECK(display(log, program, buffers, offsets))
+        LU_CHECK(display(log, program, buffers, offsets, counts))
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
