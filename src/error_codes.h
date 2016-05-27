@@ -10,7 +10,7 @@
 
 // warning - this generates two statements.
 // (chosen to allow declarations in operation that remain in-scope)
-#define HP_GLCHECK(operation) operation; {\
+#define GL_CHECK(operation) operation; {\
     GLenum err = glGetError();\
     if (err != GL_NO_ERROR) {\
         luerror(log, "OpenGL Error %x in %s (%s:%d)", err, __func__, __FILE__, __LINE__);\

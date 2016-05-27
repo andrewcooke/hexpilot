@@ -13,19 +13,19 @@
 
 static int display(lulog *log, GLuint program, luarray_buffer *buffers, luarray_uint *offsets) {
     LU_STATUS
-    HP_GLCHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
-    HP_GLCHECK(glClear(GL_COLOR_BUFFER_BIT))
-    HP_GLCHECK(glUseProgram(program))
+    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
+    GL_CHECK(glUseProgram(program))
     LU_CHECK(bind_buffers(log, buffers))
-    HP_GLCHECK(glEnableVertexAttribArray(0))
-    HP_GLCHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
+    GL_CHECK(glEnableVertexAttribArray(0))
+    GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
     for (size_t i = 0; i < offsets->mem.used-1; ++i) {
-        HP_GLCHECK(glDrawElements(GL_TRIANGLE_STRIP, offsets->i[i+1] - offsets->i[i],
+        GL_CHECK(glDrawElements(GL_TRIANGLE_STRIP, offsets->i[i+1] - offsets->i[i],
                 GL_UNSIGNED_INT, (void*)(offsets->i[i] * buffers->b[1].chunk)))
     }
-    HP_GLCHECK(glDisableVertexAttribArray(0))
+    GL_CHECK(glDisableVertexAttribArray(0))
     LU_CHECK(unbind_buffers(log, buffers))
-    HP_GLCHECK(glUseProgram(0))
+    GL_CHECK(glUseProgram(0))
     LU_NO_CLEANUP
 }
 
@@ -42,8 +42,8 @@ static int build_buffers(lulog *log, luarray_buffer **buffers, luarray_uint **of
     LU_CHECK(luarray_dumpuint(log, indices, "indices", 2))
     // create and select this, since only one is needed
     GLuint vao;
-    HP_GLCHECK(glGenVertexArrays(1, &vao))
-    HP_GLCHECK(glBindVertexArray(vao))
+    GL_CHECK(glGenVertexArrays(1, &vao))
+    GL_CHECK(glBindVertexArray(vao))
 LU_CLEANUP
     status = luarray_freefxyzw(&vertices, status);
     status = luarray_freeuint(&indices, status);

@@ -25,10 +25,10 @@ int load_buffer(lulog *log, GLenum target, GLenum usage,
     LU_STATUS
     GLuint buffer;
     size_t bytes = count * chunk;
-    HP_GLCHECK(glGenBuffers(1, &buffer))
-    HP_GLCHECK(glBindBuffer(target, buffer))
-    HP_GLCHECK(glBufferData(target, bytes, data, usage))
-    HP_GLCHECK(glBindBuffer(target, 0))
+    GL_CHECK(glGenBuffers(1, &buffer))
+    GL_CHECK(glBindBuffer(target, buffer))
+    GL_CHECK(glBufferData(target, bytes, data, usage))
+    GL_CHECK(glBindBuffer(target, 0))
     if (!*buffers) {
         LU_CHECK(luarray_mkbuffern(log, buffers, 1));
     }
@@ -42,7 +42,7 @@ int load_buffer(lulog *log, GLenum target, GLenum usage,
 int bind_buffers(lulog *log, luarray_buffer *buffers) {
     LU_STATUS
     for (size_t i = 0; i < buffers->mem.used; ++i) {
-        HP_GLCHECK(glBindBuffer(buffers->b[i].target, buffers->b[i].name))
+        GL_CHECK(glBindBuffer(buffers->b[i].target, buffers->b[i].name))
     }
     LU_NO_CLEANUP
 }
@@ -50,7 +50,7 @@ int bind_buffers(lulog *log, luarray_buffer *buffers) {
 int unbind_buffers(lulog *log, luarray_buffer *buffers) {
     LU_STATUS
     for (size_t i = 0; i < buffers->mem.used; ++i) {
-        HP_GLCHECK(glBindBuffer(buffers->b[i].target, 0))
+        GL_CHECK(glBindBuffer(buffers->b[i].target, 0))
     }
     LU_NO_CLEANUP
 }
