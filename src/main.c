@@ -22,7 +22,7 @@ static int display(lulog *log, GLuint program,
     GL_CHECK(glEnableVertexAttribArray(0))
     GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
 	GL_CHECK(glMultiDrawElements(GL_TRIANGLE_STRIP, counts->i, GL_UNSIGNED_INT,
-			(void*)offsets->ptr, counts->mem.used));//counts->mem.used))
+			(void*)offsets->ptr, counts->mem.used));
     GL_CHECK(glDisableVertexAttribArray(0))
     LU_CHECK(unbind_buffers(log, buffers))
     GL_CHECK(glUseProgram(0))
