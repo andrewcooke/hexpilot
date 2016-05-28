@@ -125,7 +125,7 @@ static int addstrip(lulog *log, luarray_ijz *ijz, size_t *current, size_t *index
     LU_NO_CLEANUP
 }
 
-static int strips(lulog *log, luarray_ijz *ijz, size_t chunk,
+static int strips(lulog *log, luarray_ijz *ijz,
 		luarray_uint32 **indices, luarray_void **offsets, luarray_uint32 **counts){
     LU_STATUS
     ludata_ij bl, tr;
@@ -138,7 +138,8 @@ static int strips(lulog *log, luarray_ijz *ijz, size_t chunk,
     LU_CHECK(luarray_mkuint32n(log, counts, tr.j - bl.j + 1))  // optimistic?
     size_t current = 0;
     while (current < ijz->mem.used) {
-        LU_CHECK(addstrip(log, ijz, &current, index, bl, tr, chunk, *indices, *offsets, *counts))
+        LU_CHECK(addstrip(log, ijz, &current, index, bl, tr, sizeof(*((*indices)->i)),
+                *indices, *offsets, *counts))
     }
     luinfo(log, "Generated %zu triangle strips", (*offsets)->mem.used - 1);
 LU_CLEANUP
@@ -162,7 +163,7 @@ static int ijz2fxyzw(lulog *log, luarray_ijz *ijz, float step, luarray_fxyzw **f
 
 int hexagon(lulog *log, uint64_t seed,
         size_t side, size_t subsamples, double step, double octweight,
-        size_t chunk, luarray_fxyzw **vertices, luarray_uint32 **indices,
+        luarray_fxyzw **vertices, luarray_uint32 **indices,
 		luarray_void **offsets, luarray_uint32 **counts) {
     LU_STATUS
     lutile_config *config = NULL;
@@ -171,7 +172,7 @@ int hexagon(lulog *log, uint64_t seed,
     LU_CHECK(lutile_defaultconfig(log, &config, seed))
     LU_CHECK(lutile_mkhexagon(log, &hexagon, side, subsamples, octweight))
     LU_CHECK(hexagon->enumerate(hexagon, log, config, -1, &ijz))
-    LU_CHECK(strips(log, ijz, chunk, indices, offsets, counts))
+    LU_CHECK(strips(log, ijz, indices, offsets, counts))
     LU_CHECK(ijz2fxyzw(log, ijz, step, vertices))
 LU_CLEANUP
     status = lutile_freeconfig(&config, status);
