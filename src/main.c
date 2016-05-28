@@ -34,7 +34,7 @@ static int build_buffers(lulog *log, luarray_buffer **buffers,
     LU_STATUS
     luarray_fxyzw *vertices = NULL;
     luarray_uint32 *indices = NULL;
-    LU_CHECK(hexagon(log, 0, 3, 3, 0.1, 1.0, &vertices, &indices, offsets, counts))
+    LU_CHECK(hexagon_vertex_strips(log, 0, 3, 3, 0.1, 1.0, &vertices, &indices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->fxyzw, vertices->mem.used, sizeof(*vertices->fxyzw), buffers));
     LU_CHECK(luarray_dumpfxyzw(log, vertices, "vertices", 2))

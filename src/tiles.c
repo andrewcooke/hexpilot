@@ -1,5 +1,5 @@
 
-#include<math.h>
+#include <math.h>
 
 #include "lu/status.h"
 #include "lu/tiles.h"
@@ -100,7 +100,7 @@ static int addstrip(lulog *log, luarray_ijz *ijz, size_t *current, size_t *index
         LU_CHECK(luarray_pushvoid(log, offsets, (void*)(chunk * indices->mem.used)))
         LU_CHECK(luarray_pushuint32(log, indices, i0-1)) // correct for 0/NULL
         LU_CHECK(luarray_pushuint32(log, indices, *current))
-		LU_CHECK(luarray_pushuint32(log, counts, 2))
+        LU_CHECK(luarray_pushuint32(log, counts, 2))
         LU_CHECK(addpoints(log, ijz, current, p1, 1, index, bl, tr, indices, counts));
     } else {
         size_t i3 = index[ij2index(right(*p1), bl, tr)];
@@ -116,7 +116,7 @@ static int addstrip(lulog *log, luarray_ijz *ijz, size_t *current, size_t *index
             LU_CHECK(luarray_pushvoid(log, offsets, (void*)(chunk * indices->mem.used)))
             LU_CHECK(luarray_pushuint32(log, indices, *current))
             LU_CHECK(luarray_pushuint32(log, indices, i2 - 1)) // correct for 0/NULL
-			LU_CHECK(luarray_pushuint32(log, counts, 2))
+            LU_CHECK(luarray_pushuint32(log, counts, 2))
             LU_CHECK(addpoints(log, ijz, current, p2, 0, index, bl, tr, indices, counts));
         } else {
             *current = *current+1;
@@ -161,7 +161,7 @@ static int ijz2fxyzw(lulog *log, luarray_ijz *ijz, float step, luarray_fxyzw **f
 }
 
 
-int hexagon(lulog *log, uint64_t seed,
+int hexagon_vertex_strips(lulog *log, uint64_t seed,
         size_t side, size_t subsamples, double step, double octweight,
         luarray_fxyzw **vertices, luarray_uint32 **indices,
 		luarray_void **offsets, luarray_uint32 **counts) {
