@@ -181,3 +181,24 @@ LU_CLEANUP
     LU_RETURN
 }
 
+
+int hexagon_vnormal_strips(lulog *log, uint64_t seed,
+        size_t side, size_t subsamples, double step, double octweight,
+        luarray_vnorm **vertices, luarray_uint32 **indices,
+        luarray_void **offsets, luarray_uint32 **counts) {
+    LU_STATUS
+    lutile_config *config = NULL;
+    lutile_tile *hexagon = NULL;
+    luarray_ijz *ijz = NULL;
+    LU_CHECK(lutile_defaultconfig(log, &config, seed))
+    LU_CHECK(lutile_mkhexagon(log, &hexagon, side, subsamples, octweight))
+    LU_CHECK(hexagon->enumerate(hexagon, log, config, -1, &ijz))
+    LU_CHECK(strips(log, ijz, indices, offsets, counts))
+LU_CLEANUP
+    status = lutile_freeconfig(&config, status);
+    if (hexagon) status = hexagon->free(&hexagon, status);
+    status = luarray_freeijz(&ijz, status);
+    LU_RETURN
+}
+
+

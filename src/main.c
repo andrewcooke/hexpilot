@@ -1,5 +1,6 @@
 
 #include <glfw.h>
+
 #include "lu/log.h"
 #include "lu/tiles.h"
 #include "lu/status.h"
