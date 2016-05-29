@@ -233,7 +233,7 @@ static int normals(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
         for (size_t j = 0; j < counts->i[i]; ++j) {
             size_t k = offsets->i[i] + j;
             ludata_fxyzw n = {};
-            if (k > 1) {
+            if (j > 1) {
                 // calculate normal
             }
             LU_CHECK(luarray_pushvnorm(log, *vnorms, vertices->fxyzw[k], n))
