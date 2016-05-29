@@ -6,7 +6,7 @@
 
 #include "lu/log.h"
 
-#include "../src/tiles.c"
+#include "../src/tiles.h"
 
 
 START_TEST(test_small_hexagon) {
@@ -15,8 +15,7 @@ START_TEST(test_small_hexagon) {
     luarray_uint32 *indices = NULL, *counts = NULL;
     luarray_void *offsets = NULL;
     ck_assert(!lulog_mkstderr(&log, lulog_level_debug));
-    ck_assert(!hexagon_vertex_strips(log, 0, 1, 1, 1.0, 1.0,
-            &vertices, &indices, &offsets, &counts));
+    ck_assert(!hexagon_vertex_strips(log, 0, 1, 1, 1.0, 1.0, &vertices, &indices, &offsets, &counts));
     luarray_dumpfxyzw(log, vertices, "vertices", 10);
     ck_assert_msg(vertices->mem.used == 7, "Expected 7 vertices, found %zu", vertices->mem.used);
     ck_assert(vertices->fxyzw[2].x == -1);
