@@ -7,6 +7,7 @@
 #include "lu/arrays.h"
 #include "lu/minmax.h"
 #include "lu/structs.h"
+#include "lu/vectors.h"
 
 #include "tiles.h"
 #include "vertices.h"
@@ -234,10 +235,12 @@ static int normals(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
             size_t k = offsets->i[i] + j;
             ludata_fxyzw n = {};
             if (j > 1) {
-                // calculate normal
+                ludata_fxyzw e1 = lusub3(vertices->fxyzw[indices->i[k-1]], vertices->fxyzw[indices->i[k]]);
+                ludata_fxyzw e2 = lusub3(vertices->fxyzw[indices->i[k-2]], vertices->fxyzw[indices->i[k]]);
+                n = lunorm3(lucross3(e1, e2));
             }
+            LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
             LU_CHECK(luarray_pushvnorm(log, *vnorms, vertices->fxyzw[k], n))
-            LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap")
         }
     }
     LU_NO_CLEANUP
