@@ -241,6 +241,7 @@ static int normals(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
                 ludata_fxyzw e1 = lusub3(vertices->fxyzw[indices->i[k-1]], vertices->fxyzw[indices->i[k]]);
                 ludata_fxyzw e2 = lusub3(vertices->fxyzw[indices->i[k-2]], vertices->fxyzw[indices->i[k]]);
                 n = lunorm3(lucross3(e1, e2));
+                ludebug(log, "%s x %s = %s", ludata_fxyzw2str(e1), ludata_fxyzw2str(e2), ludata_fxyzw2str(n));
             }
             LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
             LU_CHECK(luarray_pushvnorm(log, *vnorms, vertices->fxyzw[indices->i[k]], n))
