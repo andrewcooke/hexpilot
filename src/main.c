@@ -30,7 +30,7 @@ static int build_buffers(lulog *log, luarray_buffer **buffers,
     LU_STATUS
     luarray_vnorm *vertices = NULL;
     luarray_uint32 *indices = NULL;
-    LU_CHECK(hexagon_vnormal_strips(log, 0, 3, 3, 0.1, 1.0, &vertices, &indices, offsets, counts))
+    LU_CHECK(hexagon_vnormal_strips(log, 0, 3, 1, 0.3, 1.0, &vertices, &indices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->v, vertices->mem.used, sizeof(*vertices->v), buffers));
     LU_CHECK(luarray_dumpvnorm(log, vertices, "vertices", 2))
@@ -48,15 +48,21 @@ LU_CLEANUP
 static const char* vertex_shader =
         "#version 330\n"
         "layout(location = 0) in vec4 position;\n"
+        "layout(location = 1) in vec4 normal;\n"
+        "smooth out vec4 interpColour;\n"
         "void main(){\n"
+        "  float brightness = dot(normal, vec4(1.0f, 1.0f, 1.0f, 1.0f));\n"
+        "  brightness = clamp(brightness, 0.1, 0.9);\n"
+        "  interpColour = brightness * vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
         "  gl_Position = position;\n"
         "}\n";
 
 static const char* fragment_shader =
         "#version 330\n"
+        "smooth in vec4 interpColour;\n"
         "out vec4 outputColor;\n"
         "void main(){\n"
-        "  outputColor = vec4(0.5f, 0.0f, 0.0f, 1.0f);\n"
+        "  outputColor = interpColour;\n"
         "}\n";
 
 static int build_program(lulog *log, GLuint *program) {
@@ -76,9 +82,11 @@ static int build_vao(lulog *log, GLuint program, luarray_buffer *buffers,
     GL_CHECK(glGenVertexArrays(1, vao))
     GL_CHECK(glBindVertexArray(*vao))
     GL_CHECK(glUseProgram(program))
-    GL_CHECK(glEnableVertexAttribArray(0))
     LU_CHECK(bind_buffers(log, buffers))
-    GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0))
+    GL_CHECK(glEnableVertexAttribArray(0))
+    GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 16, 0))
+    GL_CHECK(glEnableVertexAttribArray(1))
+    GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 16, (void*)16))
 LU_CLEANUP
     GL_CHECK(glBindVertexArray(0))
     LU_CHECK(unbind_buffers(log, buffers))
