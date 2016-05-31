@@ -145,7 +145,7 @@ static int strips(lulog *log, luarray_ijz *ijz,
     while (current < ijz->mem.used) {
         LU_CHECK(addstrip(log, ijz, &current, index, bl, tr, *indices, *offsets, *counts))
     }
-    luinfo(log, "Generated %zu triangle strips", (*offsets)->mem.used - 1);
+    luinfo(log, "Generated %zu triangle strips", (*offsets)->mem.used);
 LU_CLEANUP
     free(index);
     LU_RETURN
@@ -212,17 +212,20 @@ LU_CLEANUP
 static int uniquify(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
         luarray_uint32 *counts, luarray_ijz *vertices) {
     LU_STATUS
+    size_t before = vertices->mem.used;
     for (size_t i = 0; i < offsets->mem.used; ++i) {
         size_t large = max(indices->i[offsets->i[i]], indices->i[offsets->i[i]+1]);
-        for (size_t j = 2; j < counts->i[i]; ++j) {
+        for (size_t j = 0; j < counts->i[i]; ++j) {
             size_t k = offsets->i[i] + j;
-            if (indices->i[k] > large) {
-                indices->i[k] = vertices->mem.used;
+            if (indices->i[k] >= large) {
                 ludata_ijz v = vertices->ijz[indices->i[k]];
+                indices->i[k] = vertices->mem.used;
                 LU_CHECK(luarray_pushijz(log, vertices, v.i, v.j, v.z))
             }
         }
     }
+    ludebug(log, "Uniquify increased vertex count from %zu to %zu (%.0f%%)",
+            before, vertices->mem.used, 100.0 * (vertices->mem.used - before) / before);
     LU_NO_CLEANUP
 }
 
@@ -240,28 +243,38 @@ static int normals(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
                 n = lunorm3(lucross3(e1, e2));
             }
             LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
-            LU_CHECK(luarray_pushvnorm(log, *vnorms, vertices->fxyzw[k], n))
+            LU_CHECK(luarray_pushvnorm(log, *vnorms, vertices->fxyzw[indices->i[k]], n))
         }
+    }
+    LU_NO_CLEANUP
+}
+
+
+static int uint2int(lulog *log, luarray_uint32 *in, luarray_int32 **out) {
+    LU_STATUS
+    LU_CHECK(luarray_mkint32n(log, out, in->mem.used))
+    for (size_t i = 0; i < in->mem.used; ++i) {
+        LU_CHECK(luarray_pushint32(log, *out, in->i[i]))
     }
     LU_NO_CLEANUP
 }
 
 int hexagon_vnormal_strips(lulog *log, uint64_t seed,
         size_t side, size_t subsamples, double step, double octweight,
-        luarray_vnorm **vertices, luarray_uint32 **indices,
-        luarray_void **offsets, luarray_uint32 **counts) {
+        luarray_vnorm **vertices, luarray_int32 **offsets, luarray_uint32 **counts) {
     LU_STATUS
     luarray_ijz *ijz = NULL;
-    luarray_uint32 *ioffsets = NULL;
+    luarray_uint32 *ioffsets = NULL, *indices = NULL;
     luarray_fxyzw *fxyzw = NULL;
     LU_CHECK(hexagon_common(log, seed, side, subsamples, step, octweight,
-            &ijz, indices, &ioffsets, counts))
-    LU_CHECK(uniquify(log, *indices, ioffsets, *counts, ijz))
+            &ijz, &indices, &ioffsets, counts))
+    LU_CHECK(uniquify(log, indices, ioffsets, *counts, ijz))
     LU_CHECK(ijz2fxyzw(log, ijz, step, &fxyzw))
-    LU_CHECK(normals(log, *indices, ioffsets, *counts, fxyzw, vertices))
-    LU_CHECK(offsets2void(log, ioffsets, sizeof(*(*indices)->i), offsets))
+    LU_CHECK(normals(log, indices, ioffsets, *counts, fxyzw, vertices))
+    LU_CHECK(uint2int(log, ioffsets, offsets))
 LU_CLEANUP
     status = luarray_freeuint32(&ioffsets, status);
+    status = luarray_freeuint32(&indices, status);
     status = luarray_freeijz(&ijz, status);
     status = luarray_freefxyzw(&fxyzw, status);
     LU_RETURN

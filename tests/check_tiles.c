@@ -7,6 +7,7 @@
 #include "lu/log.h"
 
 #include "../src/tiles.h"
+#include "../src/vertices.h"
 
 
 START_TEST(test_small_hexagon) {
@@ -50,6 +51,34 @@ START_TEST(test_small_hexagon) {
 } END_TEST
 
 
+START_TEST(test_norms) {
+    lulog *log;
+    luarray_vnorm *vertices = NULL;
+    luarray_uint32 *counts = NULL;
+    luarray_int32 *offsets = NULL;
+    ck_assert(!lulog_mkstderr(&log, lulog_level_debug));
+    ck_assert(!hexagon_vnormal_strips(log, 0, 1, 1, 1.0, 1.0, &vertices, &offsets, &counts));
+    luarray_dumpvnorm(log, vertices, "vertices", 10);
+    ck_assert_msg(vertices->mem.used == 10, "Expected 10 vertices, found %zu", vertices->mem.used);
+//    ck_assert(vertices->v[2].v.x == -1);
+//    ck_assert(vertices->v[2].v.y == 0);
+//    ck_assert(vertices->v[2].v.z == 0);
+//    ck_assert(vertices->v[2].v.w == 1);
+    luarray_dumpint32(log, offsets, "offsets", 10);
+    ck_assert_msg(offsets->mem.used == 2, "Expected 2 offsets, found %zu", offsets->mem.used);
+    ck_assert(offsets->i[0] == 0);
+    ck_assert(offsets->i[1] == 5);
+    luarray_dumpuint32(log, counts, "counts", 10);
+    ck_assert_msg(counts->mem.used == 2, "Expected 2 counts, found %zu", counts->mem.used);
+    ck_assert(counts->i[0] == 5);
+    ck_assert(counts->i[1] == 5);
+    ck_assert(!luarray_freeint32(&offsets, 0));
+    ck_assert(!luarray_freeuint32(&counts, 0));
+    ck_assert(!luarray_freevnorm(&vertices, 0));
+    ck_assert(!log->free(&log, 0));
+} END_TEST
+
+
 int main(void) {
 
     int failed = 0;
@@ -59,6 +88,7 @@ int main(void) {
 
     c = tcase_create("case");
     tcase_add_test(c, test_small_hexagon);
+    tcase_add_test(c, test_norms);
     s = suite_create("suite");
     suite_add_tcase(s, c);
     r = srunner_create(s);

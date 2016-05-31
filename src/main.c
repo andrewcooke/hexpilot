@@ -13,31 +13,30 @@
 #include "error_codes.h"
 
 
-static int display(lulog *log, GLuint vao, luarray_void *offsets, luarray_uint32 *counts) {
+static int display(lulog *log, GLuint vao, luarray_int32 *offsets, luarray_uint32 *counts) {
     LU_STATUS
+//    int32_t o[] = {0};
+//    uint32_t c[] = {9};
     GL_CHECK(glBindVertexArray(vao))
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
-    GL_CHECK(glMultiDrawElements(GL_TRIANGLE_STRIP, counts->i, GL_UNSIGNED_INT,
-            (void*)offsets->ptr, counts->mem.used));
+    GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, offsets->i, counts->i, counts->mem.used));
+//    GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, o, c, 1));
 LU_CLEANUP
     GL_CHECK(glBindVertexArray(0))
     LU_RETURN
 }
 
 static int build_buffers(lulog *log, luarray_buffer **buffers,
-		luarray_void **offsets, luarray_uint32 **counts) {
+		luarray_int32 **offsets, luarray_uint32 **counts) {
     LU_STATUS
     luarray_vnorm *vertices = NULL;
     luarray_uint32 *indices = NULL;
-    LU_CHECK(hexagon_vnormal_strips(log, 0, 3, 1, 0.3, 1.0, &vertices, &indices, offsets, counts))
+    LU_CHECK(hexagon_vnormal_strips(log, 0, 3, 1, 0.3, 1.0, &vertices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->v, vertices->mem.used, sizeof(*vertices->v), buffers));
     LU_CHECK(luarray_dumpvnorm(log, vertices, "vertices", 2))
-    LU_CHECK(load_buffer(log, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW,
-            indices->i, indices->mem.used, sizeof(*indices->i), buffers))
-    LU_CHECK(luarray_dumpuint32(log, indices, "indices", 2))
-    LU_CHECK(luarray_dumpvoid(log, *offsets, "offsets", 2))
+    LU_CHECK(luarray_dumpint32(log, *offsets, "offsets", 2))
     LU_CHECK(luarray_dumpuint32(log, *counts, "counts", 2))
 LU_CLEANUP
     status = luarray_freevnorm(&vertices, status);
@@ -49,7 +48,7 @@ static const char* vertex_shader =
         "#version 330\n"
         "layout(location = 0) in vec4 position;\n"
         "layout(location = 1) in vec4 normal;\n"
-        "smooth out vec4 interpColour;\n"
+        "flat out vec4 interpColour;\n"
         "void main(){\n"
         "  float brightness = dot(normal, vec4(1.0f, 1.0f, 1.0f, 1.0f));\n"
         "  brightness = clamp(brightness, 0.1, 0.9);\n"
@@ -59,7 +58,7 @@ static const char* vertex_shader =
 
 static const char* fragment_shader =
         "#version 330\n"
-        "smooth in vec4 interpColour;\n"
+        "flat in vec4 interpColour;\n"
         "out vec4 outputColor;\n"
         "void main(){\n"
         "  outputColor = interpColour;\n"
@@ -84,9 +83,9 @@ static int build_vao(lulog *log, GLuint program, luarray_buffer *buffers,
     GL_CHECK(glUseProgram(program))
     LU_CHECK(bind_buffers(log, buffers))
     GL_CHECK(glEnableVertexAttribArray(0))
-    GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 16, 0))
+    GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, 0))
     GL_CHECK(glEnableVertexAttribArray(1))
-    GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 16, (void*)16))
+    GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 32, (void*)16))
 LU_CLEANUP
     GL_CHECK(glBindVertexArray(0))
     LU_CHECK(unbind_buffers(log, buffers))
@@ -97,8 +96,8 @@ static int with_glfw(lulog *log) {
     LU_STATUS
     GLFWwindow *window = NULL;
     luarray_buffer *buffers = NULL;
-    luarray_void *offsets = NULL;
     luarray_uint32 *counts = NULL;
+    luarray_int32 *offsets = NULL;
     LU_CHECK(create_glfw_context(log, &window))
     LU_CHECK(load_opengl_functions(log))
     GLuint program, vao;
@@ -114,7 +113,7 @@ static int with_glfw(lulog *log) {
 LU_CLEANUP
     glfwTerminate();
     status = luarray_freebuffer(&buffers, status);
-    status = luarray_freevoid(&offsets, status);
+    status = luarray_freeint32(&offsets, status);
     LU_RETURN
 }
 
