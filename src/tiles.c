@@ -160,6 +160,7 @@ static int ijz2fxyzw(lulog *log, luarray_ijz *ijz, float step, luarray_fxyzw **f
         float y = p->j * sin(M_PI/3) * step;
         float z = p->z;
         LU_CHECK(luarray_pushfxyzw(log, *fxyzw, x, y, z, 1.0f))
+        ludebug(log, "%g -> %g", p->z, (*fxyzw)->fxyzw[(*fxyzw)->mem.used-1].z);
     }
     LU_NO_CLEANUP
 }
@@ -170,6 +171,12 @@ static int offsets2void(lulog *log, luarray_uint32 *in, size_t chunk, luarray_vo
     for (size_t i = 0; i < in->mem.used; ++i) {
         LU_CHECK(luarray_pushvoid(log, *out, (void*)(chunk * in->i[i])))
     }
+    LU_NO_CLEANUP
+}
+
+static int scalez(lulog *log, luarray_ijz *vertices, float k) {
+    LU_STATUS
+    for (size_t i = 0; i < vertices->mem.used; ++i) vertices->ijz[i].z *= k;
     LU_NO_CLEANUP
 }
 
@@ -184,6 +191,7 @@ static int hexagon_common(lulog *log, uint64_t seed,
     LU_CHECK(lutile_defaultconfig(log, &config, seed))
     LU_CHECK(lutile_mkhexagon(log, &hexagon, side, subsamples, octweight))
     LU_CHECK(hexagon->enumerate(hexagon, log, config, -1, vertices))
+    LU_CHECK(scalez(log, *vertices, 1000));
     LU_CHECK(strips(log, *vertices, indices, offsets, counts))
 LU_CLEANUP
     status = lutile_freeconfig(&config, status);
@@ -237,14 +245,20 @@ static int normals(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
         for (size_t j = 0; j < counts->i[i]; ++j) {
             size_t k = offsets->i[i] + j;
             ludata_fxyzw n = {};
+            ludata_fxyzw p0 = vertices->fxyzw[indices->i[k]];
             if (j > 1) {
-                ludata_fxyzw e1 = lusub3(vertices->fxyzw[indices->i[k-1]], vertices->fxyzw[indices->i[k]]);
-                ludata_fxyzw e2 = lusub3(vertices->fxyzw[indices->i[k-2]], vertices->fxyzw[indices->i[k]]);
+                ludata_fxyzw p1 = vertices->fxyzw[indices->i[k-1]];
+                ludata_fxyzw p2 = vertices->fxyzw[indices->i[k-2]];
+                if (p1.y < p2.y) {ludata_fxyzw tmp = p1; p1 = p2; p2 = tmp;}
+                ludata_fxyzw e1 = lusub3(p1, p0);
+                ludata_fxyzw e2 = lusub3(p2, p0);
                 n = lunorm3(lucross3(e1, e2));
-                ludebug(log, "%s x %s = %s", ludata_fxyzw2str(e1), ludata_fxyzw2str(e2), ludata_fxyzw2str(n));
+                char b1[100], b2[100], bn[100];
+                ludebug(log, "%s x %s = %s",
+                        ludata_fxyzw2str(e1, 100, b1), ludata_fxyzw2str(e2, 100, b2), ludata_fxyzw2str(n, 100, bn));
             }
             LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
-            LU_CHECK(luarray_pushvnorm(log, *vnorms, vertices->fxyzw[indices->i[k]], n))
+            LU_CHECK(luarray_pushvnorm(log, *vnorms, p0, n))
         }
     }
     LU_NO_CLEANUP
