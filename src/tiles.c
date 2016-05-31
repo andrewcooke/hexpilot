@@ -160,7 +160,6 @@ static int ijz2fxyzw(lulog *log, luarray_ijz *ijz, float step, luarray_fxyzw **f
         float y = p->j * sin(M_PI/3) * step;
         float z = p->z;
         LU_CHECK(luarray_pushfxyzw(log, *fxyzw, x, y, z, 1.0f))
-        ludebug(log, "%g -> %g", p->z, (*fxyzw)->fxyzw[(*fxyzw)->mem.used-1].z);
     }
     LU_NO_CLEANUP
 }
@@ -252,10 +251,8 @@ static int normals(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
                 if (p1.y < p2.y) {ludata_fxyzw tmp = p1; p1 = p2; p2 = tmp;}
                 ludata_fxyzw e1 = lusub3(p1, p0);
                 ludata_fxyzw e2 = lusub3(p2, p0);
-                n = lunorm3(lucross3(e1, e2));
+                n = lusetw(lunorm3(lucross3(e1, e2)), 0);
                 char b1[100], b2[100], bn[100];
-                ludebug(log, "%s x %s = %s",
-                        ludata_fxyzw2str(e1, 100, b1), ludata_fxyzw2str(e2, 100, b2), ludata_fxyzw2str(n, 100, bn));
             }
             LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
             LU_CHECK(luarray_pushvnorm(log, *vnorms, p0, n))

@@ -15,13 +15,10 @@
 
 static int display(lulog *log, GLuint vao, luarray_int32 *offsets, luarray_uint32 *counts) {
     LU_STATUS
-//    int32_t o[] = {0};
-//    uint32_t c[] = {9};
     GL_CHECK(glBindVertexArray(vao))
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, offsets->i, counts->i, counts->mem.used));
-//    GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, o, c, 1));
 LU_CLEANUP
     GL_CHECK(glBindVertexArray(0))
     LU_RETURN
@@ -50,9 +47,9 @@ static const char* vertex_shader =
         "layout(location = 1) in vec4 normal;\n"
         "flat out vec4 interpColour;\n"
         "void main(){\n"
-        "  float brightness = dot(normal.xyz, vec4(0.1f, 0.1f, 1.0f, 1.0f).xyz);\n"
+        "  float brightness = dot(normal, vec4(0.1, 0.1, 1.0, 1.0));\n"
         "  brightness = clamp(brightness, 0, 1);\n"
-        "  interpColour = brightness * vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
+        "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
         "  gl_Position = position;\n"
         "}\n";
 

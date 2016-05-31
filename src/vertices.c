@@ -16,6 +16,6 @@ int luarray_pushvnorm(lulog *log, luarray_vnorm *vn, ludata_fxyzw v, ludata_fxyz
     LU_NO_CLEANUP
 }
 
-LUARRAY_MKDUMP(luarray_dumpvnorm, luarray_vnorm, 2, "{%g,%g,%g,%g}/{%g,%g,%g,%g}",
+LUARRAY_MKDUMP(luarray_dumpvnorm, luarray_vnorm, 1, "{%g,%g,%g,%g}/{%g,%g,%g,%g}",
         ptr->v[i].v.x, ptr->v[i].v.y, ptr->v[i].v.z, ptr->v[i].v.w,
         ptr->v[i].n.x, ptr->v[i].n.y, ptr->v[i].n.z, ptr->v[i].n.w)
