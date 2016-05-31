@@ -32,7 +32,7 @@ static int build_buffers(lulog *log, luarray_buffer **buffers,
     LU_STATUS
     luarray_vnorm *vertices = NULL;
     luarray_uint32 *indices = NULL;
-    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 0.1, 1.0, &vertices, offsets, counts))
+    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 0.03, 1.0, &vertices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->v, vertices->mem.used, sizeof(*vertices->v), buffers));
     LU_CHECK(luarray_dumpvnorm(log, vertices, "vertices", 2))
@@ -50,7 +50,7 @@ static const char* vertex_shader =
         "layout(location = 1) in vec4 normal;\n"
         "flat out vec4 interpColour;\n"
         "void main(){\n"
-        "  float brightness = dot(normal, vec4(0.1f, 0.1f, 1.0f, 1.0f));\n"
+        "  float brightness = dot(normal.xyz, vec4(0.1f, 0.1f, 1.0f, 1.0f).xyz);\n"
         "  brightness = clamp(brightness, 0, 1);\n"
         "  interpColour = brightness * vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
         "  gl_Position = position;\n"

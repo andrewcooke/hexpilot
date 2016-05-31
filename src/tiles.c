@@ -191,7 +191,7 @@ static int hexagon_common(lulog *log, uint64_t seed,
     LU_CHECK(lutile_defaultconfig(log, &config, seed))
     LU_CHECK(lutile_mkhexagon(log, &hexagon, side, subsamples, octweight))
     LU_CHECK(hexagon->enumerate(hexagon, log, config, -1, vertices))
-    LU_CHECK(scalez(log, *vertices, 1000));
+    LU_CHECK(scalez(log, *vertices, 10));
     LU_CHECK(strips(log, *vertices, indices, offsets, counts))
 LU_CLEANUP
     status = lutile_freeconfig(&config, status);
