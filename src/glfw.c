@@ -34,3 +34,19 @@ int load_opengl_functions(lulog *log) {
     LU_NO_CLEANUP
 }
 
+static void size_callback(GLFWwindow* window, int width, int height) {
+    user_action *action = glfwGetWindowUserPointer(window);
+    ludebug(action->log, "Framebuffer changed to %d,%d", width, height);
+    action->framebuffer_size_change = 1;
+    action->any_change = 1;
+}
+
+int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action) {
+    LU_STATUS
+    LU_ALLOC(log, *action, 1)
+    (*action)->log = log;
+    (*action)->window = window;
+    glfwSetWindowUserPointer(window, *action);
+    glfwSetFramebufferSizeCallback(window, &size_callback);
+    LU_NO_CLEANUP
+}

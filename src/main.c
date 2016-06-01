@@ -15,7 +15,7 @@
 
 static int display(lulog *log, GLuint vao, luarray_int32 *offsets, luarray_uint32 *counts) {
     LU_STATUS
-    GL_CHECK(glBindVertexArray(vao))
+    GL_CHECK(glBindVertexArray(vao)) // seems we need setprogram too
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, offsets->i, counts->i, counts->mem.used));
@@ -46,11 +46,15 @@ static const char* vertex_shader =
         "layout(location = 0) in vec4 position;\n"
         "layout(location = 1) in vec4 normal;\n"
         "flat out vec4 interpColour;\n"
+        "uniform mat4 transform;\n"
         "void main(){\n"
-        "  float brightness = dot(normal, vec4(0.1, 0.1, 1.0, 1.0));\n"
+        "  vec4 t_position = transform * position;\n"
+        "  vec4 t_normal = vec4(normalize((transform * normal).xyz), 0);\n"
+        "  vec4 t_light = vec4(normalize((transform * vec4(0.1, 0.1, 1, 0)).xyz), 0);\n"
+        "  float brightness = dot(t_normal, t_light);\n"
         "  brightness = clamp(brightness, 0, 1);\n"
         "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
-        "  gl_Position = position;\n"
+        "  gl_Position = t_position;\n"
         "}\n";
 
 static const char* fragment_shader =
@@ -89,19 +93,49 @@ LU_CLEANUP
     LU_RETURN
 }
 
+static int respond_to_user(lulog *log, user_action *action, GLuint program) {
+    LU_STATUS
+    int width, height;
+    glfwGetFramebufferSize(action->window, &width, &height);
+    GL_CHECK(glViewport(0, 0, width, height))
+    float *matrix = NULL;
+    LU_ALLOC(log, matrix, 16);
+    for (size_t i = 0; i < 4; ++i) matrix[4*i+i] = 1;
+    if (width < height) {
+        matrix[0] = height / (float)width;
+    } else {
+        matrix[5] = width / (float)height;
+    }
+    GL_CHECK(glUseProgram(program))
+    GL_CHECK(GLint uniform = glGetUniformLocation(program, "transform"))
+    GL_CHECK(glUniformMatrix4fv(uniform, 1, GL_FALSE, matrix))
+//    GL_CHECK(glUseProgram(0))
+LU_CLEANUP
+    action->framebuffer_size_change = 0;
+    action->any_change = 0;
+    free(matrix);
+    LU_RETURN
+}
+
 static int with_glfw(lulog *log) {
     LU_STATUS
     GLFWwindow *window = NULL;
     luarray_buffer *buffers = NULL;
     luarray_uint32 *counts = NULL;
     luarray_int32 *offsets = NULL;
+    GLuint program, vao;
+    user_action *action = NULL;
     LU_CHECK(create_glfw_context(log, &window))
     LU_CHECK(load_opengl_functions(log))
-    GLuint program, vao;
+    LU_CHECK(set_window_callbacks(log, window, &action))
     LU_CHECK(build_program(log, &program))
     LU_CHECK(build_buffers(log, &buffers, &offsets, &counts))
     LU_CHECK(build_vao(log, program, buffers, &vao))
+    LU_CHECK(respond_to_user(log, action, program))
     while (!glfwWindowShouldClose(window)) {
+        if (action->any_change) {
+            LU_CHECK(respond_to_user(log, action, program))
+        }
         LU_CHECK(display(log, vao, offsets, counts))
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -109,6 +143,7 @@ static int with_glfw(lulog *log) {
     ludebug(log, "Clean exit");
 LU_CLEANUP
     glfwTerminate();
+    free(action);
     status = luarray_freebuffer(&buffers, status);
     status = luarray_freeint32(&offsets, status);
     LU_RETURN
