@@ -164,6 +164,19 @@ static int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw
     LU_NO_CLEANUP
 }
 
+static int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
+    LU_STATUS
+    LU_CHECK(luary_mkvecf4n(log, f4, ijz->mem.used))
+    for (size_t i = 0; i < ijz->mem.used; ++i) {
+        ludta_ijz *p = &ijz->ijz[i];
+        float x = (p->i + p->j * cos(M_PI/3)) * step;
+        float y = p->j * sin(M_PI/3) * step;
+        float z = p->z;
+        LU_CHECK(luary_pushvecf4(log, *f4, x, y, z, 1.0f))
+    }
+    LU_NO_CLEANUP
+}
+
 static int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void **out) {
     LU_STATUS
     LU_CHECK(luary_mkvoidn(log, out, in->mem.used))
@@ -237,25 +250,26 @@ static int uniquify(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
 }
 
 static int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
-        luary_uint32 *counts, luary_fxyzw *vertices, luary_vnorm **vnorms) {
+        luary_uint32 *counts, luary_vecf4 *vertices, luary_vnorm **vnorms) {
     LU_STATUS
     LU_CHECK(luary_mkvnormn(log, vnorms, vertices->mem.used))
     for (size_t i = 0; i < offsets->mem.used; ++i) {
         for (size_t j = 0; j < counts->i[i]; ++j) {
             size_t k = offsets->i[i] + j;
-            ludta_fxyzw n = {};
-            ludta_fxyzw p0 = vertices->fxyzw[indices->i[k]];
+            luvec_f4 n = {};
+            luvec_f4 *p0 = &vertices->v[indices->i[k]];
             if (j > 1) {
-                ludta_fxyzw p1 = vertices->fxyzw[indices->i[k-1]];
-                ludta_fxyzw p2 = vertices->fxyzw[indices->i[k-2]];
-                if (p1.y < p2.y) {ludta_fxyzw tmp = p1; p1 = p2; p2 = tmp;}
-                ludta_fxyzw e1 = lusub3(p1, p0);
-                ludta_fxyzw e2 = lusub3(p2, p0);
-                n = lusetw(lunorm3(lucross3(e1, e2)), 0);
-                char b1[100], b2[100], bn[100];
+                luvec_f4 *p1 = &vertices->v[indices->i[k-1]];
+                luvec_f4 *p2 = &vertices->v[indices->i[k-2]];
+                if ((*p1)[1] < (*p2)[1]) {luvec_f4 *tmp = p1; p1 = p2; p2 = tmp;}
+                luvec_f4 e1 = {}, e2 = {};
+                luvec_subf4_3(p1, p0, &e1);
+                luvec_subf4_3(p2, p0, &e2);
+                luvec_crsf4_3(&e1, &e2, &n);
+                n[3] = 0;
             }
             LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
-            LU_CHECK(luary_pushvnorm(log, *vnorms, p0, n))
+            LU_CHECK(luary_pushvnorm(log, *vnorms, p0, &n))
         }
     }
     LU_NO_CLEANUP
@@ -277,18 +291,18 @@ int hexagon_vnormal_strips(lulog *log, uint64_t seed,
     LU_STATUS
     luary_ijz *ijz = NULL;
     luary_uint32 *ioffsets = NULL, *indices = NULL;
-    luary_fxyzw *fxyzw = NULL;
+    luary_vecf4 *f4 = NULL;
     LU_CHECK(hexagon_common(log, seed, side, subsamples, step, octweight,
             &ijz, &indices, &ioffsets, counts))
     LU_CHECK(uniquify(log, indices, ioffsets, *counts, ijz))
-    LU_CHECK(ijz2fxyzw(log, ijz, step, &fxyzw))
-    LU_CHECK(normals(log, indices, ioffsets, *counts, fxyzw, vertices))
+    LU_CHECK(ijz2vecf4(log, ijz, step, &f4))
+    LU_CHECK(normals(log, indices, ioffsets, *counts, f4, vertices))
     LU_CHECK(uint2int(log, ioffsets, offsets))
 LU_CLEANUP
     status = luary_freeuint32(&ioffsets, status);
     status = luary_freeuint32(&indices, status);
     status = luary_freeijz(&ijz, status);
-    status = luary_freefxyzw(&fxyzw, status);
+    status = luary_freevecf4(&f4, status);
     LU_RETURN
 }
 

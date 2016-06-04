@@ -31,7 +31,7 @@ static int build_buffers(lulog *log, luary_buffer **buffers,
     luary_uint32 *indices = NULL;
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 0.03, 1.0, &vertices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
-            vertices->v, vertices->mem.used, sizeof(*vertices->v), buffers));
+            vertices->vn, vertices->mem.used, sizeof(*vertices->vn), buffers));
     LU_CHECK(luary_dumpvnorm(log, vertices, "vertices", 2))
     LU_CHECK(luary_dumpint32(log, *offsets, "offsets", 2))
     LU_CHECK(luary_dumpuint32(log, *counts, "counts", 2))
