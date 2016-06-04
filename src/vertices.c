@@ -23,6 +23,5 @@ int luary_pushvnorm(lulog *log, luary_vnorm *vn, luvec_f4 *v, luvec_f4 *n) {
 
 static char bv[100];
 static char bn[100];
-
 LUARY_MKDUMP(luary_dumpvnorm, luary_vnorm, "%s/%s",
         luvec_strf4(&ptr->vn[i][0], 100, bv), luvec_strf4(&ptr->vn[i][1], 100, bn))

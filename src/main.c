@@ -98,13 +98,12 @@ static int respond_to_user(lulog *log, user_action *action, GLuint program) {
     int width, height;
     glfwGetFramebufferSize(action->window, &width, &height);
     GL_CHECK(glViewport(0, 0, width, height))
-    float *matrix = NULL;
-    LU_ALLOC(log, matrix, 16);
-    for (size_t i = 0; i < 4; ++i) matrix[4*i+i] = 1;
+    lumat_f4 matrix = {};
+    lumat_idnf4(&matrix);
     if (width < height) {
-        matrix[0] = height / (float)width;
+        matrix[lumat_idx4(0,0)] = height / (float)width;
     } else {
-        matrix[5] = width / (float)height;
+        matrix[lumat_idx4(1,1)] = width / (float)height;
     }
     GL_CHECK(glUseProgram(program))
     GL_CHECK(GLint uniform = glGetUniformLocation(program, "transform"))
@@ -113,7 +112,6 @@ static int respond_to_user(lulog *log, user_action *action, GLuint program) {
 LU_CLEANUP
     action->framebuffer_size_change = 0;
     action->any_change = 0;
-    free(matrix);
     LU_RETURN
 }
 
