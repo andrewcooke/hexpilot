@@ -9,19 +9,19 @@
 #include "buffers.h"
 
 
-LUARRAY_MKBASE(buffer, luarray_buffer, buffer, b)
+LUARY_MKBASE(buffer, luary_buffer, buffer, b)
 
-int luarray_pushbuffer(lulog *log, luarray_buffer *buffers,
+int luary_pushbuffer(lulog *log, luary_buffer *buffers,
         GLuint name, GLenum target, GLenum usage, size_t count, size_t bytes, size_t chunk) {
     LU_STATUS
-    LU_CHECK(luarray_reservebuffer(log, buffers, 1))
+    LU_CHECK(luary_reservebuffer(log, buffers, 1))
     buffers->b[buffers->mem.used++] = (buffer){name, target, usage, count, bytes, chunk};
     LU_NO_CLEANUP
 }
 
 
 int load_buffer(lulog *log, GLenum target, GLenum usage,
-        const void *data, size_t count, size_t chunk, luarray_buffer **buffers) {
+        const void *data, size_t count, size_t chunk, luary_buffer **buffers) {
     LU_STATUS
     GLuint buffer;
     size_t bytes = count * chunk;
@@ -30,16 +30,16 @@ int load_buffer(lulog *log, GLenum target, GLenum usage,
     GL_CHECK(glBufferData(target, bytes, data, usage))
     GL_CHECK(glBindBuffer(target, 0))
     if (!*buffers) {
-        LU_CHECK(luarray_mkbuffern(log, buffers, 1));
+        LU_CHECK(luary_mkbuffern(log, buffers, 1));
     }
-    LU_CHECK(luarray_pushbuffer(log, *buffers,
+    LU_CHECK(luary_pushbuffer(log, *buffers,
             buffer, target, usage, count, bytes, chunk))
     luinfo(log, "Loaded %zu bytes (%zu x %zu) to buffer %u (%zu)",
             bytes, count, chunk, buffer, (*buffers)->mem.used-1);
     LU_NO_CLEANUP
 }
 
-int bind_buffers(lulog *log, luarray_buffer *buffers) {
+int bind_buffers(lulog *log, luary_buffer *buffers) {
     LU_STATUS
     for (size_t i = 0; i < buffers->mem.used; ++i) {
         GL_CHECK(glBindBuffer(buffers->b[i].target, buffers->b[i].name))
@@ -47,7 +47,7 @@ int bind_buffers(lulog *log, luarray_buffer *buffers) {
     LU_NO_CLEANUP
 }
 
-int unbind_buffers(lulog *log, luarray_buffer *buffers) {
+int unbind_buffers(lulog *log, luary_buffer *buffers) {
     LU_STATUS
     for (size_t i = 0; i < buffers->mem.used; ++i) {
         GL_CHECK(glBindBuffer(buffers->b[i].target, 0))

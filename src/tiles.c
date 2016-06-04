@@ -14,23 +14,23 @@
 #include "error_codes.h"
 
 
-static int ijeq(ludata_ij ij1, ludata_ij ij2) {
+static int ijeq(ludta_ij ij1, ludta_ij ij2) {
     return ij1.i == ij2.i && ij1.j == ij2.j;
 }
 
-static inline ludata_ij ijz2ij(ludata_ijz ijz) {
-    return (ludata_ij){ijz.i, ijz.j};
+static inline ludta_ij ijz2ij(ludta_ijz ijz) {
+    return (ludta_ij){ijz.i, ijz.j};
 }
 
-static inline int ij2index(ludata_ij ij, ludata_ij bl, ludata_ij tr) {
+static inline int ij2index(ludta_ij ij, ludta_ij bl, ludta_ij tr) {
     return ij.i - bl.i + (ij.j - bl.j) * (tr.i - bl.i + 1);
 }
 
-static inline int ijz2index(ludata_ijz ijz, ludata_ij bl, ludata_ij tr) {
+static inline int ijz2index(ludta_ijz ijz, ludta_ij bl, ludta_ij tr) {
     return ij2index(ijz2ij(ijz), bl, tr);
 }
 
-static int mkindex(lulog *log, luarray_ijz *ijz, ludata_ij bl, ludata_ij tr,
+static int mkindex(lulog *log, luary_ijz *ijz, ludta_ij bl, ludta_ij tr,
         size_t **index) {
     LU_STATUS
     size_t nx = tr.i - bl.i + 1, ny = tr.j - bl.j + 1;
@@ -42,30 +42,30 @@ static int mkindex(lulog *log, luarray_ijz *ijz, ludata_ij bl, ludata_ij tr,
     LU_NO_CLEANUP
 }
 
-static inline ludata_ij upleft(ludata_ijz p) {
-    return (ludata_ij){p.i-1, p.j+1};
+static inline ludta_ij upleft(ludta_ijz p) {
+    return (ludta_ij){p.i-1, p.j+1};
 }
 
-static inline ludata_ij upright(ludata_ijz p) {
-    return (ludata_ij){p.i, p.j+1};
+static inline ludta_ij upright(ludta_ijz p) {
+    return (ludta_ij){p.i, p.j+1};
 }
 
-static inline ludata_ij right(ludata_ijz p) {
-    return (ludata_ij){p.i+1, p.j};
+static inline ludta_ij right(ludta_ijz p) {
+    return (ludta_ij){p.i+1, p.j};
 }
 
-static inline ludata_ij downright(ludata_ijz p) {
-    return (ludata_ij){p.i+1, p.j-1};
+static inline ludta_ij downright(ludta_ijz p) {
+    return (ludta_ij){p.i+1, p.j-1};
 }
 
-static int addpoints(lulog *log, luarray_ijz *ijz, size_t *current,
-        ludata_ijz *pprev, int nextisup,
-        size_t *index, ludata_ij bl, ludata_ij tr,
-        luarray_uint32 *indices, luarray_uint32 *counts) {
+static int addpoints(lulog *log, luary_ijz *ijz, size_t *current,
+        ludta_ijz *pprev, int nextisup,
+        size_t *index, ludta_ij bl, ludta_ij tr,
+        luary_uint32 *indices, luary_uint32 *counts) {
     LU_STATUS
     do {
         size_t next = index[ij2index((nextisup ? upright : downright)(*pprev), bl, tr)];
-        ludata_ijz *pnext = next ? &ijz->ijz[next-1] : NULL;
+        ludta_ijz *pnext = next ? &ijz->ijz[next-1] : NULL;
         if (pnext) {
             if (!nextisup) {
                 // we're walking geometrically (in i,j space) across the
@@ -80,7 +80,7 @@ static int addpoints(lulog *log, luarray_ijz *ijz, size_t *current,
                         pprev->i, pprev->j, pnext->i, pnext->j)
                 *current = *current + 1;
             }
-            LU_CHECK(luarray_pushuint32(log, indices, next-1)) // correct for 0/NULL
+            LU_CHECK(luary_pushuint32(log, indices, next-1)) // correct for 0/NULL
             counts->i[counts->mem.used-1]++;
             pprev = pnext; nextisup = !nextisup;
         } else {
@@ -91,25 +91,25 @@ static int addpoints(lulog *log, luarray_ijz *ijz, size_t *current,
     LU_NO_CLEANUP
 }
 
-static int addstrip(lulog *log, luarray_ijz *ijz, size_t *current, size_t *index,
-        ludata_ij bl, ludata_ij tr,
-		luarray_uint32 *indices, luarray_uint32 *offsets, luarray_uint32 *counts) {
+static int addstrip(lulog *log, luary_ijz *ijz, size_t *current, size_t *index,
+        ludta_ij bl, ludta_ij tr,
+		luary_uint32 *indices, luary_uint32 *offsets, luary_uint32 *counts) {
     LU_STATUS
-    ludata_ijz *p1 = &ijz->ijz[*current];
+    ludta_ijz *p1 = &ijz->ijz[*current];
     size_t i0 = index[ij2index(upleft(*p1), bl, tr)];
-    ludata_ijz *p0 = i0 ? &ijz->ijz[i0-1] : NULL;
+    ludta_ijz *p0 = i0 ? &ijz->ijz[i0-1] : NULL;
     size_t i2 = index[ij2index(upright(*p1), bl, tr)];
-    ludata_ijz *p2 = i2 ? &ijz->ijz[i2-1] : NULL;
+    ludta_ijz *p2 = i2 ? &ijz->ijz[i2-1] : NULL;
     // if at least three points exist, add the first two and then add the rest
     if (p0 && p2) {
-        LU_CHECK(luarray_pushuint32(log, offsets, indices->mem.used))
-        LU_CHECK(luarray_pushuint32(log, indices, i0-1)) // correct for 0/NULL
-        LU_CHECK(luarray_pushuint32(log, indices, *current))
-        LU_CHECK(luarray_pushuint32(log, counts, 2))
+        LU_CHECK(luary_pushuint32(log, offsets, indices->mem.used))
+        LU_CHECK(luary_pushuint32(log, indices, i0-1)) // correct for 0/NULL
+        LU_CHECK(luary_pushuint32(log, indices, *current))
+        LU_CHECK(luary_pushuint32(log, counts, 2))
         LU_CHECK(addpoints(log, ijz, current, p1, 1, index, bl, tr, indices, counts));
     } else {
         size_t i3 = index[ij2index(right(*p1), bl, tr)];
-        ludata_ijz *p3 = i3 ? &ijz->ijz[i3-1] : NULL;
+        ludta_ijz *p3 = i3 ? &ijz->ijz[i3-1] : NULL;
         if (p3) {
             LU_ASSERT(*current + 1 < ijz->mem.used, LU_ERR, log,
                     "Unsorted points?  No data at %zu", *current + 1);
@@ -118,10 +118,10 @@ static int addstrip(lulog *log, luarray_ijz *ijz, size_t *current, size_t *index
                     p3->i, p3->j, p1->i, p1->j, ijz->ijz[*current + 1].i, ijz->ijz[*current + 1].j)
         }
         if (p2 && p3) {
-            LU_CHECK(luarray_pushuint32(log, offsets, indices->mem.used))
-            LU_CHECK(luarray_pushuint32(log, indices, *current))
-            LU_CHECK(luarray_pushuint32(log, indices, i2 - 1)) // correct for 0/NULL
-            LU_CHECK(luarray_pushuint32(log, counts, 2))
+            LU_CHECK(luary_pushuint32(log, offsets, indices->mem.used))
+            LU_CHECK(luary_pushuint32(log, indices, *current))
+            LU_CHECK(luary_pushuint32(log, indices, i2 - 1)) // correct for 0/NULL
+            LU_CHECK(luary_pushuint32(log, counts, 2))
             LU_CHECK(addpoints(log, ijz, current, p2, 0, index, bl, tr, indices, counts));
         } else {
             *current = *current+1;
@@ -130,17 +130,17 @@ static int addstrip(lulog *log, luarray_ijz *ijz, size_t *current, size_t *index
     LU_NO_CLEANUP
 }
 
-static int strips(lulog *log, luarray_ijz *ijz,
-		luarray_uint32 **indices, luarray_uint32 **offsets, luarray_uint32 **counts){
+static int strips(lulog *log, luary_ijz *ijz,
+		luary_uint32 **indices, luary_uint32 **offsets, luary_uint32 **counts){
     LU_STATUS
-    ludata_ij bl, tr;
+    ludta_ij bl, tr;
     size_t *index = NULL;
-    LU_CHECK(lutile_range(log, ijz, &bl, &tr, NULL))
+    LU_CHECK(lutle_range(log, ijz, &bl, &tr, NULL))
     bl.i--; bl.j--; tr.i++; tr.j++;  // add border for failed lookups
     LU_CHECK(mkindex(log, ijz, bl, tr, &index))
-    LU_CHECK(luarray_mkuint32n(log, indices, 4 * ijz->mem.used))  // guess some overhead
-    LU_CHECK(luarray_mkuint32n(log, offsets, tr.j - bl.j + 1))  // optimistic?
-    LU_CHECK(luarray_mkuint32n(log, counts, tr.j - bl.j + 1))  // optimistic?
+    LU_CHECK(luary_mkuint32n(log, indices, 4 * ijz->mem.used))  // guess some overhead
+    LU_CHECK(luary_mkuint32n(log, offsets, tr.j - bl.j + 1))  // optimistic?
+    LU_CHECK(luary_mkuint32n(log, counts, tr.j - bl.j + 1))  // optimistic?
     size_t current = 0;
     while (current < ijz->mem.used) {
         LU_CHECK(addstrip(log, ijz, &current, index, bl, tr, *indices, *offsets, *counts))
@@ -151,29 +151,29 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int ijz2fxyzw(lulog *log, luarray_ijz *ijz, float step, luarray_fxyzw **fxyzw) {
+static int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw) {
     LU_STATUS
-    LU_CHECK(luarray_mkfxyzwn(log, fxyzw, ijz->mem.used))
+    LU_CHECK(luary_mkfxyzwn(log, fxyzw, ijz->mem.used))
     for (size_t i = 0; i < ijz->mem.used; ++i) {
-        ludata_ijz *p = &ijz->ijz[i];
+        ludta_ijz *p = &ijz->ijz[i];
         float x = (p->i + p->j * cos(M_PI/3)) * step;
         float y = p->j * sin(M_PI/3) * step;
         float z = p->z;
-        LU_CHECK(luarray_pushfxyzw(log, *fxyzw, x, y, z, 1.0f))
+        LU_CHECK(luary_pushfxyzw(log, *fxyzw, x, y, z, 1.0f))
     }
     LU_NO_CLEANUP
 }
 
-static int offsets2void(lulog *log, luarray_uint32 *in, size_t chunk, luarray_void **out) {
+static int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void **out) {
     LU_STATUS
-    LU_CHECK(luarray_mkvoidn(log, out, in->mem.used))
+    LU_CHECK(luary_mkvoidn(log, out, in->mem.used))
     for (size_t i = 0; i < in->mem.used; ++i) {
-        LU_CHECK(luarray_pushvoid(log, *out, (void*)(chunk * in->i[i])))
+        LU_CHECK(luary_pushvoid(log, *out, (void*)(chunk * in->i[i])))
     }
     LU_NO_CLEANUP
 }
 
-static int scalez(lulog *log, luarray_ijz *vertices, float k) {
+static int scalez(lulog *log, luary_ijz *vertices, float k) {
     LU_STATUS
     for (size_t i = 0; i < vertices->mem.used; ++i) vertices->ijz[i].z *= k;
     LU_NO_CLEANUP
@@ -182,18 +182,18 @@ static int scalez(lulog *log, luarray_ijz *vertices, float k) {
 
 static int hexagon_common(lulog *log, uint64_t seed,
         size_t side, size_t subsamples, double step, double octweight,
-        luarray_ijz **vertices, luarray_uint32 **indices,
-		luarray_uint32 **offsets, luarray_uint32 **counts) {
+        luary_ijz **vertices, luary_uint32 **indices,
+		luary_uint32 **offsets, luary_uint32 **counts) {
     LU_STATUS
-    lutile_config *config = NULL;
-    lutile_tile *hexagon = NULL;
-    LU_CHECK(lutile_defaultconfig(log, &config, seed))
-    LU_CHECK(lutile_mkhexagon(log, &hexagon, side, subsamples, octweight))
+    lutle_config *config = NULL;
+    lutle_tile *hexagon = NULL;
+    LU_CHECK(lutle_defaultconfig(log, &config, seed))
+    LU_CHECK(lutle_mkhexagon(log, &hexagon, side, subsamples, octweight))
     LU_CHECK(hexagon->enumerate(hexagon, log, config, -1, vertices))
     LU_CHECK(scalez(log, *vertices, 10));
     LU_CHECK(strips(log, *vertices, indices, offsets, counts))
 LU_CLEANUP
-    status = lutile_freeconfig(&config, status);
+    status = lutle_freeconfig(&config, status);
     if (hexagon) status = hexagon->free(&hexagon, status);
     LU_RETURN
 }
@@ -201,23 +201,23 @@ LU_CLEANUP
 
 int hexagon_vertex_strips(lulog *log, uint64_t seed,
         size_t side, size_t subsamples, double step, double octweight,
-        luarray_fxyzw **vertices, luarray_uint32 **indices,
-        luarray_void **offsets, luarray_uint32 **counts) {
+        luary_fxyzw **vertices, luary_uint32 **indices,
+        luary_void **offsets, luary_uint32 **counts) {
     LU_STATUS
-    luarray_ijz *ijz = NULL;
-    luarray_uint32 *ioffsets = NULL;
+    luary_ijz *ijz = NULL;
+    luary_uint32 *ioffsets = NULL;
     LU_CHECK(hexagon_common(log, seed, side, subsamples, step, octweight,
             &ijz, indices, &ioffsets, counts))
     LU_CHECK(ijz2fxyzw(log, ijz, step, vertices))
     LU_CHECK(offsets2void(log, ioffsets, sizeof(*(*indices)->i), offsets))
 LU_CLEANUP
-    status = luarray_freeuint32(&ioffsets, status);
-    status = luarray_freeijz(&ijz, status);
+    status = luary_freeuint32(&ioffsets, status);
+    status = luary_freeijz(&ijz, status);
     LU_RETURN
 }
 
-static int uniquify(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
-        luarray_uint32 *counts, luarray_ijz *vertices) {
+static int uniquify(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
+        luary_uint32 *counts, luary_ijz *vertices) {
     LU_STATUS
     size_t before = vertices->mem.used;
     for (size_t i = 0; i < offsets->mem.used; ++i) {
@@ -225,9 +225,9 @@ static int uniquify(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets
         for (size_t j = 0; j < counts->i[i]; ++j) {
             size_t k = offsets->i[i] + j;
             if (indices->i[k] >= large) {
-                ludata_ijz v = vertices->ijz[indices->i[k]];
+                ludta_ijz v = vertices->ijz[indices->i[k]];
                 indices->i[k] = vertices->mem.used;
-                LU_CHECK(luarray_pushijz(log, vertices, v.i, v.j, v.z))
+                LU_CHECK(luary_pushijz(log, vertices, v.i, v.j, v.z))
             }
         }
     }
@@ -236,48 +236,48 @@ static int uniquify(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets
     LU_NO_CLEANUP
 }
 
-static int normals(lulog *log, luarray_uint32 *indices, luarray_uint32 *offsets,
-        luarray_uint32 *counts, luarray_fxyzw *vertices, luarray_vnorm **vnorms) {
+static int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
+        luary_uint32 *counts, luary_fxyzw *vertices, luary_vnorm **vnorms) {
     LU_STATUS
-    LU_CHECK(luarray_mkvnormn(log, vnorms, vertices->mem.used))
+    LU_CHECK(luary_mkvnormn(log, vnorms, vertices->mem.used))
     for (size_t i = 0; i < offsets->mem.used; ++i) {
         for (size_t j = 0; j < counts->i[i]; ++j) {
             size_t k = offsets->i[i] + j;
-            ludata_fxyzw n = {};
-            ludata_fxyzw p0 = vertices->fxyzw[indices->i[k]];
+            ludta_fxyzw n = {};
+            ludta_fxyzw p0 = vertices->fxyzw[indices->i[k]];
             if (j > 1) {
-                ludata_fxyzw p1 = vertices->fxyzw[indices->i[k-1]];
-                ludata_fxyzw p2 = vertices->fxyzw[indices->i[k-2]];
-                if (p1.y < p2.y) {ludata_fxyzw tmp = p1; p1 = p2; p2 = tmp;}
-                ludata_fxyzw e1 = lusub3(p1, p0);
-                ludata_fxyzw e2 = lusub3(p2, p0);
+                ludta_fxyzw p1 = vertices->fxyzw[indices->i[k-1]];
+                ludta_fxyzw p2 = vertices->fxyzw[indices->i[k-2]];
+                if (p1.y < p2.y) {ludta_fxyzw tmp = p1; p1 = p2; p2 = tmp;}
+                ludta_fxyzw e1 = lusub3(p1, p0);
+                ludta_fxyzw e2 = lusub3(p2, p0);
                 n = lusetw(lunorm3(lucross3(e1, e2)), 0);
                 char b1[100], b2[100], bn[100];
             }
             LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
-            LU_CHECK(luarray_pushvnorm(log, *vnorms, p0, n))
+            LU_CHECK(luary_pushvnorm(log, *vnorms, p0, n))
         }
     }
     LU_NO_CLEANUP
 }
 
 
-static int uint2int(lulog *log, luarray_uint32 *in, luarray_int32 **out) {
+static int uint2int(lulog *log, luary_uint32 *in, luary_int32 **out) {
     LU_STATUS
-    LU_CHECK(luarray_mkint32n(log, out, in->mem.used))
+    LU_CHECK(luary_mkint32n(log, out, in->mem.used))
     for (size_t i = 0; i < in->mem.used; ++i) {
-        LU_CHECK(luarray_pushint32(log, *out, in->i[i]))
+        LU_CHECK(luary_pushint32(log, *out, in->i[i]))
     }
     LU_NO_CLEANUP
 }
 
 int hexagon_vnormal_strips(lulog *log, uint64_t seed,
         size_t side, size_t subsamples, double step, double octweight,
-        luarray_vnorm **vertices, luarray_int32 **offsets, luarray_uint32 **counts) {
+        luary_vnorm **vertices, luary_int32 **offsets, luary_uint32 **counts) {
     LU_STATUS
-    luarray_ijz *ijz = NULL;
-    luarray_uint32 *ioffsets = NULL, *indices = NULL;
-    luarray_fxyzw *fxyzw = NULL;
+    luary_ijz *ijz = NULL;
+    luary_uint32 *ioffsets = NULL, *indices = NULL;
+    luary_fxyzw *fxyzw = NULL;
     LU_CHECK(hexagon_common(log, seed, side, subsamples, step, octweight,
             &ijz, &indices, &ioffsets, counts))
     LU_CHECK(uniquify(log, indices, ioffsets, *counts, ijz))
@@ -285,10 +285,10 @@ int hexagon_vnormal_strips(lulog *log, uint64_t seed,
     LU_CHECK(normals(log, indices, ioffsets, *counts, fxyzw, vertices))
     LU_CHECK(uint2int(log, ioffsets, offsets))
 LU_CLEANUP
-    status = luarray_freeuint32(&ioffsets, status);
-    status = luarray_freeuint32(&indices, status);
-    status = luarray_freeijz(&ijz, status);
-    status = luarray_freefxyzw(&fxyzw, status);
+    status = luary_freeuint32(&ioffsets, status);
+    status = luary_freeuint32(&indices, status);
+    status = luary_freeijz(&ijz, status);
+    status = luary_freefxyzw(&fxyzw, status);
     LU_RETURN
 }
 

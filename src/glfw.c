@@ -4,7 +4,6 @@
 
 #include "lu/log.h"
 #include "lu/status.h"
-#include "lu/arrays.h"
 
 #include "glfw.h"
 #include "error_codes.h"

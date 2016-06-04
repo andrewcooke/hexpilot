@@ -13,7 +13,7 @@
 #include "error_codes.h"
 
 
-static int display(lulog *log, GLuint vao, luarray_int32 *offsets, luarray_uint32 *counts) {
+static int display(lulog *log, GLuint vao, luary_int32 *offsets, luary_uint32 *counts) {
     LU_STATUS
     GL_CHECK(glBindVertexArray(vao)) // seems we need setprogram too
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
@@ -24,20 +24,20 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int build_buffers(lulog *log, luarray_buffer **buffers,
-		luarray_int32 **offsets, luarray_uint32 **counts) {
+static int build_buffers(lulog *log, luary_buffer **buffers,
+		luary_int32 **offsets, luary_uint32 **counts) {
     LU_STATUS
-    luarray_vnorm *vertices = NULL;
-    luarray_uint32 *indices = NULL;
+    luary_vnorm *vertices = NULL;
+    luary_uint32 *indices = NULL;
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 0.03, 1.0, &vertices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->v, vertices->mem.used, sizeof(*vertices->v), buffers));
-    LU_CHECK(luarray_dumpvnorm(log, vertices, "vertices", 2))
-    LU_CHECK(luarray_dumpint32(log, *offsets, "offsets", 2))
-    LU_CHECK(luarray_dumpuint32(log, *counts, "counts", 2))
+    LU_CHECK(luary_dumpvnorm(log, vertices, "vertices", 2))
+    LU_CHECK(luary_dumpint32(log, *offsets, "offsets", 2))
+    LU_CHECK(luary_dumpuint32(log, *counts, "counts", 2))
 LU_CLEANUP
-    status = luarray_freevnorm(&vertices, status);
-    status = luarray_freeuint32(&indices, status);
+    status = luary_freevnorm(&vertices, status);
+    status = luary_freeuint32(&indices, status);
     LU_RETURN
 }
 
@@ -67,7 +67,7 @@ static const char* fragment_shader =
 
 static int build_program(lulog *log, GLuint *program) {
     LU_STATUS
-    luarray_uint32 *shaders = NULL;
+    luary_uint32 *shaders = NULL;
     LU_CHECK(compile_shader(log, GL_VERTEX_SHADER, vertex_shader, &shaders))
     LU_CHECK(compile_shader(log, GL_FRAGMENT_SHADER, fragment_shader, &shaders))
     LU_CHECK(link_program(log, shaders, program));
@@ -76,7 +76,7 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int build_vao(lulog *log, GLuint program, luarray_buffer *buffers,
+static int build_vao(lulog *log, GLuint program, luary_buffer *buffers,
         GLuint *vao) {
     LU_STATUS
     GL_CHECK(glGenVertexArrays(1, vao))
@@ -120,9 +120,9 @@ LU_CLEANUP
 static int with_glfw(lulog *log) {
     LU_STATUS
     GLFWwindow *window = NULL;
-    luarray_buffer *buffers = NULL;
-    luarray_uint32 *counts = NULL;
-    luarray_int32 *offsets = NULL;
+    luary_buffer *buffers = NULL;
+    luary_uint32 *counts = NULL;
+    luary_int32 *offsets = NULL;
     GLuint program, vao;
     user_action *action = NULL;
     LU_CHECK(create_glfw_context(log, &window))
@@ -144,8 +144,8 @@ static int with_glfw(lulog *log) {
 LU_CLEANUP
     glfwTerminate();
     free(action);
-    status = luarray_freebuffer(&buffers, status);
-    status = luarray_freeint32(&offsets, status);
+    status = luary_freebuffer(&buffers, status);
+    status = luary_freeint32(&offsets, status);
     LU_RETURN
 }
 
