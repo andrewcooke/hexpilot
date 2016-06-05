@@ -3,7 +3,10 @@
 #define HP_KEYS_H
 
 #include "lu/log.h"
+#include "lu/vectors.h"
 
+
+typedef void key2matrix(float x, lumat_f4 *m);
 
 typedef struct keys {
     char *name;
@@ -12,11 +15,13 @@ typedef struct keys {
     double a;
     double k;
     double limits[2];
+    key2matrix *apply;
 } keys;
 
 int mkkeys(lulog *log, keys **keys, const char *name,
         int key1, int mod1, int key2, int mod2,
-        double a, double k, double lo, double hi);
+        double a, double k, double lo, double hi,
+        key2matrix *apply);
 int freekeys(keys **keys, int status);
 
 typedef struct variables {
@@ -45,5 +50,9 @@ size_t luary_sizecontrol(luary_control *buffer);
 
 int update_control(lulog *log, double now, control *control);
 int update_controls(lulog *log, double now, luary_control *controls);
+
+int apply_control(lulog *log, control *control, lumat_f4 *m);
+int apply_controls(lulog *log, luary_control *controls, lumat_f4 *m);
+
 
 #endif

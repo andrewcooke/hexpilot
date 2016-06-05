@@ -10,7 +10,8 @@
 
 int mkkeys(lulog *log, keys **keys, const char *name,
         int key0, int mod0, int key1, int mod1,
-        double a, double k, double lo, double hi) {
+        double a, double k, double lo, double hi,
+        key2matrix *apply) {
     LU_STATUS
     LU_ALLOC(log, *keys, 1)
     LU_ALLOC(log, (*keys)->name, strlen(name) + 1)
@@ -19,6 +20,7 @@ int mkkeys(lulog *log, keys **keys, const char *name,
     (*keys)->keys[1] = key1; (*keys)->mods[1] = mod1;
     (*keys)->a = a; (*keys)->k = k;
     (*keys)->limits[0] = lo; (*keys)->limits[1] = hi;
+    (*keys)->apply = apply;
     LU_NO_CLEANUP
 }
 
@@ -70,6 +72,24 @@ int update_controls(lulog *log, double now, luary_control *controls) {
     LU_STATUS;
     for (size_t i = 0; i < controls->mem.used; ++i) {
         LU_CHECK(update_control(log, now, &controls->c[i]))
+    }
+    LU_NO_CLEANUP
+}
+
+
+int apply_control(lulog *log, control *control, lumat_f4 *m) {
+    LU_STATUS
+    lumat_f4 transform = {}, initial = {};
+    lumat_cpyf4(m, &initial);
+    control->k.apply(control->v.x, &transform);
+    lumat_mulf4(&transform, &initial, m);
+    LU_NO_CLEANUP
+}
+
+int apply_controls(lulog *log, luary_control *controls, lumat_f4 *m) {
+    LU_STATUS;
+    for (size_t i = 0; i < controls->mem.used; ++i) {
+        LU_CHECK(apply_control(log, &controls->c[i], m))
     }
     LU_NO_CLEANUP
 }

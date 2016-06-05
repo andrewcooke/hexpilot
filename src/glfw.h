@@ -14,8 +14,6 @@ typedef struct user_action {
     lulog *log;
     GLFWwindow *window;
     luary_control *controls;
-    int framebuffer_size_change;
-    int any_change;
 } user_action;
 
 int create_glfw_context(lulog *log, GLFWwindow **window);

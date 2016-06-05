@@ -4,6 +4,7 @@
 
 #include "lu/log.h"
 #include "lu/status.h"
+#include "lu/vectors.h"
 
 #include "glfw.h"
 #include "error_codes.h"
@@ -31,13 +32,6 @@ int load_opengl_functions(lulog *log) {
     luinfo(log, "OpenGL %s, GLSL %s",
             glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
     LU_NO_CLEANUP
-}
-
-static void size_callback(GLFWwindow* window, int width, int height) {
-    user_action *action = glfwGetWindowUserPointer(window);
-    ludebug(action->log, "Framebuffer changed to %d,%d", width, height);
-    action->framebuffer_size_change = 1;
-    action->any_change = 1;
 }
 
 static void key_callback(GLFWwindow *window, int key, int scancode, int act, int mods) {
@@ -69,12 +63,10 @@ int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action) {
     LU_ALLOC(log, *action, 1)
     (*action)->log = log;
     (*action)->window = window;
-    (*action)->framebuffer_size_change = 1;  // force initial display
     LU_CHECK(luary_mkcontroln(log, &(*action)->controls, 1))
-    LU_CHECK(mkkeys(log, &k, "left/right", 263, 0, 262, 0, 150.0, 5.0, -100, 100))
+    LU_CHECK(mkkeys(log, &k, "left/right", 263, 0, 262, 0, 15, 5, 0.5, 100, &lumat_sclf4))
     LU_CHECK(luary_pushcontrol(log, (*action)->controls, k, 0))
     glfwSetWindowUserPointer(window, *action);
-    glfwSetFramebufferSizeCallback(window, &size_callback);
     glfwSetKeyCallback(window, &key_callback);
 LU_CLEANUP
     status = freekeys(&k, status);

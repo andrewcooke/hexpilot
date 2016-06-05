@@ -97,24 +97,20 @@ static int respond_to_user(lulog *log, user_action *action, GLuint program) {
     LU_STATUS
     int width, height;
     LU_CHECK(update_controls(action->log, glfwGetTime(), action->controls))
-    if (action->framebuffer_size_change) {
-        glfwGetFramebufferSize(action->window, &width, &height);
-        GL_CHECK(glViewport(0, 0, width, height))
-        lumat_f4 matrix = {};
-        lumat_idnf4(&matrix);
-        if (width < height) {
-            matrix[lumat_idx4(0,0)] = height / (float)width;
-        } else {
-            matrix[lumat_idx4(1,1)] = width / (float)height;
-        }
-        GL_CHECK(glUseProgram(program))
-        GL_CHECK(GLint uniform = glGetUniformLocation(program, "transform"))
-        GL_CHECK(glUniformMatrix4fv(uniform, 1, GL_FALSE, matrix))
+    glfwGetFramebufferSize(action->window, &width, &height);
+    GL_CHECK(glViewport(0, 0, width, height))
+    lumat_f4 matrix = {};
+    lumat_idnf4(&matrix);
+    if (width < height) {
+        matrix[lumat_idx4(0,0)] = height / (float)width;
+    } else {
+        matrix[lumat_idx4(1,1)] = width / (float)height;
     }
-LU_CLEANUP
-    action->framebuffer_size_change = 0;
-    action->any_change = 0;
-    LU_RETURN
+    LU_CHECK(apply_controls(action->log, action->controls, &matrix))
+    GL_CHECK(glUseProgram(program))
+    GL_CHECK(GLint uniform = glGetUniformLocation(program, "transform"))
+    GL_CHECK(glUniformMatrix4fv(uniform, 1, GL_FALSE, matrix))
+    LU_NO_CLEANUP
 }
 
 static int with_glfw(lulog *log) {
