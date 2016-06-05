@@ -40,12 +40,43 @@ static void size_callback(GLFWwindow* window, int width, int height) {
     action->any_change = 1;
 }
 
+static void key_callback(GLFWwindow *window, int key, int scancode, int act, int mods) {
+    user_action *action = glfwGetWindowUserPointer(window);
+    double now = glfwGetTime();
+    ludebug(action->log, "Key %d mods %d", key, mods);
+    for (size_t i = 0; i < action->controls->mem.used; ++i) {
+        for (size_t j = 0; j < 2; ++j) {
+            if (key == action->controls->c[i].k.keys[j] &&
+                    mods == action->controls->c[i].k.mods[j]) {
+                switch(act) {
+                case GLFW_PRESS:
+                    ludebug(action->log, "Press key %d (%d) mods %d", key, scancode, mods);
+                    action->controls->c[i].v.pressed[j] = now;
+                    break;
+                case GLFW_RELEASE:
+                    ludebug(action->log, "Release key %d (%d) mods %d", key, scancode, mods);
+                    action->controls->c[i].v.released[j] = now;
+                    break;
+                }
+            }
+        }
+    }
+}
+
 int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action) {
     LU_STATUS
+    keys *k = NULL;
     LU_ALLOC(log, *action, 1)
     (*action)->log = log;
     (*action)->window = window;
+    (*action)->framebuffer_size_change = 1;  // force initial display
+    LU_CHECK(luary_mkcontroln(log, &(*action)->controls, 1))
+    LU_CHECK(mkkeys(log, &k, "left/right", 263, 0, 262, 0, 150.0, 5.0, -100, 100))
+    LU_CHECK(luary_pushcontrol(log, (*action)->controls, k, 0))
     glfwSetWindowUserPointer(window, *action);
     glfwSetFramebufferSizeCallback(window, &size_callback);
-    LU_NO_CLEANUP
+    glfwSetKeyCallback(window, &key_callback);
+LU_CLEANUP
+    status = freekeys(&k, status);
+    LU_RETURN
 }

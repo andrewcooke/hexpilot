@@ -96,19 +96,21 @@ LU_CLEANUP
 static int respond_to_user(lulog *log, user_action *action, GLuint program) {
     LU_STATUS
     int width, height;
-    glfwGetFramebufferSize(action->window, &width, &height);
-    GL_CHECK(glViewport(0, 0, width, height))
-    lumat_f4 matrix = {};
-    lumat_idnf4(&matrix);
-    if (width < height) {
-        matrix[lumat_idx4(0,0)] = height / (float)width;
-    } else {
-        matrix[lumat_idx4(1,1)] = width / (float)height;
+    LU_CHECK(update_controls(action->log, glfwGetTime(), action->controls))
+    if (action->framebuffer_size_change) {
+        glfwGetFramebufferSize(action->window, &width, &height);
+        GL_CHECK(glViewport(0, 0, width, height))
+        lumat_f4 matrix = {};
+        lumat_idnf4(&matrix);
+        if (width < height) {
+            matrix[lumat_idx4(0,0)] = height / (float)width;
+        } else {
+            matrix[lumat_idx4(1,1)] = width / (float)height;
+        }
+        GL_CHECK(glUseProgram(program))
+        GL_CHECK(GLint uniform = glGetUniformLocation(program, "transform"))
+        GL_CHECK(glUniformMatrix4fv(uniform, 1, GL_FALSE, matrix))
     }
-    GL_CHECK(glUseProgram(program))
-    GL_CHECK(GLint uniform = glGetUniformLocation(program, "transform"))
-    GL_CHECK(glUniformMatrix4fv(uniform, 1, GL_FALSE, matrix))
-//    GL_CHECK(glUseProgram(0))
 LU_CLEANUP
     action->framebuffer_size_change = 0;
     action->any_change = 0;
@@ -129,11 +131,8 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_program(log, &program))
     LU_CHECK(build_buffers(log, &buffers, &offsets, &counts))
     LU_CHECK(build_vao(log, program, buffers, &vao))
-    LU_CHECK(respond_to_user(log, action, program))
     while (!glfwWindowShouldClose(window)) {
-        if (action->any_change) {
-            LU_CHECK(respond_to_user(log, action, program))
-        }
+        LU_CHECK(respond_to_user(log, action, program))
         LU_CHECK(display(log, vao, offsets, counts))
         glfwSwapBuffers(window);
         glfwPollEvents();
