@@ -72,9 +72,9 @@ int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action) {
     LU_CHECK(luary_mkcontroln(log, &(*action)->controls, 1))
     LU_CHECK(set_keys(log, &k, "zoom", 45, 0, 61, 1, 15, 5, 0.5, 100, &lumat_sclf4_3))
     LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 1))
-    LU_CHECK(set_keys(log, &k, "roll", 262, 0, 263, 0, 15, 5, -M_PI, M_PI, &lumat_rotf4_z))
+    LU_CHECK(set_keys(log, &k, "roll", 262, 0, 263, 0, 15, 10, -M_PI, M_PI, &lumat_rotf4_z))
     LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0))
-    LU_CHECK(set_keys(log, &k, "pitch", 264, 0, 265, 0, 15, 5, 0, 0.5 * M_PI, &lumat_rotf4_x))
+    LU_CHECK(set_keys(log, &k, "pitch", 264, 0, 265, 0, 15, 10, 0, 0.5 * M_PI, &lumat_rotf4_x))
     LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0.25 * M_PI))
     glfwSetWindowUserPointer(window, *action);
     glfwSetKeyCallback(window, &key_callback);

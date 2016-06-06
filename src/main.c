@@ -17,7 +17,8 @@ static int display(lulog *log, GLuint vao, luary_int32 *offsets, luary_uint32 *c
     LU_STATUS
     GL_CHECK(glBindVertexArray(vao)) // seems we need setprogram too
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
+    GL_CHECK(glClearDepth(1.0f))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, offsets->i, counts->i, counts->mem.used));
 LU_CLEANUP
     GL_CHECK(glBindVertexArray(0))
@@ -50,10 +51,10 @@ static const char* vertex_shader =
         "void main(){\n"
         "  vec4 t_position = transform * position;\n"
         "  vec4 t_normal = vec4(normalize((transform * normal).xyz), 0);\n"
-        "  vec4 t_light = vec4(normalize((transform * vec4(0.1, 0.1, 1, 0)).xyz), 0);\n"
+        "  vec4 t_light = vec4(normalize((transform * vec4(0, 0, 1, 0)).xyz), 0);\n"
         "  float brightness = dot(t_normal, t_light);\n"
         "  brightness = clamp(brightness, 0, 1);\n"
-        "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
+        "  interpColour = vec4((0.1 + 0.9 * brightness) * vec3(1.0, 0.0, 0.0), 1.0);\n"
         "  gl_Position = t_position;\n"
         "}\n";
 
@@ -121,6 +122,10 @@ static int init_opengl(lulog *log) {
     GL_CHECK(glEnable(GL_CULL_FACE))
     GL_CHECK(glCullFace(GL_BACK))
     GL_CHECK(glFrontFace(GL_CW))
+    GL_CHECK(glEnable(GL_DEPTH_TEST))
+    GL_CHECK(glDepthMask(GL_TRUE))
+    GL_CHECK(glDepthFunc(GL_LEQUAL))
+    GL_CHECK(glDepthRange(0.0f, 1.0f))
     LU_NO_CLEANUP
 }
 
