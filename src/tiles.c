@@ -204,8 +204,16 @@ static int fixz(lulog *log, luary_ijz *vertices) {
         zmax = max(zmax, vertices->ijz[i].z);
         zmin = min(zmin, vertices->ijz[i].z);
     }
-    for (size_t i = 0; i < vertices->mem.used; ++i) {
-        vertices->ijz[i].z = 0.5 * (vertices->ijz[i].z - zmin) / (zmax - zmin) - 0.75;
+    if (zmax > zmin) {
+        for (size_t i = 0; i < vertices->mem.used; ++i) {
+            // -1 to 1
+            vertices->ijz[i].z = 2 * ((vertices->ijz[i].z - zmin) / (zmax - zmin) - 0.5);
+        }
+    } else {
+        luwarn(log, "Cannot normalize z data: constant values (setting to zero)");
+        for (size_t i = 0; i < vertices->mem.used; ++i) {
+            vertices->ijz[i].z = 0.0;
+        }
     }
     LU_NO_CLEANUP
 }
