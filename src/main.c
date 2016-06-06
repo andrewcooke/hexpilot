@@ -32,9 +32,9 @@ static int build_buffers(lulog *log, luary_buffer **buffers,
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 0.03, 1.0, &vertices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), buffers));
-    LU_CHECK(luary_dumpvnorm(log, vertices, "vertices", 2))
-    LU_CHECK(luary_dumpint32(log, *offsets, "offsets", 2))
-    LU_CHECK(luary_dumpuint32(log, *counts, "counts", 2))
+    LU_CHECK(luary_dumpvnorm(log, vertices, "vertices", 4))
+    LU_CHECK(luary_dumpint32(log, *offsets, "offsets", 10))
+    LU_CHECK(luary_dumpuint32(log, *counts, "counts", 10))
 LU_CLEANUP
     status = luary_freevnorm(&vertices, status);
     status = luary_freeuint32(&indices, status);
@@ -95,21 +95,32 @@ LU_CLEANUP
 
 static int respond_to_user(lulog *log, user_action *action, GLuint program) {
     LU_STATUS
-    int width, height;
-    LU_CHECK(update_controls(action->log, glfwGetTime(), action->controls))
-    glfwGetFramebufferSize(action->window, &width, &height);
-    GL_CHECK(glViewport(0, 0, width, height))
     lumat_f4 matrix = {};
     lumat_idnf4(&matrix);
-    if (width < height) {
-        matrix[lumat_idx4(0,0)] = height / (float)width;
-    } else {
-        matrix[lumat_idx4(1,1)] = width / (float)height;
-    }
+    LU_CHECK(update_controls(action->log, glfwGetTime(), action->controls))
     LU_CHECK(apply_controls(action->log, action->controls, &matrix))
+    int width, height;
+    lumat_f4 window = {};
+    lumat_idnf4(&window);
+    glfwGetFramebufferSize(action->window, &width, &height);
+    GL_CHECK(glViewport(0, 0, width, height))
+    if (width < height) {
+        window[lumat_idx4(0,0)] = height / (float)width;
+    } else {
+        window[lumat_idx4(1,1)] = width / (float)height;
+    }
+    lumat_mulf4_in(&window, &matrix);
     GL_CHECK(glUseProgram(program))
     GL_CHECK(GLint uniform = glGetUniformLocation(program, "transform"))
     GL_CHECK(glUniformMatrix4fv(uniform, 1, GL_FALSE, matrix))
+    LU_NO_CLEANUP
+}
+
+static int init_opengl(lulog *log) {
+    LU_STATUS
+    GL_CHECK(glEnable(GL_CULL_FACE))
+    GL_CHECK(glCullFace(GL_BACK))
+    GL_CHECK(glFrontFace(GL_CW))
     LU_NO_CLEANUP
 }
 
@@ -123,6 +134,7 @@ static int with_glfw(lulog *log) {
     user_action *action = NULL;
     LU_CHECK(create_glfw_context(log, &window))
     LU_CHECK(load_opengl_functions(log))
+    LU_CHECK(init_opengl(log))
     LU_CHECK(set_window_callbacks(log, window, &action))
     LU_CHECK(build_program(log, &program))
     LU_CHECK(build_buffers(log, &buffers, &offsets, &counts))

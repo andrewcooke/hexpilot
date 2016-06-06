@@ -102,12 +102,17 @@ static int addstrip(lulog *log, luary_ijz *ijz, size_t *current, size_t *index,
     ludta_ijz *p2 = i2 ? &ijz->ijz[i2-1] : NULL;
     // if at least three points exist, add the first two and then add the rest
     if (p0 && p2) {
+        // here the initial triangle looks like \/ and (l-r) is CCW.
+        // if we want CW front face then we need to add an extra point
+        // at the start (a degenerate triangle).
         LU_CHECK(luary_pushuint32(log, offsets, indices->mem.used))
         LU_CHECK(luary_pushuint32(log, indices, i0-1)) // correct for 0/NULL
+        LU_CHECK(luary_pushuint32(log, indices, i0-1)) // correct for 0/NULL
         LU_CHECK(luary_pushuint32(log, indices, *current))
-        LU_CHECK(luary_pushuint32(log, counts, 2))
+        LU_CHECK(luary_pushuint32(log, counts, 3))
         LU_CHECK(addpoints(log, ijz, current, p1, 1, index, bl, tr, indices, counts));
     } else {
+        // here the initial triangle looks like /\ and (l-r) is CW.
         size_t i3 = index[ij2index(right(*p1), bl, tr)];
         ludta_ijz *p3 = i3 ? &ijz->ijz[i3-1] : NULL;
         if (p3) {
@@ -167,13 +172,19 @@ static int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw
 static int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
     LU_STATUS
     LU_CHECK(luary_mkvecf4n(log, f4, ijz->mem.used))
+    float lo[] = {0, 0, ijz->ijz[0].z}, hi[] = {0, 0, ijz->ijz[0].z};
     for (size_t i = 0; i < ijz->mem.used; ++i) {
         ludta_ijz *p = &ijz->ijz[i];
         float x = (p->i + p->j * cos(M_PI/3)) * step;
+        hi[0] = max(hi[0], x); lo[0] = min(lo[0], x);
         float y = p->j * sin(M_PI/3) * step;
+        hi[1] = max(hi[1], y); lo[1] = min(lo[1], y);
         float z = p->z;
+        hi[2] = max(hi[2], z); lo[2] = min(lo[2], z);
         LU_CHECK(luary_pushvecf4(log, *f4, x, y, z, 1.0f))
     }
+    ludebug(log, "Data cover range %0.2f - %0.2f, %0.2f - %0.2f, %0.2f - %0.2f",
+            lo[0], hi[0], lo[1], hi[1], lo[2], hi[2]);
     LU_NO_CLEANUP
 }
 
@@ -186,9 +197,16 @@ static int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void *
     LU_NO_CLEANUP
 }
 
-static int scalez(lulog *log, luary_ijz *vertices, float k) {
+static int fixz(lulog *log, luary_ijz *vertices) {
     LU_STATUS
-    for (size_t i = 0; i < vertices->mem.used; ++i) vertices->ijz[i].z *= k;
+    float zmax = vertices->ijz[0].z, zmin = zmax;
+    for (size_t i = 0; i < vertices->mem.used; ++i) {
+        zmax = max(zmax, vertices->ijz[i].z);
+        zmin = min(zmin, vertices->ijz[i].z);
+    }
+    for (size_t i = 0; i < vertices->mem.used; ++i) {
+        vertices->ijz[i].z = 0.5 * (vertices->ijz[i].z - zmin) / (zmax - zmin) - 0.75;
+    }
     LU_NO_CLEANUP
 }
 
@@ -203,7 +221,7 @@ static int hexagon_common(lulog *log, uint64_t seed,
     LU_CHECK(lutle_defaultconfig(log, &config, seed))
     LU_CHECK(lutle_mkhexagon(log, &hexagon, side, subsamples, octweight))
     LU_CHECK(hexagon->enumerate(hexagon, log, config, -1, vertices))
-    LU_CHECK(scalez(log, *vertices, 10));
+    LU_CHECK(fixz(log, *vertices));
     LU_CHECK(strips(log, *vertices, indices, offsets, counts))
 LU_CLEANUP
     status = lutle_freeconfig(&config, status);
@@ -229,6 +247,9 @@ LU_CLEANUP
     LU_RETURN
 }
 
+// this duplicates points so that none are shared between two triangle
+// strips.  this is necessary so that we can have a single normal for
+// each triangle (with no interpolation).
 static int uniquify(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
         luary_uint32 *counts, luary_ijz *vertices) {
     LU_STATUS

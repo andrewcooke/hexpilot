@@ -18,11 +18,10 @@ typedef struct keys {
     key2matrix *apply;
 } keys;
 
-int mkkeys(lulog *log, keys **keys, const char *name,
+int set_keys(lulog *log, keys *keys, const char *name,
         int key1, int mod1, int key2, int mod2,
         double a, double k, double lo, double hi,
         key2matrix *apply);
-int freekeys(keys **keys, int status);
 
 typedef struct variables {
     double previous;
