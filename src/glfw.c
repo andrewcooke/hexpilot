@@ -21,6 +21,7 @@ int create_glfw_context(lulog *log, GLFWwindow **window) {
     LU_ASSERT(*window = glfwCreateWindow(320, 320, "hexpilot", NULL, NULL),
             HP_ERR_GLFW, log, "Could not create window")
     glfwMakeContextCurrent(*window);
+    glfwSwapInterval(1);
     LU_NO_CLEANUP
 }
 
@@ -45,19 +46,12 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int act, int
                     mods == action->controls->c[i].k.mods[j]) {
                 switch(act) {
                 case GLFW_PRESS:
-//                    ludebug(action->log, "Press key %d (%d) mods %d", key, scancode, mods);
                     action->controls->c[i].v.pressed[j] = now;
                     break;
                 case GLFW_RELEASE:
-//                    ludebug(action->log, "Release key %d (%d) mods %d", key, scancode, mods);
                     action->controls->c[i].v.released[j] = now;
                     break;
-//                default:
-//                    ludebug(action->log, "Ignored action for key %d (%d) mods %d", key, scancode, mods);
                 }
-//            } else {
-//                ludebug(action->log, "No match for key %d mods %d",
-//                        action->controls->c[i].k.keys[j], action->controls->c[i].k.mods[j]);
             }
         }
     }
@@ -70,8 +64,8 @@ int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action) {
     (*action)->log = log;
     (*action)->window = window;
     LU_CHECK(luary_mkcontroln(log, &(*action)->controls, 1))
-    LU_CHECK(set_keys(log, &k, "zoom", 45, 0, 61, 1, 15, 5, 0.5, 100, &lumat_sclf4_3))
-    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 1))
+    LU_CHECK(set_keys(log, &k, "zoom", 45, 0, 61, 1, 5, 10, 0.1, 10, &lumat_sclf4_3))
+    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0.3))
     LU_CHECK(set_keys(log, &k, "roll", 262, 0, 263, 0, 15, 10, -M_PI, M_PI, &lumat_rotf4_z))
     LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0))
     LU_CHECK(set_keys(log, &k, "pitch", 264, 0, 265, 0, 15, 10, 0, 0.5 * M_PI, &lumat_rotf4_x))
@@ -82,3 +76,4 @@ LU_CLEANUP
     free(k.name);
     LU_RETURN
 }
+

@@ -197,7 +197,7 @@ static int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void *
     LU_NO_CLEANUP
 }
 
-static int fixz(lulog *log, luary_ijz *vertices) {
+static int normalize_z(lulog *log, luary_ijz *vertices) {
     LU_STATUS
     float zmax = vertices->ijz[0].z, zmin = zmax;
     for (size_t i = 0; i < vertices->mem.used; ++i) {
@@ -220,7 +220,7 @@ static int fixz(lulog *log, luary_ijz *vertices) {
 
 
 static int hexagon_common(lulog *log, uint64_t seed,
-        size_t side, size_t subsamples, double step, double octweight,
+        size_t side, size_t subsamples, double octweight,
         luary_ijz **vertices, luary_uint32 **indices,
 		luary_uint32 **offsets, luary_uint32 **counts) {
     LU_STATUS
@@ -229,7 +229,7 @@ static int hexagon_common(lulog *log, uint64_t seed,
     LU_CHECK(lutle_defaultconfig(log, &config, seed))
     LU_CHECK(lutle_mkhexagon(log, &hexagon, side, subsamples, octweight))
     LU_CHECK(hexagon->enumerate(hexagon, log, config, -1, vertices))
-    LU_CHECK(fixz(log, *vertices));
+    LU_CHECK(normalize_z(log, *vertices));
     LU_CHECK(strips(log, *vertices, indices, offsets, counts))
 LU_CLEANUP
     status = lutle_freeconfig(&config, status);
@@ -245,7 +245,7 @@ int hexagon_vertex_strips(lulog *log, uint64_t seed,
     LU_STATUS
     luary_ijz *ijz = NULL;
     luary_uint32 *ioffsets = NULL;
-    LU_CHECK(hexagon_common(log, seed, side, subsamples, step, octweight,
+    LU_CHECK(hexagon_common(log, seed, side, subsamples, octweight,
             &ijz, indices, &ioffsets, counts))
     LU_CHECK(ijz2fxyzw(log, ijz, step, vertices))
     LU_CHECK(offsets2void(log, ioffsets, sizeof(*(*indices)->i), offsets))
@@ -321,10 +321,10 @@ int hexagon_vnormal_strips(lulog *log, uint64_t seed,
     luary_ijz *ijz = NULL;
     luary_uint32 *ioffsets = NULL, *indices = NULL;
     luary_vecf4 *f4 = NULL;
-    LU_CHECK(hexagon_common(log, seed, side, subsamples, step, octweight,
+    LU_CHECK(hexagon_common(log, seed, side, subsamples, octweight,
             &ijz, &indices, &ioffsets, counts))
     LU_CHECK(uniquify(log, indices, ioffsets, *counts, ijz))
-    LU_CHECK(ijz2vecf4(log, ijz, step, &f4))
+    LU_CHECK(ijz2vecf4(log, ijz, step / subsamples, &f4))
     LU_CHECK(normals(log, indices, ioffsets, *counts, f4, vertices))
     LU_CHECK(uint2int(log, ioffsets, offsets))
 LU_CLEANUP

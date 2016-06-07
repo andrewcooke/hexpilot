@@ -77,7 +77,7 @@ int link_program(lulog *log, luary_uint32 *shaders, GLuint *program) {
 
 int free_shaders(lulog *log, luary_uint32 **shaders, int prev_status) {
     LU_STATUS
-    if (shaders) {
+    if (shaders && *shaders) {
         for (size_t i = 0; i < (*shaders)->mem.used; ++i) {
             GL_CHECK(glDeleteShader((*shaders)->i[i]));
         }

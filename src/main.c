@@ -30,7 +30,7 @@ static int build_buffers(lulog *log, luary_buffer **buffers,
     LU_STATUS
     luary_vnorm *vertices = NULL;
     luary_uint32 *indices = NULL;
-    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 0.03, 1.0, &vertices, offsets, counts))
+    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 1, 1.0, &vertices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), buffers));
     LU_CHECK(luary_dumpvnorm(log, vertices, "vertices", 4))
@@ -48,13 +48,14 @@ static const char* vertex_shader =
         "layout(location = 1) in vec4 normal;\n"
         "flat out vec4 interpColour;\n"
         "uniform mat4 transform;\n"
+        "uniform mat4 ntransform;\n"
         "void main(){\n"
         "  vec4 t_position = transform * position;\n"
-        "  vec4 t_normal = vec4(normalize((transform * normal).xyz), 0);\n"
-        "  vec4 t_light = vec4(normalize((transform * vec4(0, 0, 1, 0)).xyz), 0);\n"
-        "  float brightness = dot(t_normal, t_light);\n"
-        "  brightness = clamp(brightness, 0, 1);\n"
-        "  interpColour = vec4((0.1 + 0.9 * brightness) * vec3(1.0, 0.0, 0.0), 1.0);\n"
+        "  vec4 t_normal = vec4(normalize((ntransform * normal).xyz), 0);\n"
+        "  float brightness_1 = dot(t_normal, vec4(1,1,1,0));\n"
+        "  float brightness_2 = dot(t_normal, vec4(0,0,1,0));\n"
+        "  float brightness = clamp(0.05 * brightness_1 + 0.95 * brightness_2, 0, 1);\n"
+        "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
         "  gl_Position = t_position;\n"
         "}\n";
 
@@ -112,8 +113,13 @@ static int respond_to_user(lulog *log, user_action *action, GLuint program) {
     }
     lumat_mulf4_in(&window, &matrix);
     GL_CHECK(glUseProgram(program))
-    GL_CHECK(GLint uniform = glGetUniformLocation(program, "transform"))
-    GL_CHECK(glUniformMatrix4fv(uniform, 1, GL_FALSE, matrix))
+    GL_CHECK(GLint uniform1 = glGetUniformLocation(program, "transform"))
+    GL_CHECK(glUniformMatrix4fv(uniform1, 1, GL_FALSE, matrix))
+    lumat_f4 tmp = {}, nmatrix = {};
+    LU_CHECK(lumat_invf4(log, &matrix, &tmp))
+    lumat_trnf4(&tmp, &nmatrix);
+    GL_CHECK(GLint uniform2 = glGetUniformLocation(program, "ntransform"))
+    GL_CHECK(glUniformMatrix4fv(uniform2, 1, GL_FALSE, nmatrix))
     LU_NO_CLEANUP
 }
 
@@ -126,6 +132,7 @@ static int init_opengl(lulog *log) {
     GL_CHECK(glDepthMask(GL_TRUE))
     GL_CHECK(glDepthFunc(GL_LEQUAL))
     GL_CHECK(glDepthRange(0.0f, 1.0f))
+//    GL_CHECK(glEnable(GL_DEPTH_CLAMP))
     LU_NO_CLEANUP
 }
 
