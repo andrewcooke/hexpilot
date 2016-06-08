@@ -11,7 +11,7 @@
 int set_keys(lulog *log, keys *keys, const char *name,
         int key0, int mod0, int key1, int mod1,
         double a, double k, double lo, double hi,
-        key2matrix *apply) {
+        variable_index index) {
     LU_STATUS
     free(keys->name);
     LU_ALLOC(log, keys->name, strlen(name) + 1)
@@ -20,7 +20,7 @@ int set_keys(lulog *log, keys *keys, const char *name,
     keys->keys[1] = key1; keys->mods[1] = mod1;
     keys->a = a; keys->k = k;
     keys->limits[0] = lo; keys->limits[1] = hi;
-    keys->apply = apply;
+    keys->index = index;
     LU_NO_CLEANUP
 }
 
@@ -30,13 +30,13 @@ LUARY_MKBASE(control, luary_control, control, c)
 int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, double x) {
     LU_STATUS
     LU_CHECK(luary_reservecontrol(log, controls, 1))
-    variables v = {}; v.x = x;
+    variables v = {};
     controls->c[controls->mem.used++] = (control){*keys, v};
     LU_NO_CLEANUP
 }
 
 
-int update_control(lulog *log, double now, control *c) {
+int update_control(lulog *log, double now, control *c, float *x) {
     LU_STATUS
     double dv = 0;
     for (size_t i = 0; i < 2; ++i) {
@@ -49,33 +49,17 @@ int update_control(lulog *log, double now, control *c) {
     }
     dv -= c->v.v * c->k.k * (now - c->v.previous);
     c->v.v += dv;
-    c->v.x += c->v.v * (now - c->v.previous);
-    c->v.x = max(c->k.limits[0], min(c->k.limits[1], c->v.x));
+    *x += c->v.v * (now - c->v.previous);
+    *x = max(c->k.limits[0], min(c->k.limits[1], *x));
     c->v.previous = now;
     LU_NO_CLEANUP
 }
 
-int update_controls(lulog *log, double now, luary_control *controls) {
+int update_controls(lulog *log, double now, luary_control *controls, float *variables) {
     LU_STATUS;
     for (size_t i = 0; i < controls->mem.used; ++i) {
-        LU_CHECK(update_control(log, now, &controls->c[i]))
-    }
-    LU_NO_CLEANUP
-}
-
-
-int apply_control(lulog *log, control *control, lumat_f4 *m) {
-    LU_STATUS
-    lumat_f4 transform = {};
-    control->k.apply(control->v.x, &transform);
-    lumat_mulf4_in(&transform, m);
-    LU_NO_CLEANUP
-}
-
-int apply_controls(lulog *log, luary_control *controls, lumat_f4 *m) {
-    LU_STATUS;
-    for (size_t i = 0; i < controls->mem.used; ++i) {
-        LU_CHECK(apply_control(log, &controls->c[i], m))
+        LU_CHECK(update_control(log, now, &controls->c[i],
+                &variables[controls->c[i].k.index]))
     }
     LU_NO_CLEANUP
 }

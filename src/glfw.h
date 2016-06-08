@@ -19,5 +19,6 @@ typedef struct user_action {
 int create_glfw_context(lulog *log, GLFWwindow **window);
 int load_opengl_functions(lulog *log);
 int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action);
+int respond_to_user(lulog *log, user_action *action, float *variables);
 
 #endif

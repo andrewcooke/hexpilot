@@ -1,6 +1,4 @@
 
-#include <glfw.h>
-
 #include "lu/log.h"
 #include "lu/tiles.h"
 #include "lu/status.h"
@@ -11,11 +9,14 @@
 #include "buffers.h"
 #include "tiles.h"
 #include "error_codes.h"
+#include "geometry.h"
 
 
-static int display(lulog *log, GLuint vao, luary_int32 *offsets, luary_uint32 *counts) {
+static int display(lulog *log, GLuint program, GLuint vao,
+        luary_int32 *offsets, luary_uint32 *counts) {
     LU_STATUS
-    GL_CHECK(glBindVertexArray(vao)) // seems we need setprogram too
+    GL_CHECK(glUseProgram(program))
+    GL_CHECK(glBindVertexArray(vao))
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClearDepth(1.0f))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
@@ -95,34 +96,6 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int respond_to_user(lulog *log, user_action *action, GLuint program) {
-    LU_STATUS
-    lumat_f4 matrix = {};
-    lumat_idnf4(&matrix);
-    LU_CHECK(update_controls(action->log, glfwGetTime(), action->controls))
-    LU_CHECK(apply_controls(action->log, action->controls, &matrix))
-    int width, height;
-    lumat_f4 window = {};
-    lumat_idnf4(&window);
-    glfwGetFramebufferSize(action->window, &width, &height);
-    GL_CHECK(glViewport(0, 0, width, height))
-    if (width < height) {
-        window[lumat_idx4(0,0)] = height / (float)width;
-    } else {
-        window[lumat_idx4(1,1)] = width / (float)height;
-    }
-    lumat_mulf4_in(&window, &matrix);
-    GL_CHECK(glUseProgram(program))
-    GL_CHECK(GLint uniform1 = glGetUniformLocation(program, "transform"))
-    GL_CHECK(glUniformMatrix4fv(uniform1, 1, GL_FALSE, matrix))
-    lumat_f4 tmp = {}, nmatrix = {};
-    LU_CHECK(lumat_invf4(log, &matrix, &tmp))
-    lumat_trnf4(&tmp, &nmatrix);
-    GL_CHECK(GLint uniform2 = glGetUniformLocation(program, "ntransform"))
-    GL_CHECK(glUniformMatrix4fv(uniform2, 1, GL_FALSE, nmatrix))
-    LU_NO_CLEANUP
-}
-
 static int init_opengl(lulog *log) {
     LU_STATUS
     GL_CHECK(glEnable(GL_CULL_FACE))
@@ -144,6 +117,8 @@ static int with_glfw(lulog *log) {
     luary_int32 *offsets = NULL;
     GLuint program, vao;
     user_action *action = NULL;
+    float variables[n_variables] = {};
+    LU_CHECK(init_geometry(log, variables));
     LU_CHECK(create_glfw_context(log, &window))
     LU_CHECK(load_opengl_functions(log))
     LU_CHECK(init_opengl(log))
@@ -152,8 +127,9 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_buffers(log, &buffers, &offsets, &counts))
     LU_CHECK(build_vao(log, program, buffers, &vao))
     while (!glfwWindowShouldClose(window)) {
-        LU_CHECK(respond_to_user(log, action, program))
-        LU_CHECK(display(log, vao, offsets, counts))
+        LU_CHECK(respond_to_user(log, action, variables));
+        LU_CHECK(update_geometry(log, program, variables));
+        LU_CHECK(display(log, program, vao, offsets, counts))
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
