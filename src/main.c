@@ -136,6 +136,7 @@ static int with_glfw(lulog *log) {
     luary_int32 *offsets = NULL;
     GLuint program, vao;
     user_action *action = NULL;
+    double tik[2] = {glfwGetTime(), 0};
     float variables[n_variables] = {};
     LU_CHECK(init_geometry(log, variables));
     LU_CHECK(create_glfw_context(log, &window))
@@ -147,11 +148,13 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_vao(log, program, buffers, &vao))
     LU_CHECK(build_uniforms(log, program, buffers))
     while (!glfwWindowShouldClose(window)) {
-        LU_CHECK(respond_to_user(log, action, variables));
-        LU_CHECK(update_geometry(log, program, variables, &buffers->b[1]));
+        tik[1] = glfwGetTime();
+        LU_CHECK(respond_to_user(log, tik[1] - tik[0], action, variables));
+        LU_CHECK(update_geometry(log, tik[1] - tik[0], program, variables, &buffers->b[1]));
         LU_CHECK(display(log, program, vao, offsets, counts))
         glfwSwapBuffers(window);
         glfwPollEvents();
+        tik[0] = tik[1];
     }
     ludebug(log, "Clean exit");
 LU_CLEANUP

@@ -9,10 +9,11 @@
 
 
 typedef enum variable_index {
-    ship_sx,
-    ship_sy,
-    ship_vx,
-    ship_vy,
+    ship_speed,
+    ship_rotation,
+    ship_x,
+    ship_y,
+    ship_angle,
     camera_elevation,
     camera_distance,
     camera_zoom,
@@ -34,6 +35,6 @@ typedef struct geometry_data {
 } geometry_data;
 
 int init_geometry(lulog *log, float *variables);
-int update_geometry(lulog *log, GLuint program, float *variables, buffer *buffer);
+int update_geometry(lulog *log, double dt, GLuint program, float *variables, buffer *buffer);
 
 #endif

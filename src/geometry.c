@@ -17,15 +17,22 @@ int init_geometry(lulog *log, float *variables) {
     variables[camera_zoom] = 1;
     variables[camera_elevation] = M_PI/4;
     variables[camera_distance] = 4;
-    variables[ship_vx] = 0;
-    variables[ship_vy] = 1;
+    variables[ship_angle] = 0;
     variables[light_x] = 1;
     variables[light_y] = 1;
     variables[light_z] = 1;
     return LU_OK;
 }
 
-int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
+static int calculate_physics(lulog *log, double dt, float *variables) {
+    LU_STATUS
+    variables[ship_angle] += variables[ship_rotation];
+    variables[ship_x] -= variables[ship_speed] * sinf(variables[ship_angle]);
+    variables[ship_y] -= variables[ship_speed] * cosf(variables[ship_angle]);
+    LU_NO_CLEANUP
+}
+
+static int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
 
     LU_STATUS
     lumat_f4 model_world = {}, world_camera = {}, m = {};
@@ -39,18 +46,18 @@ int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
     // z=-1 and includes [-1,1] in x and y.  the camera is at (0,0)
     // looking towards -ve z.
     lumat_idnf4(&world_camera);
-    float dz = variables[camera_distance] * sinf(variables[camera_elevation]);
-    lumat_offf4_3(0, 0, -dz, &m);
+    // move to ship location
+    lumat_offf4_3(variables[ship_x], variables[ship_y], 0, &m);
     lumat_mulf4_in(&m, &world_camera);
     // orient so that we are looking along the ship's velocity
     // ie rotate until y axis points along ship
-    lumat_rotf4_z(atan2(variables[ship_vy], variables[ship_vx]), &m);
-    lumat_mulf4_in(&m, &world_camera);
-    // move left/right etc relative to ship orientation
-    lumat_offf4_3(variables[ship_sx], variables[ship_sy], 0, &m);
+    lumat_rotf4_z(variables[ship_angle], &m);
     lumat_mulf4_in(&m, &world_camera);
     // tilt to the camera angle
     lumat_rotf4_x(variables[camera_elevation] - M_PI/2, &m);
+    lumat_mulf4_in(&m, &world_camera);
+    // retreat back along camera view
+    lumat_offf4_3(0, 0, -variables[camera_distance], &m);
     lumat_mulf4_in(&m, &world_camera);
 
     // combine model_world and world_camera
@@ -83,7 +90,7 @@ int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
     LU_NO_CLEANUP
 }
 
-int send_geometry(lulog *log, GLuint program, geometry_data *data, buffer *buffer) {
+static int send_geometry(lulog *log, GLuint program, geometry_data *data, buffer *buffer) {
     LU_STATUS
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, buffer->name))
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(*data), data))
@@ -91,9 +98,10 @@ int send_geometry(lulog *log, GLuint program, geometry_data *data, buffer *buffe
     LU_NO_CLEANUP
 }
 
-int update_geometry(lulog *log, GLuint program, float *variables, buffer *buffer) {
+int update_geometry(lulog *log, double dt, GLuint program, float *variables, buffer *buffer) {
     LU_STATUS
     geometry_data data = {};
+    LU_CHECK(calculate_physics(log, dt, variables))
     LU_CHECK(calculate_geometry(log, variables, &data))
     LU_CHECK(send_geometry(log, program, &data, buffer))
     LU_NO_CLEANUP

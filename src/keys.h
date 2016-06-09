@@ -12,22 +12,22 @@ typedef struct keys {
     char *name;
     int keys[2];
     int mods[2];
-    double a;
-    double k;
-    double limits[2];
+    float force;
+    float kv;
+    float kx;
+    float limits[2];
     variable_index index;
 } keys;
 
 int set_keys(lulog *log, keys *keys, const char *name,
         int key1, int mod1, int key2, int mod2,
-        double a, double k, double lo, double hi,
+        float force, float kv, float kx, float lo, float hi,
         variable_index index);
 
 typedef struct variables {
-    double previous;
     double pressed[2];
     double released[2];
-    double v;
+    float v;
 } variables;
 
 typedef struct control {
@@ -43,10 +43,10 @@ typedef struct luary_control {
 int luary_mkcontroln(lulog *log, luary_control **controls, size_t n);
 int luary_freecontrol(luary_control **controls, int prev_status);
 int luary_reservecontrol(lulog *log, luary_control *controls, size_t n);
-int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, double x);
+int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x);
 size_t luary_sizecontrol(luary_control *buffer);
 
-int update_control(lulog *log, double now, control *control, float *x);
-int update_controls(lulog *log, double now, luary_control *controls, float *variables);
+int update_control(lulog *log, double dt, control *control, float *x);
+int update_controls(lulog *log, double dt, luary_control *controls, float *variables);
 
 #endif
