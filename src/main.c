@@ -26,6 +26,10 @@ LU_CLEANUP
     LU_RETURN
 }
 
+// currently this is a mess because there are two buffers:
+// 0 - used by vao
+// 1 - used by uniforms
+// and there's little reason to group them in an array
 static int build_buffers(lulog *log, luary_buffer **buffers,
 		luary_int32 **offsets, luary_uint32 **counts) {
     LU_STATUS
@@ -34,6 +38,8 @@ static int build_buffers(lulog *log, luary_buffer **buffers,
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 1, 1.0, &vertices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), buffers));
+    LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
+            NULL, 1, sizeof(geometry_data), buffers));
     LU_CHECK(luary_dumpvnorm(log, vertices, "vertices", 4))
     LU_CHECK(luary_dumpint32(log, *offsets, "offsets", 10))
     LU_CHECK(luary_dumpuint32(log, *counts, "counts", 10))
@@ -47,17 +53,21 @@ static const char* vertex_shader =
         "#version 330\n"
         "layout(location = 0) in vec4 position;\n"
         "layout(location = 1) in vec4 normal;\n"
+        "layout(std140) uniform geometry {\n"
+        "  vec4 light_camera,\n"
+        "  mat4 model_camera,\n"
+        "  mat4 model_camera_n,\n"
+        "  mat4 camera_clip\n"
+        "}\n"
         "flat out vec4 interpColour;\n"
-        "uniform mat4 transform;\n"
-        "uniform mat4 ntransform;\n"
         "void main(){\n"
-        "  vec4 t_position = transform * position;\n"
-        "  vec4 t_normal = vec4(normalize((ntransform * normal).xyz), 0);\n"
-        "  float brightness_1 = dot(t_normal, vec4(1,1,1,0));\n"
-        "  float brightness_2 = dot(t_normal, vec4(0,0,1,0));\n"
+        "  vec4 c_position = model_camera * position;\n"
+        "  vec4 c_normal = vec4(normalize((model_camera_n * normal).xyz), 0);\n"
+        "  float brightness_1 = dot(c_normal, light_camera);\n"
+        "  float brightness_2 = dot(c_normal, vec4(0,0,1,0));\n"
         "  float brightness = clamp(0.05 * brightness_1 + 0.95 * brightness_2, 0, 1);\n"
         "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
-        "  gl_Position = t_position;\n"
+        "  gl_Position = camera_clip * c_position;\n"
         "}\n";
 
 static const char* fragment_shader =
@@ -85,15 +95,24 @@ static int build_vao(lulog *log, GLuint program, luary_buffer *buffers,
     GL_CHECK(glGenVertexArrays(1, vao))
     GL_CHECK(glBindVertexArray(*vao))
     GL_CHECK(glUseProgram(program))
-    LU_CHECK(bind_buffers(log, buffers))
+    LU_CHECK(bind_buffer(log, &buffers->b[0]))
     GL_CHECK(glEnableVertexAttribArray(0))
     GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, 0))
     GL_CHECK(glEnableVertexAttribArray(1))
     GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 32, (void*)16))
 LU_CLEANUP
     GL_CHECK(glBindVertexArray(0))
-    LU_CHECK(unbind_buffers(log, buffers))
+    LU_CHECK(unbind_buffer(log, &buffers->b[0]))
     LU_RETURN
+}
+
+// http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
+static int build_uniforms(lulog *log, GLuint program, luary_buffer *buffers) {
+    LU_STATUS
+    GL_CHECK(GLuint index = glGetUniformBlockIndex(program, "geometry"))
+    GL_CHECK(glUniformBlockBinding(program, index, 1))
+    GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, buffers->b[1].name))
+    LU_NO_CLEANUP
 }
 
 static int init_opengl(lulog *log) {
@@ -126,9 +145,10 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_program(log, &program))
     LU_CHECK(build_buffers(log, &buffers, &offsets, &counts))
     LU_CHECK(build_vao(log, program, buffers, &vao))
+    LU_CHECK(build_uniforms(log, program, buffers))
     while (!glfwWindowShouldClose(window)) {
         LU_CHECK(respond_to_user(log, action, variables));
-        LU_CHECK(update_geometry(log, program, variables));
+        LU_CHECK(update_geometry(log, program, variables, buffers->b[1]));
         LU_CHECK(display(log, program, vao, offsets, counts))
         glfwSwapBuffers(window);
         glfwPollEvents();

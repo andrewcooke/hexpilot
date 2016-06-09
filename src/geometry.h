@@ -25,6 +25,13 @@ typedef enum variable_index {
     n_variables
 } variable_index;
 
+typedef struct geometry_data {
+    luvec_f4 light_camera;
+    lumat_f4 model_camera;
+    lumat_f4 model_camera_n;
+    lumat_f4 camera_clip;
+} geometry_data;
+
 int init_geometry(lulog *log, float *variables);
 int update_geometry(lulog *log, GLuint program, float *variables);
 

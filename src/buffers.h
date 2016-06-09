@@ -32,7 +32,11 @@ size_t luary_sizebuffer(luary_buffer *buffer);
 
 int load_buffer(lulog *log, GLenum target, GLenum usage,
         const void *data, size_t count, size_t chunk, luary_buffer **buffers);
+
+int bind_buffer(lulog *log, buffer *buffer);
 int bind_buffers(lulog *log, luary_buffer *buffers);
+
+int unbind_buffer(lulog *log, buffer *buffer);
 int unbind_buffers(lulog *log, luary_buffer *buffers);
 
 #endif

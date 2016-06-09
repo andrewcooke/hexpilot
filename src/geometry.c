@@ -7,23 +7,26 @@
 
 #include "error_codes.h"
 #include "geometry.h"
+#include "buffers.h"
 
 
-// assumes zeroed already
+// assumes zeroed on stack
 int init_geometry(lulog *log, float *variables) {
     variables[far_z] = -1000;  // scan hexagon limits?
     variables[near_z] = -1;
     variables[camera_zoom] = 1;
+    variables[ship_vx] = 0;
+    variables[ship_vy] = 1;
     variables[light_x] = 1;
     variables[light_y] = 1;
     variables[light_z] = 1;
+    return LU_OK;
 }
 
-int update_geometry(lulog *log, GLuint program, float *variables) {
+int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
 
     LU_STATUS
-    lumat_f4 model_world = {}, world_camera = {}, camera_clip = {};
-    lumat_f4 m = {}, model_camera = {}, model_camera_n = {};
+    lumat_f4 model_world = {}, world_camera = {}, m = {};
 
     // the hex surface goes from -1 to 1 in z and extends outwards in x, y
     // from the origin.  that seems quite reasonable for the world, too.
@@ -31,14 +34,14 @@ int update_geometry(lulog *log, GLuint program, float *variables) {
 
     // camera space is described in "learning modern 3d graphics
     // programming", page 60 onwards.  the projection plane is at
-    // z=-1 and include s[-1,1] in x and y.  the camera is at (0,0)
+    // z=-1 and includes [-1,1] in x and y.  the camera is at (0,0)
     // looking towards -ve z.
     lumat_idnf4(&world_camera);
     // we must at least have the highest peaks behind near_z
     float dz = min(1 - variables[near_z], variables[camera_distance] * sinf(variables[camera_elevation]));
     lumat_offf4_3(variables[ship_sx], variables[ship_sy], dz, &m);
     lumat_mulf4_in(&m, &world_camera);
-    // orientate so that we are looking along the ship's velocity
+    // orient so that we are looking along the ship's velocity
     // ie rotate until x axis points along ship
     lumat_rotf4_z(atan2(variables[ship_vy], variables[ship_vx]), &m);
     lumat_mulf4_in(&m, &world_camera);
@@ -47,11 +50,16 @@ int update_geometry(lulog *log, GLuint program, float *variables) {
     lumat_mulf4_in(&m, &world_camera);
 
     // combine model_world and world_camera
-    lumat_mulf4(&world_camera, &model_world, &model_camera);
+    lumat_mulf4(&world_camera, &model_world, &data->model_camera);
 
     // the equivalent for normals
-    LU_CHECK(lumat_invf4(log, &model_camera, &m))
-    lumat_trnf4(&m, &model_camera_n);
+    LU_CHECK(lumat_invf4(log, &data->model_camera, &m))
+    lumat_trnf4(&m, &data->model_camera_n);
+
+    // transform light direction to camera space
+    luvec_f4 light_model =
+        {variables[light_x], variables[light_y], variables[light_z], 0};
+    luvec_mulf4(&data->model_camera, &light_model, &data->light_camera);
 
     // from page 66 of LM3DGP, but with the signs of near_z and far_z
     // changed (for some reason the author decided those should be
@@ -67,8 +75,20 @@ int update_geometry(lulog *log, GLuint program, float *variables) {
     lumat_setf4(scale_x,       0,           0,           0,
                       0, scale_y,           0,           0,
                       0,       0, (n+f)/(n-f), 2*f*n/(n-f),
-                      0,       0,          -1,           0, &camera_clip);
-
-    GL_CHECK(glUseProgram(program))
+                      0,       0,          -1,           0, &data->camera_clip);
     LU_NO_CLEANUP
 }
+
+int send_geometry(lulog *log, GLuint program, geometry_data *data) {
+    LU_STATUS
+
+    LU_NO_CLEANUP
+}
+
+int update_geometry(lulog *log, GLuint program, float *variables) {
+    LU_STATUS
+    calculate_geometry(log, lo)
+    LU_NO_CLEANUP
+}
+
+

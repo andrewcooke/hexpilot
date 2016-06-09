@@ -39,18 +39,30 @@ int load_buffer(lulog *log, GLenum target, GLenum usage,
     LU_NO_CLEANUP
 }
 
+int bind_buffer(lulog *log, buffer *buffer) {
+    LU_STATUS
+    GL_CHECK(glBindBuffer(buffer->target, buffer->name))
+    LU_NO_CLEANUP
+}
+
 int bind_buffers(lulog *log, luary_buffer *buffers) {
     LU_STATUS
     for (size_t i = 0; i < buffers->mem.used; ++i) {
-        GL_CHECK(glBindBuffer(buffers->b[i].target, buffers->b[i].name))
+        LU_CHECK(bind_buffer(log, &buffers->b[i]))
     }
+    LU_NO_CLEANUP
+}
+
+int unbind_buffer(lulog *log, buffer *buffer) {
+    LU_STATUS
+    GL_CHECK(glBindBuffer(buffer->target, 0))
     LU_NO_CLEANUP
 }
 
 int unbind_buffers(lulog *log, luary_buffer *buffers) {
     LU_STATUS
     for (size_t i = 0; i < buffers->mem.used; ++i) {
-        GL_CHECK(glBindBuffer(buffers->b[i].target, 0))
+        LU_CHECK(unbind_buffer(log, &buffers->b[i]))
     }
     LU_NO_CLEANUP
 }
