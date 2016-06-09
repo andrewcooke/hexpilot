@@ -15,6 +15,8 @@ int init_geometry(lulog *log, float *variables) {
     variables[far_z] = -1000;  // scan hexagon limits?
     variables[near_z] = -1;
     variables[camera_zoom] = 1;
+    variables[camera_elevation] = M_PI/4;
+    variables[camera_distance] = 4;
     variables[ship_vx] = 0;
     variables[ship_vy] = 1;
     variables[light_x] = 1;
@@ -37,16 +39,18 @@ int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
     // z=-1 and includes [-1,1] in x and y.  the camera is at (0,0)
     // looking towards -ve z.
     lumat_idnf4(&world_camera);
-    // we must at least have the highest peaks behind near_z
-    float dz = min(1 - variables[near_z], variables[camera_distance] * sinf(variables[camera_elevation]));
-    lumat_offf4_3(variables[ship_sx], variables[ship_sy], dz, &m);
+    float dz = variables[camera_distance] * sinf(variables[camera_elevation]);
+    lumat_offf4_3(0, 0, -dz, &m);
     lumat_mulf4_in(&m, &world_camera);
     // orient so that we are looking along the ship's velocity
-    // ie rotate until x axis points along ship
+    // ie rotate until y axis points along ship
     lumat_rotf4_z(atan2(variables[ship_vy], variables[ship_vx]), &m);
     lumat_mulf4_in(&m, &world_camera);
+    // move left/right etc relative to ship orientation
+    lumat_offf4_3(variables[ship_sx], variables[ship_sy], 0, &m);
+    lumat_mulf4_in(&m, &world_camera);
     // tilt to the camera angle
-    lumat_rotf4_y(M_PI/2 - variables[camera_elevation], &m);
+    lumat_rotf4_x(variables[camera_elevation] - M_PI/2, &m);
     lumat_mulf4_in(&m, &world_camera);
 
     // combine model_world and world_camera
@@ -66,9 +70,9 @@ int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
     // positive values; here they are simply coords and so -ve).
     float scale_x = 1, scale_y = 1;
     if (variables[buffer_x] < variables[buffer_y]) {
-        scale_x = variables[buffer_x] / variables[buffer_y];
+        scale_x = variables[buffer_y] / variables[buffer_x];
     } else {
-        scale_y = variables[buffer_y] / variables[buffer_x];
+        scale_y = variables[buffer_x] / variables[buffer_y];
     }
     scale_x *= variables[camera_zoom]; scale_y *= variables[camera_zoom];
     float f = -variables[far_z], n = -variables[near_z];
@@ -79,15 +83,19 @@ int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
     LU_NO_CLEANUP
 }
 
-int send_geometry(lulog *log, GLuint program, geometry_data *data) {
+int send_geometry(lulog *log, GLuint program, geometry_data *data, buffer *buffer) {
     LU_STATUS
-
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, buffer->name))
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(*data), data))
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
     LU_NO_CLEANUP
 }
 
-int update_geometry(lulog *log, GLuint program, float *variables) {
+int update_geometry(lulog *log, GLuint program, float *variables, buffer *buffer) {
     LU_STATUS
-    calculate_geometry(log, lo)
+    geometry_data data = {};
+    LU_CHECK(calculate_geometry(log, variables, &data))
+    LU_CHECK(send_geometry(log, program, &data, buffer))
     LU_NO_CLEANUP
 }
 

@@ -35,7 +35,7 @@ static int build_buffers(lulog *log, luary_buffer **buffers,
     LU_STATUS
     luary_vnorm *vertices = NULL;
     luary_uint32 *indices = NULL;
-    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 5, 1, 1.0, &vertices, offsets, counts))
+    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, offsets, counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), buffers));
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
@@ -54,11 +54,11 @@ static const char* vertex_shader =
         "layout(location = 0) in vec4 position;\n"
         "layout(location = 1) in vec4 normal;\n"
         "layout(std140) uniform geometry {\n"
-        "  vec4 light_camera,\n"
-        "  mat4 model_camera,\n"
-        "  mat4 model_camera_n,\n"
-        "  mat4 camera_clip\n"
-        "}\n"
+        "  vec4 light_camera;\n"
+        "  mat4 model_camera;\n"
+        "  mat4 model_camera_n;\n"
+        "  mat4 camera_clip;\n"
+        "};\n"
         "flat out vec4 interpColour;\n"
         "void main(){\n"
         "  vec4 c_position = model_camera * position;\n"
@@ -148,7 +148,7 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_uniforms(log, program, buffers))
     while (!glfwWindowShouldClose(window)) {
         LU_CHECK(respond_to_user(log, action, variables));
-        LU_CHECK(update_geometry(log, program, variables, buffers->b[1]));
+        LU_CHECK(update_geometry(log, program, variables, &buffers->b[1]));
         LU_CHECK(display(log, program, vao, offsets, counts))
         glfwSwapBuffers(window);
         glfwPollEvents();

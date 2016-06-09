@@ -46,6 +46,8 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int act, int
                     mods == action->controls->c[i].k.mods[j]) {
                 switch(act) {
                 case GLFW_PRESS:
+                    ludebug(action->log, "Pressed %s (%d/%d)",
+                            action->controls->c[i].k.name, key, mods);
                     action->controls->c[i].v.pressed[j] = now;
                     break;
                 case GLFW_RELEASE:
@@ -64,12 +66,12 @@ int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action) {
     (*action)->log = log;
     (*action)->window = window;
     LU_CHECK(luary_mkcontroln(log, &(*action)->controls, 1))
-    LU_CHECK(set_keys(log, &k, "zoom", 45, 0, 61, 1, 5, 10, 0.1, 10, camera_zoom))
-    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0.3))
-    LU_CHECK(set_keys(log, &k, "roll", 262, 0, 263, 0, 15, 10, -M_PI, M_PI, ship_sx))
+    LU_CHECK(set_keys(log, &k, "zoom", 45, 0, 61, 1, 15, 10, 0.1, 10, camera_zoom))
+    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 1))
+    LU_CHECK(set_keys(log, &k, "left/right", 262, 0, 263, 0, 15, 10, -100, 100, ship_sx))
     LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0))
-    LU_CHECK(set_keys(log, &k, "pitch", 264, 0, 265, 0, 15, 10, 0, 0.5 * M_PI, ship_sy))
-    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0.25 * M_PI))
+    LU_CHECK(set_keys(log, &k, "up/down", 265, 0, 264, 0, 15, 10, -100, 100, ship_sy))
+    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0))
     glfwSetWindowUserPointer(window, *action);
     glfwSetKeyCallback(window, &key_callback);
 LU_CLEANUP

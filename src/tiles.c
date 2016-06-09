@@ -206,7 +206,6 @@ static int normalize_z(lulog *log, luary_ijz *vertices) {
     }
     if (zmax > zmin) {
         for (size_t i = 0; i < vertices->mem.used; ++i) {
-            // -1 to 1
             vertices->ijz[i].z = 2 * ((vertices->ijz[i].z - zmin) / (zmax - zmin) - 0.5);
         }
     } else {
@@ -324,7 +323,7 @@ int hexagon_vnormal_strips(lulog *log, uint64_t seed,
     LU_CHECK(hexagon_common(log, seed, side, subsamples, octweight,
             &ijz, &indices, &ioffsets, counts))
     LU_CHECK(uniquify(log, indices, ioffsets, *counts, ijz))
-    LU_CHECK(ijz2vecf4(log, ijz, step / subsamples, &f4))
+    LU_CHECK(ijz2vecf4(log, ijz, step, &f4))
     LU_CHECK(normals(log, indices, ioffsets, *counts, f4, vertices))
     LU_CHECK(uint2int(log, ioffsets, offsets))
 LU_CLEANUP
