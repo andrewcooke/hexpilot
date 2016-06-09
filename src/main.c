@@ -63,9 +63,9 @@ static const char* vertex_shader =
         "void main(){\n"
         "  vec4 c_position = model_camera * position;\n"
         "  vec4 c_normal = vec4(normalize((model_camera_n * normal).xyz), 0);\n"
-        "  float brightness_1 = dot(c_normal, light_camera);\n"
-        "  float brightness_2 = dot(c_normal, vec4(0,0,1,0));\n"
-        "  float brightness = clamp(0.05 * brightness_1 + 0.95 * brightness_2, 0, 1);\n"
+        "  float brightness_1 = clamp(dot(c_normal, light_camera), 0, 1);\n"
+        "  float brightness_2 = clamp(dot(c_normal, vec4(0,0,1,0)), 0, 1);\n"
+        "  float brightness = 0.05 * brightness_1 + 0.95 * brightness_2;\n"
         "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
         "  gl_Position = camera_clip * c_position;\n"
         "}\n";
