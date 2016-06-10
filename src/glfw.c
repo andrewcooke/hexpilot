@@ -67,12 +67,12 @@ int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action) {
     (*action)->log = log;
     (*action)->window = window;
     LU_CHECK(luary_mkcontroln(log, &(*action)->controls, 1))
-    LU_CHECK(set_keys(log, &k, "+/-", 45, 0,  61, 1,
+    LU_CHECK(set_keys(log, &k, "+/-", 61, 1, 45, 0,
             15, 10, 0,
             0.1, 10, camera_zoom))
     LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 1))
     LU_CHECK(set_keys(log, &k, "left/right", 262, 0, 263, 0,
-            0.1, 5, 5,
+            0.3, 5, 5,
             -0.5, 0.5, ship_rotation))
     LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0))
     LU_CHECK(set_keys(log, &k, "up/down",
