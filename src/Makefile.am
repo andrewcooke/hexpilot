@@ -1,6 +1,6 @@
 
 noinst_LTLIBRARIES = libhp.la
-libhp_la_SOURCES = shaders.c buffers.c geometry.c keys.c tiles.c \
+libhp_la_SOURCES = shaders.c buffers.c geometry.c keys.c models.c tiles.c \
 	vertices.c glfw.c glad.c
 
 bin_PROGRAMS = hexpilot

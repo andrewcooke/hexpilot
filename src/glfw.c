@@ -60,41 +60,10 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int act, int
     if (act == GLFW_PRESS) ludebug(action->log, "Unused key (%d/%d)", key, mods);
 }
 
-int set_window_callbacks(lulog *log, GLFWwindow *window, user_action **action) {
+int set_window_callbacks(lulog *log, GLFWwindow *window, user_action *action) {
     LU_STATUS
-    keys k = {};
-    LU_ALLOC(log, *action, 1)
-    (*action)->log = log;
-    (*action)->window = window;
-    LU_CHECK(luary_mkcontroln(log, &(*action)->controls, 1))
-    LU_CHECK(set_keys(log, &k, "+/-", 61, 1, 45, 0,
-            15, 10, 0,
-            0.1, 10, camera_zoom))
-    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 1))
-    LU_CHECK(set_keys(log, &k, "left/right", 262, 0, 263, 0,
-            0.3, 5, 5,
-            -0.5, 0.5, ship_rotation))
-    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0))
-    LU_CHECK(set_keys(log, &k, "up/down",
-            265, 0, 264, 0,
-            2, 10, 0,
-            0, 4, ship_speed))
-    LU_CHECK(luary_pushcontrol(log, (*action)->controls, &k, 0))
-    glfwSetWindowUserPointer(window, *action);
+    glfwSetWindowUserPointer(window, action);
     glfwSetKeyCallback(window, &key_callback);
-LU_CLEANUP
-    free(k.name);
-    LU_RETURN
-}
-
-
-int respond_to_user(lulog *log, double dt, user_action *action, float *variables) {
-    LU_STATUS
-    LU_CHECK(update_controls(action->log, dt, action->controls, variables))
-    int width, height;
-    glfwGetFramebufferSize(action->window, &width, &height);
-    GL_CHECK(glViewport(0, 0, width, height))
-    variables[buffer_x] = width; variables[buffer_y] = height;
     LU_NO_CLEANUP
 }
 

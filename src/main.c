@@ -5,6 +5,7 @@
 #include "lu/arrays.h"
 
 #include "glfw.h"
+#include "models.h"
 #include "shaders.h"
 #include "buffers.h"
 #include "tiles.h"
@@ -12,41 +13,18 @@
 #include "geometry.h"
 
 
-static int display(lulog *log, GLuint program, GLuint vao,
-        luary_int32 *offsets, luary_uint32 *counts) {
+static int display(universe *universe) {
     LU_STATUS
-    GL_CHECK(glUseProgram(program))
-    GL_CHECK(glBindVertexArray(vao))
+    lulog *log = universe->log;
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClearDepth(1.0f))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
-    GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, offsets->i, counts->i, counts->mem.used));
-LU_CLEANUP
-    GL_CHECK(glBindVertexArray(0))
-    LU_RETURN
-}
-
-// currently this is a mess because there are two buffers:
-// 0 - used by vao
-// 1 - used by uniforms
-// and there's little reason to group them in an array
-static int build_buffers(lulog *log, luary_buffer **buffers,
-		luary_int32 **offsets, luary_uint32 **counts) {
-    LU_STATUS
-    luary_vnorm *vertices = NULL;
-    luary_uint32 *indices = NULL;
-    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, offsets, counts))
-    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
-            vertices->vn, vertices->mem.used, sizeof(*vertices->vn), buffers));
-    LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
-            NULL, 1, sizeof(geometry_data), buffers));
-    LU_CHECK(luary_dumpvnorm(log, vertices, "vertices", 4))
-    LU_CHECK(luary_dumpint32(log, *offsets, "offsets", 10))
-    LU_CHECK(luary_dumpuint32(log, *counts, "counts", 10))
-LU_CLEANUP
-    status = luary_freevnorm(&vertices, status);
-    status = luary_freeuint32(&indices, status);
-    LU_RETURN
+    GL_CHECK(glUseProgram(universe->program))
+    for (size_t i = 0; i < universe->models->mem.used; ++i) {
+        LU_CHECK(universe->models->m[i]->draw(log, universe->models->m[i]))
+    }
+    GL_CHECK(glUseProgram(0))
+    LU_NO_CLEANUP
 }
 
 static const char* vertex_shader =
@@ -89,29 +67,31 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int build_vao(lulog *log, GLuint program, luary_buffer *buffers,
-        GLuint *vao) {
+static int build_hexagon(universe *universe, GLuint program) {
     LU_STATUS
-    GL_CHECK(glGenVertexArrays(1, vao))
-    GL_CHECK(glBindVertexArray(*vao))
-    GL_CHECK(glUseProgram(program))
-    LU_CHECK(bind_buffer(log, &buffers->b[0]))
-    GL_CHECK(glEnableVertexAttribArray(0))
-    GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, 0))
-    GL_CHECK(glEnableVertexAttribArray(1))
-    GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 32, (void*)16))
+    lulog *log = universe->log;
+    model *model = NULL;
+    luary_vnorm *vertices = NULL;
+    LU_CHECK(mkmodel(log, &model));
+    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
+    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+            vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
+    LU_CHECK(interleaved_vnorm_vao(log, program, model->vertices, &model->vao))
+    push_model(universe, model);
 LU_CLEANUP
-    GL_CHECK(glBindVertexArray(0))
-    LU_CHECK(unbind_buffer(log, &buffers->b[0]))
+    status = luary_freevnorm(&vertices, status);
     LU_RETURN
 }
 
-// http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
-static int build_uniforms(lulog *log, GLuint program, luary_buffer *buffers) {
+static int build_geometry(universe *universe, GLuint program) {
     LU_STATUS
+    lulog *log = universe->log;
+    LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
+            NULL, 1, sizeof(geometry_data), &universe->geometry));
+    // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
     GL_CHECK(GLuint index = glGetUniformBlockIndex(program, "geometry"))
     GL_CHECK(glUniformBlockBinding(program, index, 1))
-    GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, buffers->b[1].name))
+    GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, universe->geometry->name))
     LU_NO_CLEANUP
 }
 
@@ -129,29 +109,31 @@ static int init_opengl(lulog *log) {
 }
 
 static int with_glfw(lulog *log) {
+
     LU_STATUS
     GLFWwindow *window = NULL;
-    luary_buffer *buffers = NULL;
-    luary_uint32 *counts = NULL;
-    luary_int32 *offsets = NULL;
-    GLuint program, vao;
-    user_action *action = NULL;
-    double tik[2] = {glfwGetTime(), 0};
-    float variables[n_variables] = {};
-    LU_CHECK(init_geometry(log, variables));
+    GLuint program;
+    universe *universe = NULL;
+
     LU_CHECK(create_glfw_context(log, &window))
     LU_CHECK(load_opengl_functions(log))
     LU_CHECK(init_opengl(log))
-    LU_CHECK(set_window_callbacks(log, window, &action))
+
     LU_CHECK(build_program(log, &program))
-    LU_CHECK(build_buffers(log, &buffers, &offsets, &counts))
-    LU_CHECK(build_vao(log, program, buffers, &vao))
-    LU_CHECK(build_uniforms(log, program, buffers))
+    LU_CHECK(mkuniverse(log, &universe, program, n_variables, window))
+    LU_CHECK(init_keys(log, universe->action))
+    LU_CHECK(init_geometry(log, universe->variables))
+    LU_CHECK(set_window_callbacks(log, window, universe->action))
+    LU_CHECK(build_geometry(universe, program))
+    LU_CHECK(build_hexagon(universe, program))
+
+    double tik[2] = {glfwGetTime(), 0};
     while (!glfwWindowShouldClose(window)) {
         tik[1] = glfwGetTime();
-        LU_CHECK(respond_to_user(log, tik[1] - tik[0], action, variables));
-        LU_CHECK(update_geometry(log, tik[1] - tik[0], program, variables, &buffers->b[1]));
-        LU_CHECK(display(log, program, vao, offsets, counts))
+        LU_CHECK(respond_to_user(log, tik[1] - tik[0], universe->action, universe->variables))
+        LU_CHECK(update_geometry(log, tik[1] - tik[0],
+                universe->program, universe->variables, universe->geometry))
+        LU_CHECK(display(universe))
         glfwSwapBuffers(window);
         glfwPollEvents();
         tik[0] = tik[1];
@@ -159,9 +141,7 @@ static int with_glfw(lulog *log) {
     ludebug(log, "Clean exit");
 LU_CLEANUP
     glfwTerminate();
-    free(action);
-    status = luary_freebuffer(&buffers, status);
-    status = luary_freeint32(&offsets, status);
+    status = free_universe(&universe, status);
     LU_RETURN
 }
 

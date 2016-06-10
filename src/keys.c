@@ -5,13 +5,15 @@
 #include "lu/status.h"
 #include "lu/array_macros.h"
 
+#include "error_codes.h"
 #include "keys.h"
+#include "geometry.h"
 
 
 int set_keys(lulog *log, keys *keys, const char *name,
         int key0, int mod0, int key1, int mod1,
         float force, float kv, float kx, float lo, float hi,
-        variable_index index) {
+        size_t index) {
     LU_STATUS
     free(keys->name);
     LU_ALLOC(log, keys->name, strlen(name) + 1)
@@ -63,4 +65,15 @@ int update_controls(lulog *log, double dt, luary_control *controls, float *varia
     }
     LU_NO_CLEANUP
 }
+
+int respond_to_user(lulog *log, double dt, user_action *action, float *variables) {
+    LU_STATUS
+    LU_CHECK(update_controls(log, dt, action->controls, variables))
+    int width, height;
+    glfwGetFramebufferSize(action->window, &width, &height);
+    GL_CHECK(glViewport(0, 0, width, height))
+    variables[buffer_x] = width; variables[buffer_y] = height;
+    LU_NO_CLEANUP
+}
+
 

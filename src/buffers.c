@@ -9,33 +9,18 @@
 #include "buffers.h"
 
 
-LUARY_MKBASE(buffer, luary_buffer, buffer, b)
-
-int luary_pushbuffer(lulog *log, luary_buffer *buffers,
-        GLuint name, GLenum target, GLenum usage, size_t count, size_t bytes, size_t chunk) {
-    LU_STATUS
-    LU_CHECK(luary_reservebuffer(log, buffers, 1))
-    buffers->b[buffers->mem.used++] = (buffer){name, target, usage, count, bytes, chunk};
-    LU_NO_CLEANUP
-}
-
-
 int load_buffer(lulog *log, GLenum target, GLenum usage,
-        const void *data, size_t count, size_t chunk, luary_buffer **buffers) {
+        const void *data, size_t count, size_t chunk, buffer **buffer) {
     LU_STATUS
-    GLuint buffer;
-    size_t bytes = count * chunk;
-    GL_CHECK(glGenBuffers(1, &buffer))
-    GL_CHECK(glBindBuffer(target, buffer))
+    size_t bytes = chunk * count;
+    LU_ALLOC(log, *buffer, 1)
+    (*buffer)->target = target;
+    GL_CHECK(glGenBuffers(1, &(*buffer)->name))
+    LU_CHECK(bind_buffer(log, *buffer))
     GL_CHECK(glBufferData(target, bytes, data, usage))
-    GL_CHECK(glBindBuffer(target, 0))
-    if (!*buffers) {
-        LU_CHECK(luary_mkbuffern(log, buffers, 1));
-    }
-    LU_CHECK(luary_pushbuffer(log, *buffers,
-            buffer, target, usage, count, bytes, chunk))
-    luinfo(log, "Loaded %zu bytes (%zu x %zu) to buffer %u (%zu)",
-            bytes, count, chunk, buffer, (*buffers)->mem.used-1);
+    LU_CHECK(unbind_buffer(log, *buffer))
+    luinfo(log, "Loaded %zu bytes (%zu x %zu) to buffer %u",
+            bytes, count, chunk, buffer);
     LU_NO_CLEANUP
 }
 
@@ -45,24 +30,8 @@ int bind_buffer(lulog *log, buffer *buffer) {
     LU_NO_CLEANUP
 }
 
-int bind_buffers(lulog *log, luary_buffer *buffers) {
-    LU_STATUS
-    for (size_t i = 0; i < buffers->mem.used; ++i) {
-        LU_CHECK(bind_buffer(log, &buffers->b[i]))
-    }
-    LU_NO_CLEANUP
-}
-
 int unbind_buffer(lulog *log, buffer *buffer) {
     LU_STATUS
     GL_CHECK(glBindBuffer(buffer->target, 0))
-    LU_NO_CLEANUP
-}
-
-int unbind_buffers(lulog *log, luary_buffer *buffers) {
-    LU_STATUS
-    for (size_t i = 0; i < buffers->mem.used; ++i) {
-        LU_CHECK(unbind_buffer(log, &buffers->b[i]))
-    }
     LU_NO_CLEANUP
 }

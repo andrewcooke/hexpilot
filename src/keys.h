@@ -5,7 +5,8 @@
 #include "lu/log.h"
 #include "lu/vectors.h"
 
-#include "geometry.h"
+#include "glad.h"
+#include <GLFW/glfw3.h>
 
 
 typedef struct keys {
@@ -16,13 +17,13 @@ typedef struct keys {
     float kv;
     float kx;
     float limits[2];
-    variable_index index;
+    size_t index;
 } keys;
 
 int set_keys(lulog *log, keys *keys, const char *name,
         int key1, int mod1, int key2, int mod2,
         float force, float kv, float kx, float lo, float hi,
-        variable_index index);
+        size_t index);
 
 typedef struct variables {
     double pressed[2];
@@ -40,11 +41,19 @@ typedef struct luary_control {
     lumem mem;
 } luary_control;
 
+typedef struct user_action {
+    lulog *log;
+    GLFWwindow *window;
+    luary_control *controls;
+} user_action;
+
 int luary_mkcontroln(lulog *log, luary_control **controls, size_t n);
 int luary_freecontrol(luary_control **controls, int prev_status);
 int luary_reservecontrol(lulog *log, luary_control *controls, size_t n);
 int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x);
 size_t luary_sizecontrol(luary_control *buffer);
+
+int respond_to_user(lulog *log, double dt, user_action *action, float *variables);
 
 int update_control(lulog *log, double dt, control *control, float *x);
 int update_controls(lulog *log, double dt, luary_control *controls, float *variables);

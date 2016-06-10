@@ -6,6 +6,7 @@
 
 #include "glad.h"
 #include "buffers.h"
+#include "glfw.h"
 
 
 typedef enum variable_index {
@@ -34,7 +35,8 @@ typedef struct geometry_data {
     lumat_f4 camera_clip;
 } geometry_data;
 
+int init_keys(lulog *log, user_action *action);
 int init_geometry(lulog *log, float *variables);
-int update_geometry(lulog *log, double dt, GLuint program, float *variables, buffer *buffer);
+int update_geometry(lulog *log, double , GLuint program, float *variables, buffer *buffer);
 
 #endif

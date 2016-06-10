@@ -86,3 +86,20 @@ LU_CLEANUP
     status = luary_freeuint32(shaders, status);
     LU_RETURN2(prev_status)
 }
+
+int interleaved_vnorm_vao(lulog *log, GLuint program, buffer *buffer, GLuint *vao) {
+    LU_STATUS
+    GL_CHECK(glGenVertexArrays(1, vao))
+    GL_CHECK(glBindVertexArray(*vao))
+    GL_CHECK(glUseProgram(program))
+    LU_CHECK(bind_buffer(log, buffer))
+    GL_CHECK(glEnableVertexAttribArray(0))
+    GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, 0))
+    GL_CHECK(glEnableVertexAttribArray(1))
+    GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 32, (void*)16))
+    GL_CHECK(glBindVertexArray(0))
+    LU_CHECK(unbind_buffer(log, buffer))
+    LU_NO_CLEANUP
+}
+
+
