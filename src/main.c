@@ -128,15 +128,21 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_hexagon(universe, program))
 
     double tik[2] = {glfwGetTime(), 0};
+    double fpszero = glfwGetTime(); int fcount = 0;
     while (!glfwWindowShouldClose(window)) {
         tik[1] = glfwGetTime();
-        LU_CHECK(respond_to_user(log, tik[1] - tik[0], universe->action, universe->variables))
+        if (tik[1] > fpszero+1) {
+            ludebug(log, "%0.1f fps", fcount / (tik[1] - fpszero));
+            fpszero = tik[1];
+        }
+        LU_CHECK(respond_to_user(log, tik[1] - tik[0],
+                universe->action, universe->variables))
         LU_CHECK(update_geometry(log, tik[1] - tik[0],
                 universe->program, universe->variables, universe->geometry))
         LU_CHECK(display(universe))
         glfwSwapBuffers(window);
         glfwPollEvents();
-        tik[0] = tik[1];
+        tik[0] = tik[1]; fcount++;
     }
     ludebug(log, "Clean exit");
 LU_CLEANUP
