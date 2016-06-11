@@ -67,6 +67,6 @@ int draw_multi_arrays(lulog *log, model *model) {
     GL_CHECK(glBindVertexArray(model->vao))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
 LU_CLEANUP
-    GL_CHECK(glBindVertexArray(0))
+    GL_CLEAN(glBindVertexArray(0))
     LU_RETURN
 }

@@ -97,9 +97,10 @@ int interleaved_vnorm_vao(lulog *log, GLuint program, buffer *buffer, GLuint *va
     GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, 0))
     GL_CHECK(glEnableVertexAttribArray(1))
     GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 32, (void*)16))
-    GL_CHECK(glBindVertexArray(0))
-    LU_CHECK(unbind_buffer(log, buffer))
-    LU_NO_CLEANUP
+LU_CLEANUP
+    GL_CLEAN(glBindVertexArray(0))
+    LU_CLEAN(unbind_buffer(log, buffer))
+    LU_RETURN
 }
 
 

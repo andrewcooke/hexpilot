@@ -1,5 +1,6 @@
 
 #include <math.h>
+#include <string.h>
 
 #include "lu/status.h"
 #include "lu/tiles.h"
@@ -294,6 +295,8 @@ static int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
                 luvec_subf4_3(p1, p0, &e1);
                 luvec_subf4_3(p2, p0, &e2);
                 luvec_crsf4_3(&e1, &e2, &n);
+                luvec_nrmf4_3in(&n);
+//                if (j % 2) luvec_sclf4_3in(-1, &n);
                 n[3] = 0;
             }
             LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
@@ -334,4 +337,32 @@ LU_CLEANUP
     LU_RETURN
 }
 
+int ship_vnormal_strips(lulog *log, double step,
+        luary_vnorm **vertices, luary_int32 **offsets, luary_uint32 **counts) {
+    LU_STATUS
+    float points[][4] = {{-1,-3,0,1},{-1,3,0,1},{5,0,0,1},{0,0,1,1}};
+    uint32_t index[] = {1,0,2,3,1,0};
+//    uint32_t index[] = {0,1,2,3,0,1};
+    size_t np = sizeof(points) / sizeof(points[0]), ni = sizeof(index) / sizeof(index[0]);
+    luary_vecf4 *f4 = NULL;
+    luary_uint32 *ioffsets = NULL, *indices = NULL;
+    LU_CHECK(luary_mkvecf4n(log, &f4, np))
+    memcpy(f4->v, points, sizeof(points)); f4->mem.used = np;
+    for (size_t i = 0; i < f4->mem.used; ++i) {
+        luvec_sclf4_3in(step, &f4->v[i]);
+    }
+    LU_CHECK(luary_mkuint32n(log, &indices, ni))
+    memcpy(indices->i, index, sizeof(index)); indices->mem.used = ni;
+    LU_CHECK(luary_mkuint32n(log, &ioffsets, 1))
+    LU_CHECK(luary_pushuint32(log, ioffsets, 0))
+    LU_CHECK(luary_mkuint32n(log, counts, 1))
+    LU_CHECK(luary_pushuint32(log, *counts, ni))
+    LU_CHECK(normals(log, indices, ioffsets, *counts, f4, vertices))
+    LU_CHECK(uint2int(log, ioffsets, offsets))
+    luary_dumpvnorm(log, *vertices, "Ship vnorms", (*vertices)->mem.used);
+LU_CLEANUP
+    status = luary_freevecf4(&f4, status);
+    status = luary_freeuint32(&ioffsets, status);
+    LU_RETURN
+}
 

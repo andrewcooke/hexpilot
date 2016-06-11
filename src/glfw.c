@@ -21,7 +21,7 @@ int create_glfw_context(lulog *log, GLFWwindow **window) {
     LU_ASSERT(*window = glfwCreateWindow(320, 320, "hexpilot", NULL, NULL),
             HP_ERR_GLFW, log, "Could not create window")
     glfwMakeContextCurrent(*window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(1);  // 0 to see raw fps
     LU_NO_CLEANUP
 }
 

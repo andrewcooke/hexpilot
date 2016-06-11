@@ -23,8 +23,9 @@ static int display(universe *universe) {
     for (size_t i = 0; i < universe->models->mem.used; ++i) {
         LU_CHECK(universe->models->m[i]->draw(log, universe->models->m[i]))
     }
-    GL_CHECK(glUseProgram(0))
-    LU_NO_CLEANUP
+LU_CLEANUP
+    GL_CLEAN(glUseProgram(0))
+    LU_RETURN
 }
 
 static const char* vertex_shader =
@@ -42,7 +43,7 @@ static const char* vertex_shader =
         "  vec4 c_position = model_camera * position;\n"
         "  vec4 c_normal = vec4(normalize((model_camera_n * normal).xyz), 0);\n"
         "  float brightness_1 = clamp(dot(c_normal, light_camera), 0, 1);\n"
-        "  float brightness_2 = clamp(dot(c_normal, vec4(0,0,1,0)), 0, 1);\n"
+        "  float brightness_2 = clamp(dot(c_normal, vec4(0,0,-1,0)), 0, 1);\n"
         "  float brightness = 0.85 * brightness_1 + 0.15 * brightness_2;\n"
         "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
         "  gl_Position = camera_clip * c_position;\n"
@@ -74,6 +75,22 @@ static int build_hexagon(universe *universe, GLuint program) {
     luary_vnorm *vertices = NULL;
     LU_CHECK(mkmodel(log, &model));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
+    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+            vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
+    LU_CHECK(interleaved_vnorm_vao(log, program, model->vertices, &model->vao))
+    push_model(universe, model);
+LU_CLEANUP
+    status = luary_freevnorm(&vertices, status);
+    LU_RETURN
+}
+
+static int build_ship(universe *universe, GLuint program) {
+    LU_STATUS
+    lulog *log = universe->log;
+    model *model = NULL;
+    luary_vnorm *vertices = NULL;
+    LU_CHECK(mkmodel(log, &model));
+    LU_CHECK(ship_vnormal_strips(log, 0.1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
     LU_CHECK(interleaved_vnorm_vao(log, program, model->vertices, &model->vao))
@@ -125,15 +142,16 @@ static int with_glfw(lulog *log) {
     LU_CHECK(init_geometry(log, universe->variables))
     LU_CHECK(set_window_callbacks(log, window, universe->action))
     LU_CHECK(build_geometry(universe, program))
-    LU_CHECK(build_hexagon(universe, program))
+//    LU_CHECK(build_hexagon(universe, program))
+    LU_CHECK(build_ship(universe, program))
 
     double tik[2] = {glfwGetTime(), 0};
     double fpszero = glfwGetTime(); int fcount = 0;
     while (!glfwWindowShouldClose(window)) {
         tik[1] = glfwGetTime();
         if (tik[1] > fpszero+1) {
-            ludebug(log, "%0.1f fps", fcount / (tik[1] - fpszero));
-            fpszero = tik[1];
+//            ludebug(log, "%0.1f fps", fcount / (tik[1] - fpszero));
+            fpszero = tik[1]; fcount = 0;
         }
         LU_CHECK(respond_to_user(log, tik[1] - tik[0],
                 universe->action, universe->variables))
