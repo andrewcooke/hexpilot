@@ -92,7 +92,7 @@ static int calculate_geometry(lulog *log, float *variables, geometry_data *data)
     // transform light direction to camera space
     luvec_f4 light_model =
         {variables[light_x], variables[light_y], variables[light_z], 0};
-    luvec_mulf4(&data->model_camera, &light_model, &data->light_camera);
+    luvec_mulf4(&data->model_camera_n, &light_model, &data->light_camera);
 
     // from page 66 of LM3DGP, but with the signs of near_z and far_z
     // changed (for some reason the author decided those should be

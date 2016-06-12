@@ -43,8 +43,8 @@ static const char* vertex_shader =
         "  vec4 c_position = model_camera * position;\n"
         "  vec4 c_normal = vec4(normalize((model_camera_n * normal).xyz), 0);\n"
         "  float brightness_1 = clamp(dot(c_normal, light_camera), 0, 1);\n"
-        "  float brightness_2 = clamp(dot(c_normal, vec4(0,0,-1,0)), 0, 1);\n"
-        "  float brightness = 0.85 * brightness_1 + 0.15 * brightness_2;\n"
+        "  float brightness_2 = clamp(dot(c_normal, vec4(0,0,1,0)), 0, 1);\n"
+        "  float brightness = 0.5 * brightness_1 + 0.3 * brightness_2;\n"
         "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
         "  gl_Position = camera_clip * c_position;\n"
         "}\n";
@@ -142,7 +142,7 @@ static int with_glfw(lulog *log) {
     LU_CHECK(init_geometry(log, universe->variables))
     LU_CHECK(set_window_callbacks(log, window, universe->action))
     LU_CHECK(build_geometry(universe, program))
-//    LU_CHECK(build_hexagon(universe, program))
+    LU_CHECK(build_hexagon(universe, program))
     LU_CHECK(build_ship(universe, program))
 
     double tik[2] = {glfwGetTime(), 0};
