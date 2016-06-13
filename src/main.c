@@ -46,7 +46,7 @@ static const char* vertex_shader =
         "  vec4 c_normal = vec4(normalize((model_to_camera_n * normal).xyz), 0);\n"
         "  float brightness_1 = clamp(dot(c_normal, camera_light_pos), 0, 1);\n"
         "  float brightness_2 = clamp(dot(c_normal, vec4(0,0,1,0)), 0, 1);\n"
-        "  float brightness = 0.5 * brightness_1 + 0.0 * brightness_2;\n"
+        "  float brightness = 0.6 * brightness_1 + 0.1 * brightness_2;\n"
         "  interpColour = vec4(brightness * colour, 1.0);\n"
         "  gl_Position = camera_to_clip * c_position;\n"
         "}\n";
@@ -92,7 +92,7 @@ static int build_ship(universe *universe, GLuint program) {
     model *model = NULL;
     luary_vnorm *vertices = NULL;
     LU_CHECK(mkmodel(log, &model, &send_ship_data));
-    LU_CHECK(ship_vnormal_strips(log, 0.1, &vertices, &model->offsets, &model->counts))
+    LU_CHECK(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
     LU_CHECK(interleaved_vnorm_vao(log, program, model->vertices, &model->vao))

@@ -78,26 +78,27 @@ static int calculate_geometry(lulog *log, float *variables, geometry *geometry) 
     // programming", page 60 onwards.  the projection plane is at
     // z=-1 and includes [-1,1] in x and y.  the camera is at (0,0)
     // looking towards -ve z.
-    lumat_idnf4(&geometry->hex_to_camera);
+
     // move to ship location
-    lumat_offf4_3(variables[ship_x], variables[ship_y], 0, &m);
-    lumat_mulf4_in(&m, &geometry->hex_to_camera);
+    lumat_offf4_3(variables[ship_x], variables[ship_y], 0, &geometry->hex_to_camera);
     // orient so that we are looking along the ship's velocity
     // ie rotate until y axis points along ship
-    lumat_rotf4_z(variables[ship_angle], &m);
-    lumat_mulf4_in(&m, &geometry->hex_to_camera);
+    lumat_f4 rotation = {};  // save this part to use on light direction
+    lumat_rotf4_z(variables[ship_angle], &rotation);
     // tilt to the camera angle
     lumat_rotf4_x(variables[camera_elevation] - M_PI/2, &m);
-    lumat_mulf4_in(&m, &geometry->hex_to_camera);
+    lumat_mulf4_in(&m, &rotation);
+    lumat_mulf4_in(&rotation, &geometry->hex_to_camera);
     // retreat back along camera view
     lumat_offf4_3(0, 0, -variables[camera_distance], &m);
     lumat_mulf4_in(&m, &geometry->hex_to_camera);
     LU_CHECK(normal_transform(log,  &geometry->hex_to_camera,  &geometry->hex_to_camera_n))
 
     // transform light direction to camera space
-    luvec_f4 light_model =
+    luvec_f4 model_light_pos =
         {variables[light_x], variables[light_y], variables[light_z], 0};
-    luvec_mulf4(&geometry->hex_to_camera, &light_model, &geometry->camera_light_pos);
+    luvec_mulf4(&rotation, &model_light_pos, &geometry->camera_light_pos);
+    luvec_nrmf4_3in(&geometry->camera_light_pos);
 
     // from page 66 of LM3DGP, but with the signs of near_z and far_z
     // changed (for some reason the author decided those should be
