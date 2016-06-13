@@ -40,6 +40,7 @@ int init_geometry(lulog *log, float *variables) {
     variables[camera_elevation] = M_PI/4;
     variables[camera_distance] = 4;
     variables[ship_angle] = 0;
+    variables[ship_z] = 1;
     variables[light_x] = 1;
     variables[light_y] = 1;
     variables[light_z] = 1;
@@ -71,7 +72,9 @@ static int calculate_geometry(lulog *log, float *variables, geometry *geometry) 
     // from the origin.  that seems quite reasonable for the world, too.
     // so we use hex coords as the world space.
 
-    lumat_offf4_3(-variables[ship_x], -variables[ship_y], -variables[ship_z], &geometry->ship_to_hex);
+    lumat_rotf4_z(-variables[ship_angle] + M_PI/2, &geometry->ship_to_hex);
+    lumat_offf4_3(-variables[ship_x], -variables[ship_y], variables[ship_z], &m);
+    lumat_mulf4_in(&m, &geometry->ship_to_hex);
     LU_CHECK(normal_transform(log, &geometry->ship_to_hex, &geometry->ship_to_hex_n))
 
     // camera space is described in "learning modern 3d graphics
