@@ -14,6 +14,7 @@ typedef enum variable_index {
     ship_rotation,
     ship_x,
     ship_y,
+    ship_z,
     ship_angle,
     camera_elevation,
     camera_distance,
@@ -28,15 +29,26 @@ typedef enum variable_index {
     n_variables
 } variable_index;
 
-typedef struct geometry_data {
-    luvec_f4 light_camera;
-    lumat_f4 model_camera;
-    lumat_f4 model_camera_n;
-    lumat_f4 camera_clip;
-} geometry_data;
+typedef struct geometry {
+    luvec_f4 camera_light_pos;
+    lumat_f4 ship_to_hex;
+    lumat_f4 ship_to_hex_n;
+    lumat_f4 hex_to_camera;
+    lumat_f4 hex_to_camera_n;
+    lumat_f4 camera_to_clip;
+} geometry;
+
+typedef struct geometry_buffer {
+    luvec_f3 colour;              // 0
+    float padding;
+    luvec_f4 camera_light_pos;    // 16
+    lumat_f4 model_to_camera;     // 32
+    lumat_f4 model_to_camera_n;   // 96
+    lumat_f4 camera_to_clip;      // 160
+} geometry_buffer;
 
 int init_keys(lulog *log, user_action *action);
 int init_geometry(lulog *log, float *variables);
-int update_geometry(lulog *log, double , GLuint program, float *variables, buffer *buffer);
+int update_geometry(lulog *log, double, float *variables, geometry *geometry);
 
 #endif

@@ -6,10 +6,13 @@
 
 #include "buffers.h"
 #include "keys.h"
+#include "geometry.h"
 
 
 struct model;
+struct universe;
 
+typedef int send(lulog *log, struct model *model, struct universe *universe);
 typedef int draw(lulog *log, struct model *model);
 
 typedef struct model {
@@ -17,6 +20,8 @@ typedef struct model {
     buffer *vertices;
     luary_int32 *offsets;
     luary_uint32 *counts;
+    luvec_f3 colour;
+    send *send;
     draw *draw;
 } model;
 
@@ -36,16 +41,20 @@ typedef struct universe {
     GLuint program;
     float *variables;
     luary_model *models;
-    buffer *geometry;
+    geometry *geometry;
+    buffer *geometry_buffer;
     user_action *action;
 } universe;
 
 int mkuniverse(lulog *log, universe **universe,
         GLuint program, size_t n_variables, GLFWwindow *window);
 int free_universe(universe **universe, int status);
-int mkmodel(lulog *log, model **model);
+int mkmodel(lulog *log, model **model, send *send);
 int free_model(model **model, int status);
 int push_model(universe *universe, model *model);
 int draw_multi_arrays(lulog *log, model *model);
+
+int send_hex_data(lulog *log, model *model, universe *universe);
+int send_ship_data(lulog *log, model *model, universe *universe);
 
 #endif

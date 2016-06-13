@@ -21,6 +21,7 @@ static int display(universe *universe) {
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     GL_CHECK(glUseProgram(universe->program))
     for (size_t i = 0; i < universe->models->mem.used; ++i) {
+        LU_CHECK(universe->models->m[i]->send(log, universe->models->m[i], universe))
         LU_CHECK(universe->models->m[i]->draw(log, universe->models->m[i]))
     }
 LU_CLEANUP
@@ -33,20 +34,21 @@ static const char* vertex_shader =
         "layout(location = 0) in vec4 position;\n"
         "layout(location = 1) in vec4 normal;\n"
         "layout(std140) uniform geometry {\n"
-        "  vec4 light_camera;\n"
-        "  mat4 model_camera;\n"
-        "  mat4 model_camera_n;\n"
-        "  mat4 camera_clip;\n"
+        "  vec3 colour;\n"
+        "  vec4 camera_light_pos;\n"
+        "  mat4 model_to_camera;\n"
+        "  mat4 model_to_camera_n;\n"
+        "  mat4 camera_to_clip;\n"
         "};\n"
         "flat out vec4 interpColour;\n"
         "void main(){\n"
-        "  vec4 c_position = model_camera * position;\n"
-        "  vec4 c_normal = vec4(normalize((model_camera_n * normal).xyz), 0);\n"
-        "  float brightness_1 = clamp(dot(c_normal, light_camera), 0, 1);\n"
+        "  vec4 c_position = model_to_camera * position;\n"
+        "  vec4 c_normal = vec4(normalize((model_to_camera_n * normal).xyz), 0);\n"
+        "  float brightness_1 = clamp(dot(c_normal, camera_light_pos), 0, 1);\n"
         "  float brightness_2 = clamp(dot(c_normal, vec4(0,0,1,0)), 0, 1);\n"
-        "  float brightness = 0.5 * brightness_1 + 0.3 * brightness_2;\n"
-        "  interpColour = vec4(brightness * vec3(1.0, 0.0, 0.0), 1.0);\n"
-        "  gl_Position = camera_clip * c_position;\n"
+        "  float brightness = 0.5 * brightness_1 + 0.0 * brightness_2;\n"
+        "  interpColour = vec4(brightness * colour, 1.0);\n"
+        "  gl_Position = camera_to_clip * c_position;\n"
         "}\n";
 
 static const char* fragment_shader =
@@ -73,7 +75,7 @@ static int build_hexagon(universe *universe, GLuint program) {
     lulog *log = universe->log;
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model));
+    LU_CHECK(mkmodel(log, &model, &send_hex_data));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
@@ -89,7 +91,7 @@ static int build_ship(universe *universe, GLuint program) {
     lulog *log = universe->log;
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model));
+    LU_CHECK(mkmodel(log, &model, &send_ship_data));
     LU_CHECK(ship_vnormal_strips(log, 0.1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
@@ -104,11 +106,11 @@ static int build_geometry(universe *universe, GLuint program) {
     LU_STATUS
     lulog *log = universe->log;
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
-            NULL, 1, sizeof(geometry_data), &universe->geometry));
+            NULL, 1, sizeof(geometry_buffer), &universe->geometry_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
     GL_CHECK(GLuint index = glGetUniformBlockIndex(program, "geometry"))
     GL_CHECK(glUniformBlockBinding(program, index, 1))
-    GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, universe->geometry->name))
+    GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, universe->geometry_buffer->name))
     LU_NO_CLEANUP
 }
 
@@ -156,7 +158,7 @@ static int with_glfw(lulog *log) {
         LU_CHECK(respond_to_user(log, tik[1] - tik[0],
                 universe->action, universe->variables))
         LU_CHECK(update_geometry(log, tik[1] - tik[0],
-                universe->program, universe->variables, universe->geometry))
+                universe->variables, universe->geometry))
         LU_CHECK(display(universe))
         glfwSwapBuffers(window);
         glfwPollEvents();

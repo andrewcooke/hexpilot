@@ -54,45 +54,50 @@ static int calculate_physics(lulog *log, double dt, float *variables) {
     LU_NO_CLEANUP
 }
 
-static int calculate_geometry(lulog *log, float *variables, geometry_data *data) {
+static int normal_transform(lulog *log, lumat_f4 *m, lumat_f4 *n) {
+    LU_STATUS
+    lumat_f4 x = {};
+    LU_CHECK(lumat_invf4(log, m, &x));
+    lumat_trnf4(&x, n);
+    LU_NO_CLEANUP
+}
+
+static int calculate_geometry(lulog *log, float *variables, geometry *geometry) {
 
     LU_STATUS
-    lumat_f4 model_world = {}, world_camera = {}, m = {};
+    lumat_f4 ship_to_hex = {}, world_to_camera = {}, m = {};
 
     // the hex surface goes from -1 to 1 in z and extends outwards in x, y
     // from the origin.  that seems quite reasonable for the world, too.
-    lumat_idnf4(&model_world);
+    // so we use hex coords as the world space.
+
+    lumat_offf4_3(-variables[ship_x], -variables[ship_y], -variables[ship_z], &geometry->ship_to_hex);
+    LU_CHECK(normal_transform(log, &geometry->ship_to_hex, &geometry->ship_to_hex_n))
 
     // camera space is described in "learning modern 3d graphics
     // programming", page 60 onwards.  the projection plane is at
     // z=-1 and includes [-1,1] in x and y.  the camera is at (0,0)
     // looking towards -ve z.
-    lumat_idnf4(&world_camera);
+    lumat_idnf4(&geometry->hex_to_camera);
     // move to ship location
     lumat_offf4_3(variables[ship_x], variables[ship_y], 0, &m);
-    lumat_mulf4_in(&m, &world_camera);
+    lumat_mulf4_in(&m, &geometry->hex_to_camera);
     // orient so that we are looking along the ship's velocity
     // ie rotate until y axis points along ship
     lumat_rotf4_z(variables[ship_angle], &m);
-    lumat_mulf4_in(&m, &world_camera);
+    lumat_mulf4_in(&m, &geometry->hex_to_camera);
     // tilt to the camera angle
     lumat_rotf4_x(variables[camera_elevation] - M_PI/2, &m);
-    lumat_mulf4_in(&m, &world_camera);
+    lumat_mulf4_in(&m, &geometry->hex_to_camera);
     // retreat back along camera view
     lumat_offf4_3(0, 0, -variables[camera_distance], &m);
-    lumat_mulf4_in(&m, &world_camera);
-
-    // combine model_world and world_camera
-    lumat_mulf4(&world_camera, &model_world, &data->model_camera);
-
-    // the equivalent for normals
-    LU_CHECK(lumat_invf4(log, &data->model_camera, &m))
-    lumat_trnf4(&m, &data->model_camera_n);
+    lumat_mulf4_in(&m, &geometry->hex_to_camera);
+    LU_CHECK(normal_transform(log,  &geometry->hex_to_camera,  &geometry->hex_to_camera_n))
 
     // transform light direction to camera space
     luvec_f4 light_model =
         {variables[light_x], variables[light_y], variables[light_z], 0};
-    luvec_mulf4(&data->model_camera_n, &light_model, &data->light_camera);
+    luvec_mulf4(&geometry->hex_to_camera, &light_model, &geometry->camera_light_pos);
 
     // from page 66 of LM3DGP, but with the signs of near_z and far_z
     // changed (for some reason the author decided those should be
@@ -108,24 +113,14 @@ static int calculate_geometry(lulog *log, float *variables, geometry_data *data)
     lumat_setf4(scale_x,       0,           0,           0,
                       0, scale_y,           0,           0,
                       0,       0, (n+f)/(n-f), 2*f*n/(n-f),
-                      0,       0,          -1,           0, &data->camera_clip);
+                      0,       0,          -1,           0, &geometry->camera_to_clip);
     LU_NO_CLEANUP
 }
 
-static int send_geometry(lulog *log, GLuint program, geometry_data *data, buffer *buffer) {
+int update_geometry(lulog *log, double dt, float *variables, geometry *geometry) {
     LU_STATUS
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, buffer->name))
-    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(*data), data))
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
-    LU_NO_CLEANUP
-}
-
-int update_geometry(lulog *log, double dt, GLuint program, float *variables, buffer *buffer) {
-    LU_STATUS
-    geometry_data data = {};
     LU_CHECK(calculate_physics(log, dt, variables))
-    LU_CHECK(calculate_geometry(log, variables, &data))
-    LU_CHECK(send_geometry(log, program, &data, buffer))
+    LU_CHECK(calculate_geometry(log, variables, geometry))
     LU_NO_CLEANUP
 }
 

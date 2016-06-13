@@ -290,12 +290,12 @@ static int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
             if (j > 1) {
                 luvec_f4 *p1 = &vertices->v[indices->i[k-1]];
                 luvec_f4 *p2 = &vertices->v[indices->i[k-2]];
-//                if ((*p1)[1] < (*p2)[1]) {luvec_f4 *tmp = p1; p1 = p2; p2 = tmp;}
                 luvec_f4 e1 = {}, e2 = {};
                 luvec_subf4_3(p1, p0, &e1);
                 luvec_subf4_3(p2, p1, &e2);
                 luvec_crsf4_3(&e1, &e2, &n);
                 luvec_nrmf4_3in(&n);
+                // alternate windows are reversed in strip
                 if (j % 2) luvec_sclf4_3in(-1, &n);
                 n[3] = 0;
             }

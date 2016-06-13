@@ -27,6 +27,7 @@ int mkuniverse(lulog *log, universe **universe,
     (*universe)->program = program;
     LU_ALLOC(log, (*universe)->variables, n_variables)
     LU_CHECK(luary_mkmodeln(log, &(*universe)->models, 1))
+    LU_ALLOC(log, (*universe)->geometry, 1);
     LU_ALLOC(log, (*universe)->action, 1)
     LU_CHECK(luary_mkcontroln(log, &(*universe)->action->controls, 1))
     (*universe)->action->log = log;
@@ -34,10 +35,11 @@ int mkuniverse(lulog *log, universe **universe,
     LU_NO_CLEANUP
 }
 
-int mkmodel(lulog *log, model **model) {
+int mkmodel(lulog *log, model **model, send *send) {
     LU_STATUS
     LU_ALLOC(log, *model, 1)
     (*model)->draw = &draw_multi_arrays;
+    (*model)->send = send;
     LU_NO_CLEANUP
 }
 
@@ -51,6 +53,8 @@ int free_universe(universe **universe, int prev) {
                 free((*universe)->models->m[i]); (*universe)->models->m[i] = NULL;
             }
         }
+        free((*universe)->geometry);
+        free((*universe)->geometry_buffer);
         status = luary_freemodel(&(*universe)->models, status);
         free(*universe);
         *universe = NULL;
@@ -70,3 +74,39 @@ LU_CLEANUP
     GL_CLEAN(glBindVertexArray(0))
     LU_RETURN
 }
+
+static luvec_f3 hex_red = {1,0,0};
+
+int send_hex_data(lulog *log, model *model, universe *universe) {
+    LU_STATUS
+//    ludebug(log, "Sending hex geometry");
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, universe->geometry_buffer->name))
+    geometry_buffer buffer = {};
+    luvec_cpyf3(&hex_red, &buffer.colour);
+    luvec_cpyf4(&universe->geometry->camera_light_pos, &buffer.camera_light_pos);
+    lumat_cpyf4(&universe->geometry->hex_to_camera, &buffer.model_to_camera);
+    lumat_cpyf4(&universe->geometry->hex_to_camera_n, &buffer.model_to_camera_n);
+    lumat_cpyf4(&universe->geometry->camera_to_clip, &buffer.camera_to_clip);
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(buffer), &buffer))
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
+    LU_NO_CLEANUP
+}
+
+static luvec_f3 ship_cyan = {0,1,1};
+
+int send_ship_data(lulog *log, model *model, universe *universe) {
+    LU_STATUS
+//    ludebug(log, "Sending ship geometry");
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, universe->geometry_buffer->name))
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ship_cyan), &ship_cyan))
+    lumat_f4 ship_to_camera = {};
+    lumat_mulf4(&universe->geometry->hex_to_camera, &universe->geometry->ship_to_hex, &ship_to_camera);
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(ship_to_camera), &ship_to_camera))
+    lumat_f4 ship_to_camera_n = {};
+    lumat_mulf4(&universe->geometry->hex_to_camera_n, &universe->geometry->ship_to_hex_n, &ship_to_camera_n);
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 96, sizeof(ship_to_camera_n), &ship_to_camera_n))
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
+    LU_NO_CLEANUP
+}
+
+
