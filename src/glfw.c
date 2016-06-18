@@ -32,6 +32,7 @@ int create_glfw_context(lulog *log, GLFWwindow **window) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
     LU_ASSERT(*window = glfwCreateWindow(320, 320, "hexpilot", NULL, NULL),
             HP_ERR_GLFW, log, "Could not create window")
     glfwMakeContextCurrent(*window);

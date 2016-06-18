@@ -123,6 +123,7 @@ static int init_opengl(lulog *log) {
     GL_CHECK(glDepthMask(GL_TRUE))
     GL_CHECK(glDepthFunc(GL_LEQUAL))
     GL_CHECK(glDepthRange(0.0f, 1.0f))
+    GL_CHECK(glEnable(GL_MULTISAMPLE))  // see also GLFW_SAMPLES in glfw.c
 //    GL_CHECK(glEnable(GL_DEPTH_CLAMP))
     LU_NO_CLEANUP
 }
