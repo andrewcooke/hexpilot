@@ -11,6 +11,20 @@
 #include "error_codes.h"
 
 
+static lulog *LOG = NULL;
+
+static void on_error(int error, const char *message) {
+    luerror(LOG, "GLFW: %s (code %d)", error, message);
+}
+
+int init_glfw(lulog *log) {
+    LU_STATUS
+    LOG = log;
+    glfwSetErrorCallback(on_error);
+    LU_ASSERT(glfwInit(), HP_ERR_GLFW, log, "Could not start GLFW")
+    LU_NO_CLEANUP
+}
+
 int create_glfw_context(lulog *log, GLFWwindow **window) {
     LU_STATUS
     // not clear to me to what extent these duplicate or conflict with glad

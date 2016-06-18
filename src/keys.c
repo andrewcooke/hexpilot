@@ -15,7 +15,6 @@ int set_keys(lulog *log, keys *keys, const char *name,
         float force, float kv, float kx, float lo, float hi,
         size_t index) {
     LU_STATUS
-    free(keys->name);
     LU_ALLOC(log, keys->name, strlen(name) + 1)
     strcpy(keys->name, name);
     keys->keys[0] = key0; keys->mods[0] = mod0;
@@ -26,7 +25,6 @@ int set_keys(lulog *log, keys *keys, const char *name,
     LU_NO_CLEANUP
 }
 
-
 LUARY_MKBASE(control, luary_control, control, c)
 
 int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x) {
@@ -34,6 +32,34 @@ int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x) 
     LU_CHECK(luary_reservecontrol(log, controls, 1))
     variables v = {};
     controls->c[controls->mem.used++] = (control){*keys, v};
+    LU_NO_CLEANUP
+}
+
+int init_keys(lulog *log, user_action *action) {
+    LU_STATUS
+    keys k = {};
+    LU_CHECK(set_keys(log, &k, "+/-", 61, 1, 45, 0,
+            15, 10, 0,
+            0.1, 10, camera_zoom))
+    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 1))
+    LU_CHECK(set_keys(log, &k, "left/right", 262, 0, 263, 0,
+            0.3, 5, 5,
+            -0.5, 0.5, ship_rotation))
+    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 0))
+    LU_CHECK(set_keys(log, &k, "up/down",
+            265, 0, 264, 0,
+            2, 10, 0,
+            0, 4, ship_speed))
+    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 0))
+    LU_NO_CLEANUP
+}
+
+int free_keys(user_action *action) {
+    LU_STATUS
+    for (int i = 0; i < action->controls->mem.used; ++i) {
+        free(action->controls->c[i].k.name);
+    }
+    status = luary_freecontrol(&action->controls, status);
     LU_NO_CLEANUP
 }
 

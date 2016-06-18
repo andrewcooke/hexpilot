@@ -56,9 +56,14 @@ int free_universe(universe **universe, int prev) {
         free((*universe)->geometry);
         free((*universe)->geometry_buffer);
         status = luary_freemodel(&(*universe)->models, status);
+        if ((*universe)->action) {
+            LU_CHECK(free_keys((*universe)->action))
+            free((*universe)->action);
+        }
         free(*universe);
         *universe = NULL;
     }
+LU_CLEANUP
     LU_RETURN2(prev)
 }
 

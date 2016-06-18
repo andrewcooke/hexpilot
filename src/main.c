@@ -172,20 +172,15 @@ LU_CLEANUP
 }
 
 
-static lulog *LOG = NULL;
-
-static void on_error(int error, const char *message) {
-    luerror(LOG, "%d: %s", error, message);
-}
-
 int main(int argc, char** argv) {
     LU_STATUS
-    lulog_mkstderr(&LOG, lulog_level_debug);
-    glfwSetErrorCallback(on_error);
-    LU_ASSERT(sizeof(GLuint) == sizeof(unsigned int), HP_ERR, LOG,
+    lulog *log = NULL;
+    lulog_mkstderr(&log, lulog_level_debug);
+    LU_ASSERT(sizeof(GLuint) == sizeof(unsigned int), HP_ERR, log,
             "Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(unsigned int))
-    LU_ASSERT(glfwInit(), HP_ERR_GLFW, LOG, "Could not start GLFW")
-    LU_CHECK(with_glfw(LOG))
+    LU_CHECK(init_glfw(log))
+    LU_CHECK(with_glfw(log))
 LU_CLEANUP
+    if (log) status = log->free(&log, status);
     return status ? 1 : 0;
 }

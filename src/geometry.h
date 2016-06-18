@@ -47,7 +47,6 @@ typedef struct geometry_buffer {
     lumat_f4 camera_to_clip;      // 160
 } geometry_buffer;
 
-int init_keys(lulog *log, user_action *action);
 int init_geometry(lulog *log, float *variables);
 int update_geometry(lulog *log, double, float *variables, geometry *geometry);
 
