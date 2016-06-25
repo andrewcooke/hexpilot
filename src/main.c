@@ -51,19 +51,12 @@ static const char* vertex_shader =
         "  gl_Position = camera_to_clip * c_position;\n"
         "}\n";
 
-static const char* fragment_shader =
-        "#version 330\n"
-        "flat in vec4 interpColour;\n"
-        "out vec4 outputColor;\n"
-        "void main(){\n"
-        "  outputColor = interpColour;\n"
-        "}\n";
 
 static int build_program(lulog *log, GLuint *program) {
     LU_STATUS
     luary_uint32 *shaders = NULL;
-    LU_CHECK(compile_shader(log, GL_VERTEX_SHADER, vertex_shader, &shaders))
-    LU_CHECK(compile_shader(log, GL_FRAGMENT_SHADER, fragment_shader, &shaders))
+    LU_CHECK(compile_shader_from_string(log, GL_VERTEX_SHADER, vertex_shader, &shaders))
+    LU_CHECK(compile_shader_from_file(log, GL_FRAGMENT_SHADER, "direct_colour.frag", &shaders))
     LU_CHECK(link_program(log, shaders, program));
 LU_CLEANUP
     status = free_shaders(log, &shaders, status);

@@ -3,7 +3,9 @@
 #include <string.h>
 
 #include "lu/status.h"
+#include "lu/files.h"
 
+#include "hexpilot.h"
 #include "shaders.h"
 #include "error_codes.h"
 
@@ -22,7 +24,19 @@ const char *shader_type_str(lulog *log, GLenum shader_type) {
     }
 }
 
-int compile_shader(lulog *log, GLenum shader_type, const char *source, luary_uint32 **shaders) {
+int compile_shader_from_file(lulog *log, GLenum shader_type, const char *filename,
+		luary_uint32 **shaders) {
+	LU_STATUS
+	lustr source = {};
+	LU_CHECK(lufle_find_and_read(log, hp_xstr(DATADIR), HEXPILOT, "direct_colour.frag",
+			HEXPILOT_DATA, &source))
+	LU_CHECK(compile_shader_from_string(log, shader_type, source.c, shaders))
+LU_CLEANUP
+	status = lustr_free(&source, status);
+	LU_RETURN
+}
+
+int compile_shader_from_string(lulog *log, GLenum shader_type, const char *source, luary_uint32 **shaders) {
     LU_STATUS
     ludebug(log, "Compiling %s shader:", shader_type_str(log, shader_type));
     lulog_lines(log, lulog_level_debug, source);
