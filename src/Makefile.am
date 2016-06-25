@@ -1,10 +1,7 @@
 
-noinst_LTLIBRARIES = libhp.la
-libhp_la_SOURCES = shaders.c buffers.c geometry.c keys.c models.c tiles.c \
-	vertices.c glfw.c glad.c
+AM_CPPFLAGS = -DDATADIR='$(datadir)' -I../lib
+AM_CFLAGS = -L../lib
 
 bin_PROGRAMS = hexpilot
 hexpilot_SOURCES = main.c
-hexpilot_LDADD = -lhp
-
-
+hexpilot_LDADD = -lhexpilot
