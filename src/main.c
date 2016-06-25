@@ -29,33 +29,11 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static const char* vertex_shader =
-        "#version 330\n"
-        "layout(location = 0) in vec4 position;\n"
-        "layout(location = 1) in vec4 normal;\n"
-        "layout(std140) uniform geometry {\n"
-        "  vec3 colour;\n"
-        "  vec4 camera_light_pos;\n"
-        "  mat4 model_to_camera;\n"
-        "  mat4 model_to_camera_n;\n"
-        "  mat4 camera_to_clip;\n"
-        "};\n"
-        "flat out vec4 interpColour;\n"
-        "void main(){\n"
-        "  vec4 c_position = model_to_camera * position;\n"
-        "  vec4 c_normal = vec4(normalize((model_to_camera_n * normal).xyz), 0);\n"
-        "  float brightness_1 = clamp(dot(c_normal, camera_light_pos), 0, 1);\n"
-        "  float brightness_2 = clamp(dot(c_normal, vec4(0,0,1,0)), 0, 1);\n"
-        "  float brightness = 0.6 * brightness_1 + 0.1 * brightness_2;\n"
-        "  interpColour = vec4(brightness * colour, 1.0);\n"
-        "  gl_Position = camera_to_clip * c_position;\n"
-        "}\n";
-
 
 static int build_program(lulog *log, GLuint *program) {
     LU_STATUS
     luary_uint32 *shaders = NULL;
-    LU_CHECK(compile_shader_from_string(log, GL_VERTEX_SHADER, vertex_shader, &shaders))
+    LU_CHECK(compile_shader_from_file(log, GL_VERTEX_SHADER, "lit_model.vert", &shaders))
     LU_CHECK(compile_shader_from_file(log, GL_FRAGMENT_SHADER, "direct_colour.frag", &shaders))
     LU_CHECK(link_program(log, shaders, program));
 LU_CLEANUP
