@@ -6,6 +6,7 @@
 
 #include "glfw.h"
 #include "models.h"
+#include "universe.h"
 #include "shaders.h"
 #include "buffers.h"
 #include "tiles.h"
@@ -41,6 +42,25 @@ LU_CLEANUP
     LU_RETURN
 }
 
+static luvec_f3 hex_red = {1,0,0};
+
+static int send_hex_data(lulog *log, model *model, universe *universe) {
+    LU_STATUS
+//    ludebug(log, "Sending hex geometry");
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, universe->geometry_buffer->name))
+    geometry_buffer buffer = {};
+    luvec_cpyf3(&hex_red, &buffer.colour);
+    luvec_cpyf4(&universe->geometry->camera_light_pos, &buffer.camera_light_pos);
+    lumat_cpyf4(&universe->geometry->hex_to_camera, &buffer.model_to_camera);
+    lumat_cpyf4(&universe->geometry->hex_to_camera_n, &buffer.model_to_camera_n);
+    lumat_cpyf4(&universe->geometry->camera_to_clip, &buffer.camera_to_clip);
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(buffer), &buffer))
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
+    LU_NO_CLEANUP
+}
+
+static luvec_f3 ship_cyan = {0,1,1};
+
 static int build_hexagon(universe *universe) {
     LU_STATUS
     lulog *log = universe->log;
@@ -55,6 +75,21 @@ static int build_hexagon(universe *universe) {
 LU_CLEANUP
     status = luary_freevnorm(&vertices, status);
     LU_RETURN
+}
+
+static int send_ship_data(lulog *log, model *model, universe *universe) {
+    LU_STATUS
+//    ludebug(log, "Sending ship geometry");
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, universe->geometry_buffer->name))
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ship_cyan), &ship_cyan))
+    lumat_f4 ship_to_camera = {};
+    lumat_mulf4(&universe->geometry->hex_to_camera, &universe->geometry->ship_to_hex, &ship_to_camera);
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(ship_to_camera), &ship_to_camera))
+    lumat_f4 ship_to_camera_n = {};
+    lumat_mulf4(&universe->geometry->hex_to_camera_n, &universe->geometry->ship_to_hex_n, &ship_to_camera_n);
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 96, sizeof(ship_to_camera_n), &ship_to_camera_n))
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
+    LU_NO_CLEANUP
 }
 
 static int build_ship(universe *universe) {
