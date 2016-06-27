@@ -19,12 +19,10 @@ int luary_pushmodel(lulog *log, luary_model *models, model *model) {
     LU_NO_CLEANUP
 }
 
-int mkuniverse(lulog *log, universe **universe,
-        GLuint program, size_t n_variables, GLFWwindow *window) {
+int mkuniverse(lulog *log, universe **universe, size_t n_variables, GLFWwindow *window) {
     LU_STATUS
     LU_ALLOC(log, *universe, 1)
     (*universe)->log = log;
-    (*universe)->program = program;
     LU_ALLOC(log, (*universe)->variables, n_variables)
     LU_CHECK(luary_mkmodeln(log, &(*universe)->models, 1))
     LU_ALLOC(log, (*universe)->geometry, 1);
@@ -35,10 +33,11 @@ int mkuniverse(lulog *log, universe **universe,
     LU_NO_CLEANUP
 }
 
-int mkmodel(lulog *log, model **model, send *send) {
+int mkmodel(lulog *log, model **model, send *send, draw *draw, GLuint program) {
     LU_STATUS
     LU_ALLOC(log, *model, 1)
-    (*model)->draw = &draw_multi_arrays;
+    (*model)->program = program;
+    (*model)->draw = draw;
     (*model)->send = send;
     LU_NO_CLEANUP
 }
@@ -113,5 +112,4 @@ int send_ship_data(lulog *log, model *model, universe *universe) {
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
     LU_NO_CLEANUP
 }
-
 

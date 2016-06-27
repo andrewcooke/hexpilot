@@ -19,8 +19,8 @@ static int display(universe *universe) {
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClearDepth(1.0f))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
-    GL_CHECK(glUseProgram(universe->program))
     for (size_t i = 0; i < universe->models->mem.used; ++i) {
+    	GL_CHECK(glUseProgram(universe->models->m[i]->program))
         LU_CHECK(universe->models->m[i]->send(log, universe->models->m[i], universe))
         LU_CHECK(universe->models->m[i]->draw(log, universe->models->m[i]))
     }
@@ -30,7 +30,7 @@ LU_CLEANUP
 }
 
 
-static int build_program(lulog *log, GLuint *program) {
+static int build_flat(lulog *log, GLuint *program) {
     LU_STATUS
     luary_uint32 *shaders = NULL;
     LU_CHECK(compile_shader_from_file(log, GL_VERTEX_SHADER, "lit_model.vert", &shaders))
@@ -41,46 +41,46 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int build_hexagon(universe *universe, GLuint program) {
+static int build_hexagon(universe *universe) {
     LU_STATUS
     lulog *log = universe->log;
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_hex_data));
+    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_multi_arrays, universe->programs.flat));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
-    LU_CHECK(interleaved_vnorm_vao(log, program, model->vertices, &model->vao))
+    LU_CHECK(interleaved_vnorm_vao(log, model->program, model->vertices, &model->vao))
     push_model(universe, model);
 LU_CLEANUP
     status = luary_freevnorm(&vertices, status);
     LU_RETURN
 }
 
-static int build_ship(universe *universe, GLuint program) {
+static int build_ship(universe *universe) {
     LU_STATUS
     lulog *log = universe->log;
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_ship_data));
+    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_multi_arrays, universe->programs.flat));
     LU_CHECK(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
-    LU_CHECK(interleaved_vnorm_vao(log, program, model->vertices, &model->vao))
+    LU_CHECK(interleaved_vnorm_vao(log, model->program, model->vertices, &model->vao))
     push_model(universe, model);
 LU_CLEANUP
     status = luary_freevnorm(&vertices, status);
     LU_RETURN
 }
 
-static int build_geometry(universe *universe, GLuint program) {
+static int build_geometry(universe *universe) {
     LU_STATUS
     lulog *log = universe->log;
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
             NULL, 1, sizeof(geometry_buffer), &universe->geometry_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
-    GL_CHECK(GLuint index = glGetUniformBlockIndex(program, "geometry"))
-    GL_CHECK(glUniformBlockBinding(program, index, 1))
+    GL_CHECK(GLuint index = glGetUniformBlockIndex(universe->programs.flat, "geometry"))
+    GL_CHECK(glUniformBlockBinding(universe->programs.flat, index, 1))
     GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, universe->geometry_buffer->name))
     LU_NO_CLEANUP
 }
@@ -110,14 +110,15 @@ static int with_glfw(lulog *log) {
     LU_CHECK(load_opengl_functions(log))
     LU_CHECK(init_opengl(log))
 
-    LU_CHECK(build_program(log, &program))
-    LU_CHECK(mkuniverse(log, &universe, program, n_variables, window))
+    LU_CHECK(build_flat(log, &program))
+    LU_CHECK(mkuniverse(log, &universe, n_variables, window))
+	LU_CHECK(build_flat(log, &universe->programs.flat))
     LU_CHECK(init_keys(log, universe->action))
     LU_CHECK(init_geometry(log, universe->variables))
     LU_CHECK(set_window_callbacks(log, window, universe->action))
-    LU_CHECK(build_geometry(universe, program))
-    LU_CHECK(build_hexagon(universe, program))
-    LU_CHECK(build_ship(universe, program))
+    LU_CHECK(build_geometry(universe))
+    LU_CHECK(build_hexagon(universe))
+    LU_CHECK(build_ship(universe))
 
     double tik[2] = {glfwGetTime(), 0};
     double fpszero = glfwGetTime(); int fcount = 0;
