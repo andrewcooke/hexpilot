@@ -14,6 +14,8 @@
 #include "error_codes.h"
 #include "geometry.h"
 
+#include "flight_simple.h"
+
 
 static int display(lulog *log, world *world) {
     LU_STATUS
@@ -42,81 +44,6 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static luvec_f3 hex_red = {1,0,0};
-
-static int send_hex_data(lulog *log, model *model, world *world) {
-    LU_STATUS
-//    ludebug(log, "Sending hex geometry");
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
-    geometry_buffer buffer = {};
-    luvec_cpyf3(&hex_red, &buffer.colour);
-    luvec_cpyf4(&world->geometry->camera_light_pos, &buffer.camera_light_pos);
-    lumat_cpyf4(&world->geometry->hex_to_camera, &buffer.model_to_camera);
-    lumat_cpyf4(&world->geometry->hex_to_camera_n, &buffer.model_to_camera_n);
-    lumat_cpyf4(&world->geometry->camera_to_clip, &buffer.camera_to_clip);
-    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(buffer), &buffer))
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
-    LU_NO_CLEANUP
-}
-
-static luvec_f3 ship_cyan = {0,1,1};
-
-static int build_hexagon(lulog *log, GLuint program, world *world) {
-    LU_STATUS
-    model *model = NULL;
-    luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_multi_arrays, program));
-    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
-    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
-            vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
-    LU_CHECK(interleaved_vnorm_vao(log, model->program, model->vertices, &model->vao))
-    push_model(log, world, model);
-LU_CLEANUP
-    status = luary_freevnorm(&vertices, status);
-    LU_RETURN
-}
-
-static int send_ship_data(lulog *log, model *model, world *world) {
-    LU_STATUS
-//    ludebug(log, "Sending ship geometry");
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
-    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ship_cyan), &ship_cyan))
-    lumat_f4 ship_to_camera = {};
-    lumat_mulf4(&world->geometry->hex_to_camera, &world->geometry->ship_to_hex, &ship_to_camera);
-    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(ship_to_camera), &ship_to_camera))
-    lumat_f4 ship_to_camera_n = {};
-    lumat_mulf4(&world->geometry->hex_to_camera_n, &world->geometry->ship_to_hex_n, &ship_to_camera_n);
-    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 96, sizeof(ship_to_camera_n), &ship_to_camera_n))
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
-    LU_NO_CLEANUP
-}
-
-static int build_ship(lulog *log, GLuint program, world *world) {
-    LU_STATUS
-    model *model = NULL;
-    luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_multi_arrays, program));
-    LU_CHECK(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts))
-    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
-            vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
-    LU_CHECK(interleaved_vnorm_vao(log, model->program, model->vertices, &model->vao))
-    push_model(log, world, model);
-LU_CLEANUP
-    status = luary_freevnorm(&vertices, status);
-    LU_RETURN
-}
-
-static int build_geometry(lulog *log, GLuint program, world *world) {
-    LU_STATUS
-    LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
-            NULL, 1, sizeof(geometry_buffer), &world->geometry_buffer));
-    // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
-    GL_CHECK(GLuint index = glGetUniformBlockIndex(program, "geometry"))
-    GL_CHECK(glUniformBlockBinding(program, index, 1))
-    GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->geometry_buffer->name))
-    LU_NO_CLEANUP
-}
-
 static int init_opengl(lulog *log) {
     LU_STATUS
     GL_CHECK(glEnable(GL_CULL_FACE))
@@ -142,14 +69,8 @@ static int with_glfw(lulog *log) {
     LU_CHECK(init_opengl(log))
 
     LU_CHECK(mkuniverse(log, &universe))
-	LU_CHECK(mkworld(log, &universe->flight, n_variables, window))
 	LU_CHECK(build_flat(log, &universe->programs.flat))
-    LU_CHECK(init_keys(log, universe->flight->action))
-    LU_CHECK(init_geometry(log, universe->flight->variables))
-    LU_CHECK(set_window_callbacks(log, window, universe->flight->action))
-    LU_CHECK(build_geometry(log, universe->programs.flat, universe->flight))
-    LU_CHECK(build_hexagon(log, universe->programs.flat, universe->flight))
-    LU_CHECK(build_ship(log, universe->programs.flat, universe->flight))
+	LU_CHECK(build_flight_simple(log, universe->programs.flat, window, &universe->flight))
 
     double tik[2] = {glfwGetTime(), 0};
     double fpszero = glfwGetTime(); int fcount = 0;
