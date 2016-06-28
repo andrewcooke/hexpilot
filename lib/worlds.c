@@ -49,6 +49,14 @@ int push_model(lulog *log, world *world, model *model) {
     return luary_pushmodel(log, world->models, model);
 }
 
+
+int update_world(lulog *log, double delta, world *world) {
+	LU_STATUS
+    LU_CHECK(world->respond(log, delta, world->action, world->variables))
+    LU_CHECK(world->update(log, delta, world->variables, world->data))
+	LU_NO_CLEANUP
+}
+
 int display_world(lulog *log, world *world) {
     LU_STATUS
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
