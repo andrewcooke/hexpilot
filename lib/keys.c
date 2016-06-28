@@ -8,6 +8,7 @@
 #include "error_codes.h"
 #include "keys.h"
 #include "geometry.h"
+#include "worlds.h"
 
 
 int set_keys(lulog *log, keys *keys, const char *name,
@@ -89,16 +90,6 @@ int update_controls(lulog *log, double dt, luary_control *controls, float *varia
         LU_CHECK(update_control(log, dt, &controls->c[i],
                 &variables[controls->c[i].k.index]))
     }
-    LU_NO_CLEANUP
-}
-
-int respond_to_user(lulog *log, double dt, user_action *action, float *variables) {
-    LU_STATUS
-    LU_CHECK(update_controls(log, dt, action->controls, variables))
-    int width, height;
-    glfwGetFramebufferSize(action->window, &width, &height);
-    GL_CHECK(glViewport(0, 0, width, height))
-    variables[buffer_x] = width; variables[buffer_y] = height;
     LU_NO_CLEANUP
 }
 

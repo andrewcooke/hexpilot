@@ -8,6 +8,7 @@
 #include "buffers.h"
 #include "glfw.h"
 
+struct world;
 
 typedef enum variable_index {
     ship_speed,
@@ -48,6 +49,6 @@ typedef struct geometry_buffer {
 } geometry_buffer;
 
 int init_geometry(lulog *log, float *variables);
-int update_geometry(lulog *log, double, float *variables, geometry *geometry);
+int update_geometry(lulog *log, double dt, float *variables, geometry *geometry);
 
 #endif

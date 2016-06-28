@@ -55,8 +55,6 @@ size_t luary_sizecontrol(luary_control *buffer);
 int init_keys(lulog *log, user_action *action);
 int free_keys(user_action *action);
 
-int respond_to_user(lulog *log, double dt, user_action *action, float *variables);
-
 int update_control(lulog *log, double dt, control *control, float *x);
 int update_controls(lulog *log, double dt, luary_control *controls, float *variables);
 

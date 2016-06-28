@@ -10,9 +10,9 @@
 
 
 struct model;
-struct universe;
+struct world;
 
-typedef int send(lulog *log, struct model *model, struct universe *universe);
+typedef int send(lulog *log, struct model *model, struct world *world);
 typedef int draw(lulog *log, struct model *model);
 
 typedef struct model {
