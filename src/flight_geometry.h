@@ -1,6 +1,6 @@
 
-#ifndef HP_GEOMETRY_H
-#define HP_GEOMETRY_H
+#ifndef HP_FLIGHT_GEOMETRY_H
+#define HP_FLIGHT_GEOMETRY_H
 
 #include "lu/log.h"
 
@@ -49,6 +49,6 @@ typedef struct geometry_buffer {
 } geometry_buffer;
 
 int init_geometry(lulog *log, float *variables);
-int update_geometry(lulog *log, double dt, float *variables, geometry *geometry);
+int update_geometry(lulog *log, double dt, float *variables, void *data);
 
 #endif

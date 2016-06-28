@@ -12,8 +12,8 @@
 #include "buffers.h"
 #include "tiles.h"
 #include "error_codes.h"
-#include "geometry.h"
 
+#include "flight_geometry.h"
 #include "flight_simple.h"
 
 
@@ -80,8 +80,9 @@ static int with_glfw(lulog *log) {
 //            ludebug(log, "%0.1f fps", fcount / (tik[1] - fpszero));
             fpszero = tik[1]; fcount = 0;
         }
-        LU_CHECK(respond_to_user(log, tik[1] - tik[0], universe->flight))
-        LU_CHECK(update_geometry(log, tik[1] - tik[0], universe->flight->variables, universe->flight->geometry))
+        double delta = tik[1] - tik[0];
+        LU_CHECK(universe->flight->respond(log, delta, universe->flight->action, universe->flight->variables))
+        LU_CHECK(universe->flight->update(log, tik[1] - tik[0], universe->flight->variables, universe->flight->data))
         LU_CHECK(display(log, universe->flight))
         glfwSwapBuffers(window);
         glfwPollEvents();

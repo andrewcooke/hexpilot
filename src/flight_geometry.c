@@ -8,7 +8,7 @@
 #include "error_codes.h"
 #include "buffers.h"
 #include "keys.h"
-#include "geometry.h"
+#include "flight_geometry.h"
 
 
 // assumes zeroed on stack
@@ -100,10 +100,10 @@ static int calculate_geometry(lulog *log, float *variables, geometry *geometry) 
     LU_NO_CLEANUP
 }
 
-int update_geometry(lulog *log, double dt, float *variables, geometry *geometry) {
+int update_geometry(lulog *log, double dt, float *variables, void *data) {
     LU_STATUS
     LU_CHECK(calculate_physics(log, dt, variables))
-    LU_CHECK(calculate_geometry(log, variables, geometry))
+    LU_CHECK(calculate_geometry(log, variables, (geometry*)data))
     LU_NO_CLEANUP
 }
 

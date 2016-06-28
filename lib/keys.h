@@ -52,7 +52,6 @@ int luary_freecontrol(luary_control **controls, int prev_status);
 int luary_reservecontrol(lulog *log, luary_control *controls, size_t n);
 int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x);
 size_t luary_sizecontrol(luary_control *buffer);
-int init_keys(lulog *log, user_action *action);
 int free_keys(user_action *action);
 
 int update_control(lulog *log, double dt, control *control, float *x);

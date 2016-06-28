@@ -7,7 +7,6 @@
 
 #include "error_codes.h"
 #include "keys.h"
-#include "geometry.h"
 #include "worlds.h"
 
 
@@ -33,25 +32,6 @@ int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x) 
     LU_CHECK(luary_reservecontrol(log, controls, 1))
     variables v = {};
     controls->c[controls->mem.used++] = (control){*keys, v};
-    LU_NO_CLEANUP
-}
-
-int init_keys(lulog *log, user_action *action) {
-    LU_STATUS
-    keys k = {};
-    LU_CHECK(set_keys(log, &k, "+/-", 61, 1, 45, 0,
-            15, 10, 0,
-            0.1, 10, camera_zoom))
-    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 1))
-    LU_CHECK(set_keys(log, &k, "left/right", 262, 0, 263, 0,
-            0.3, 5, 5,
-            -0.5, 0.5, ship_rotation))
-    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 0))
-    LU_CHECK(set_keys(log, &k, "up/down",
-            265, 0, 264, 0,
-            2, 10, 0,
-            0, 4, ship_speed))
-    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 0))
     LU_NO_CLEANUP
 }
 

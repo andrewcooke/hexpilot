@@ -6,7 +6,6 @@
 
 #include "buffers.h"
 #include "keys.h"
-#include "geometry.h"
 
 
 struct model;
