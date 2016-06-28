@@ -33,23 +33,23 @@ typedef struct timing {
 } timing;
 
 static double update_timing(lulog *log, timing *clock) {
-	double now = glfwGetTime();
-	if (now > clock->seconds+1) {
-		double fps = clock->frame_count / (now - clock->seconds);
-		if (abs(fps - clock->fps) > 0.1 * clock->fps) {
-			// by default glfw syncs to 60fps (more exactly,
-			// whatever freq the monitor uses).  see glfw.c
-			// to enable free-spinning.
-			clock->fps = fps;
-			ludebug(log, "FPS: %0.1f", fps);
-		}
-		clock->seconds = now;
-		clock->frame_count = 0;
-	}
+    double now = glfwGetTime();
+    if (now > clock->seconds+1) {
+        double fps = clock->frame_count / (now - clock->seconds);
+        if (abs(fps - clock->fps) > 0.1 * clock->fps) {
+            // by default glfw syncs to 60fps (more exactly,
+            // whatever freq the monitor uses).  see glfw.c
+            // to enable free-spinning.
+            clock->fps = fps;
+            ludebug(log, "FPS: %0.1f", fps);
+        }
+        clock->seconds = now;
+        clock->frame_count = 0;
+    }
     double delta = now - clock->previous;
-	clock->previous = now;
-	clock->frame_count++;
-	return delta;
+    clock->previous = now;
+    clock->frame_count++;
+    return delta;
 }
 
 static int with_glfw(lulog *log) {
