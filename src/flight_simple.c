@@ -48,7 +48,7 @@ static int send_hex_data(lulog *log, model *model, world *world) {
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->data_buffer->name))
     geometry_buffer buffer = {};
     luvec_cpyf3(&hex_red, &buffer.colour);
-	geometry *g = (geometry*) world->data;
+    geometry *g = (geometry*) world->data;
     luvec_cpyf4(&g->camera_light_pos, &buffer.camera_light_pos);
     lumat_cpyf4(&g->hex_to_camera, &buffer.model_to_camera);
     lumat_cpyf4(&g->hex_to_camera_n, &buffer.model_to_camera_n);
@@ -81,7 +81,7 @@ static int send_ship_data(lulog *log, model *model, world *world) {
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->data_buffer->name))
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ship_cyan), &ship_cyan))
     lumat_f4 ship_to_camera = {};
-	geometry *g = (geometry*) world->data;
+    geometry *g = (geometry*) world->data;
     lumat_mulf4(&g->hex_to_camera, &g->ship_to_hex, &ship_to_camera);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(ship_to_camera), &ship_to_camera))
     lumat_f4 ship_to_camera_n = {};
@@ -118,14 +118,14 @@ static int build_geometry(lulog *log, GLuint program, world *world) {
 }
 
 int build_flight_simple(lulog *log, GLuint program, GLFWwindow *window, world **world) {
-	LU_STATUS
-	LU_CHECK(mkworld(log, world, n_variables, sizeof(geometry), window,
-			&respond_to_user, &update_geometry))
+    LU_STATUS
+    LU_CHECK(mkworld(log, world, n_variables, sizeof(geometry), window,
+            &respond_to_user, &update_geometry))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_geometry(log, program, *world))
     LU_CHECK(build_hexagon(log, program, *world))
     LU_CHECK(build_ship(log, program, *world))
     LU_CHECK(set_window_callbacks(log, window, (*world)->action))
-	LU_NO_CLEANUP
+    LU_NO_CLEANUP
 }
