@@ -25,38 +25,12 @@ static int init_opengl(lulog *log) {
     LU_NO_CLEANUP
 }
 
-typedef struct timing {
-    double previous;
-    double fps;
-    double seconds;
-    int frame_count;
-} timing;
-
-static double update_timing(lulog *log, timing *clock) {
-    double now = glfwGetTime();
-    if (now > clock->seconds+1) {
-        double fps = clock->frame_count / (now - clock->seconds);
-        if (abs(fps - clock->fps) > 0.1 * clock->fps) {
-            // by default glfw syncs to 60fps (more exactly,
-            // whatever freq the monitor uses).  see glfw.c
-            // to enable free-spinning.
-            clock->fps = fps;
-            ludebug(log, "FPS: %0.1f", fps);
-        }
-        clock->seconds = now;
-        clock->frame_count = 0;
-    }
-    double delta = now - clock->previous;
-    clock->previous = now;
-    clock->frame_count++;
-    return delta;
-}
-
 static int with_glfw(lulog *log) {
 
     LU_STATUS
     GLFWwindow *window = NULL;
     universe *universe = NULL;
+    timing clock;
 
     LU_CHECK(create_glfw_context(log, &window))
     LU_CHECK(load_opengl_functions(log))
@@ -66,9 +40,7 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_flat(log, &universe->programs.flat))
     LU_CHECK(build_flight_simple(log, universe->programs.flat, window, &universe->flight))
 
-    timing clock = {};
-    clock.previous = clock.seconds = glfwGetTime();
-
+    LU_CHECK(init_timing(log, &clock));
     while (!glfwWindowShouldClose(window)) {
         double delta = update_timing(log, &clock);
         LU_CHECK(update_world(log, delta, universe->flight))

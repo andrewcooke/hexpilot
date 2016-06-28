@@ -82,3 +82,32 @@ int set_window_callbacks(lulog *log, GLFWwindow *window, user_action *action) {
     LU_NO_CLEANUP
 }
 
+
+int init_timing(lulog *log, timing *clock) {
+    LU_STATUS
+    timing zero = {};
+    *clock = zero;
+    clock->previous = clock->seconds = glfwGetTime();
+    LU_NO_CLEANUP
+}
+
+double update_timing(lulog *log, timing *clock) {
+    double now = glfwGetTime();
+    if (now > clock->seconds+1) {
+        double fps = clock->frame_count / (now - clock->seconds);
+        if (abs(fps - clock->fps) > 0.1 * clock->fps) {
+            // by default glfw syncs to 60fps (more exactly,
+            // whatever freq the monitor uses).  see glfw.c
+            // to enable free-spinning.
+            clock->fps = fps;
+            ludebug(log, "FPS: %0.1f", fps);
+        }
+        clock->seconds = now;
+        clock->frame_count = 0;
+    }
+    double delta = now - clock->previous;
+    clock->previous = now;
+    clock->frame_count++;
+    return delta;
+}
+
