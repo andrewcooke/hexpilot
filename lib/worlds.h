@@ -24,5 +24,6 @@ int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
 		GLFWwindow *window, respond *respond, update *update);
 int free_world(world **world, int status);
 int push_model(lulog *log, world *world, model *model);
+int display_world(lulog *log, world *world);
 
 #endif

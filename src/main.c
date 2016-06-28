@@ -1,48 +1,16 @@
 
 #include "lu/log.h"
-#include "lu/tiles.h"
 #include "lu/status.h"
-#include "lu/arrays.h"
 
 #include "glfw.h"
-#include "models.h"
 #include "universe.h"
 #include "worlds.h"
-#include "shaders.h"
-#include "buffers.h"
-#include "tiles.h"
 #include "error_codes.h"
 
+#include "programs.h"
 #include "flight_geometry.h"
 #include "flight_simple.h"
 
-
-static int display(lulog *log, world *world) {
-    LU_STATUS
-    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
-    GL_CHECK(glClearDepth(1.0f))
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
-    for (size_t i = 0; i < world->models->mem.used; ++i) {
-    	GL_CHECK(glUseProgram(world->models->m[i]->program))
-        LU_CHECK(world->models->m[i]->send(log, world->models->m[i], world))
-        LU_CHECK(world->models->m[i]->draw(log, world->models->m[i]))
-    }
-LU_CLEANUP
-    GL_CLEAN(glUseProgram(0))
-    LU_RETURN
-}
-
-
-static int build_flat(lulog *log, GLuint *program) {
-    LU_STATUS
-    luary_uint32 *shaders = NULL;
-    LU_CHECK(compile_shader_from_file(log, GL_VERTEX_SHADER, "lit_model.vert", &shaders))
-    LU_CHECK(compile_shader_from_file(log, GL_FRAGMENT_SHADER, "direct_colour.frag", &shaders))
-    LU_CHECK(link_program(log, shaders, program));
-LU_CLEANUP
-    status = free_shaders(log, &shaders, status);
-    LU_RETURN
-}
 
 static int init_opengl(lulog *log) {
     LU_STATUS
@@ -83,7 +51,7 @@ static int with_glfw(lulog *log) {
         double delta = tik[1] - tik[0];
         LU_CHECK(universe->flight->respond(log, delta, universe->flight->action, universe->flight->variables))
         LU_CHECK(universe->flight->update(log, tik[1] - tik[0], universe->flight->variables, universe->flight->data))
-        LU_CHECK(display(log, universe->flight))
+        LU_CHECK(display_world(log, universe->flight))
         glfwSwapBuffers(window);
         glfwPollEvents();
         tik[0] = tik[1]; fcount++;
@@ -100,8 +68,9 @@ int main(int argc, char** argv) {
     LU_STATUS
     lulog *log = NULL;
     lulog_mkstderr(&log, lulog_level_debug);
-    LU_ASSERT(sizeof(GLuint) == sizeof(unsigned int), HP_ERR, log,
-            "Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(unsigned int))
+    // is this always true?  unclear to me, but we use pre-built uint32 arrays
+    LU_ASSERT(sizeof(GLuint) == sizeof(uint32_t), HP_ERR, log,
+            "Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(uint32_t))
     LU_CHECK(init_glfw(log))
     LU_CHECK(with_glfw(log))
 LU_CLEANUP

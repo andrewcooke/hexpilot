@@ -49,3 +49,17 @@ int push_model(lulog *log, world *world, model *model) {
     return luary_pushmodel(log, world->models, model);
 }
 
+int display_world(lulog *log, world *world) {
+    LU_STATUS
+    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
+    GL_CHECK(glClearDepth(1.0f))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+    for (size_t i = 0; i < world->models->mem.used; ++i) {
+    	GL_CHECK(glUseProgram(world->models->m[i]->program))
+        LU_CHECK(world->models->m[i]->send(log, world->models->m[i], world))
+        LU_CHECK(world->models->m[i]->draw(log, world->models->m[i]))
+    }
+LU_CLEANUP
+    GL_CLEAN(glUseProgram(0))
+    LU_RETURN
+}
