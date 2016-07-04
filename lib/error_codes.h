@@ -13,7 +13,7 @@
 #define GL_CHECK(operation) operation; {\
     GLenum err = glGetError();\
     if (err != GL_NO_ERROR) {\
-        luerror(log, "OpenGL Error %x in %s (%s:%d)", err, __func__, __FILE__, __LINE__);\
+        luerror(log, "OpenGL Error #%x in %s (%s:%d)", err, __func__, __FILE__, __LINE__);\
         status = HP_ERR_OPENGL;\
         goto exit;\
     }}
@@ -21,7 +21,7 @@
 #define GL_CLEAN(operation) operation; {\
     GLenum err = glGetError();\
     if (err != GL_NO_ERROR) {\
-        luerror(log, "OpenGL Error %x in %s (%s:%d)", err, __func__, __FILE__, __LINE__);\
+        luerror(log, "OpenGL Error #%x in %s (%s:%d)", err, __func__, __FILE__, __LINE__);\
         status = status || HP_ERR_OPENGL;\
     }}
 

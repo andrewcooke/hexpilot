@@ -28,10 +28,23 @@ int mkmodel(lulog *log, model **model, send *send, draw *draw, GLuint program) {
     LU_NO_CLEANUP
 }
 
-int draw_multi_arrays(lulog *log, model *model) {
+int draw_triangles(lulog *log, model *model) {
     LU_STATUS
     GL_CHECK(glBindVertexArray(model->vao))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
+LU_CLEANUP
+    GL_CLEAN(glBindVertexArray(0))
+    LU_RETURN
+}
+
+int draw_lines_and_triangles(lulog *log, model *model) {
+    LU_STATUS
+    GL_CHECK(glBindVertexArray(model->vao))
+    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
+    GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
+    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE))
+    GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
+    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
 LU_CLEANUP
     GL_CLEAN(glBindVertexArray(0))
     LU_RETURN

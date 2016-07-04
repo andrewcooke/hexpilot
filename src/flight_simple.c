@@ -64,7 +64,7 @@ static int build_hexagon(lulog *log, GLuint program, world *world) {
     LU_STATUS
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_multi_arrays, program));
+    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_triangles, program));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
@@ -95,7 +95,7 @@ static int build_ship(lulog *log, GLuint program, world *world) {
     LU_STATUS
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_multi_arrays, program));
+    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_lines_and_triangles, program));
     LU_CHECK(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
