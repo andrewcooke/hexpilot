@@ -17,6 +17,6 @@ int compile_shader_from_string(lulog *log, GLenum shader_type, const char *sourc
 int link_program(lulog *log, luary_uint32 *shaders, GLuint *program);
 int free_shaders(lulog *log, luary_uint32 **shaders, int status);
 
-int interleaved_vnorm_vao(lulog *log, GLuint program, buffer *buffer, GLuint *vao);
+int interleaved_vnorm_vao(lulog *log, buffer *buffer, GLuint *vao);
 
 #endif

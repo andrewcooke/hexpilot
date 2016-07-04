@@ -4,9 +4,10 @@
 
 
 #include "worlds.h"
+#include "universe.h"
 
 
-int build_flight_simple(lulog *log, GLuint program, GLFWwindow *window, world **world);
+int build_flight_simple(lulog *log, programs *programs, GLFWwindow *window, world **world);
 
 
 #endif

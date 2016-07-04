@@ -3,6 +3,7 @@
 
 #include "error_codes.h"
 #include "worlds.h"
+#include "universe.h"
 
 
 int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
@@ -57,17 +58,14 @@ int update_world(lulog *log, double delta, world *world) {
 	LU_NO_CLEANUP
 }
 
-int display_world(lulog *log, world *world) {
+int display_world(lulog *log, programs *programs, world *world) {
     LU_STATUS
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClearDepth(1.0f))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     for (size_t i = 0; i < world->models->mem.used; ++i) {
-    	GL_CHECK(glUseProgram(world->models->m[i]->program))
         LU_CHECK(world->models->m[i]->send(log, world->models->m[i], world))
-        LU_CHECK(world->models->m[i]->draw(log, world->models->m[i]))
+        LU_CHECK(world->models->m[i]->draw(log, world->models->m[i], programs))
     }
-LU_CLEANUP
-    GL_CLEAN(glUseProgram(0))
-    LU_RETURN
+    LU_NO_CLEANUP
 }

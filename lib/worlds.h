@@ -5,7 +5,7 @@
 #include "models.h"
 
 
-struct world;
+struct programs;
 
 typedef int respond(lulog *log, double delta, user_action *action, float *variables);
 typedef int update(lulog *log, double delta, float *variables, void *data);
@@ -26,6 +26,6 @@ int free_world(world **world, int status);
 int push_model(lulog *log, world *world, model *model);
 
 int update_world(lulog *log, double delta, world *world);
-int display_world(lulog *log, world *world);
+int display_world(lulog *log, struct programs *programs, world *world);
 
 #endif

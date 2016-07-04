@@ -101,11 +101,10 @@ LU_CLEANUP
     LU_RETURN2(prev_status)
 }
 
-int interleaved_vnorm_vao(lulog *log, GLuint program, buffer *buffer, GLuint *vao) {
+int interleaved_vnorm_vao(lulog *log, buffer *buffer, GLuint *vao) {
     LU_STATUS
     GL_CHECK(glGenVertexArrays(1, vao))
     GL_CHECK(glBindVertexArray(*vao))
-    GL_CHECK(glUseProgram(program))
     LU_CHECK(bind_buffer(log, buffer))
     GL_CHECK(glEnableVertexAttribArray(0))
     GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, 0))

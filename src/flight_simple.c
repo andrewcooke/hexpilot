@@ -60,15 +60,15 @@ static int send_hex_data(lulog *log, model *model, world *world) {
 
 static luvec_f3 ship_cyan = {0,1,1};
 
-static int build_hexagon(lulog *log, GLuint program, world *world) {
+static int build_hexagon(lulog *log, programs *programs, world *world) {
     LU_STATUS
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_triangles, program));
+    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_lines_and_triangles));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
-    LU_CHECK(interleaved_vnorm_vao(log, model->program, model->vertices, &model->vao))
+    LU_CHECK(interleaved_vnorm_vao(log, model->vertices, &model->vao))
     push_model(log, world, model);
 LU_CLEANUP
     status = luary_freevnorm(&vertices, status);
@@ -91,41 +91,41 @@ static int send_ship_data(lulog *log, model *model, world *world) {
     LU_NO_CLEANUP
 }
 
-static int build_ship(lulog *log, GLuint program, world *world) {
+static int build_ship(lulog *log, programs *programs, world *world) {
     LU_STATUS
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_lines_and_triangles, program));
+    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_lines_and_triangles));
     LU_CHECK(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
-    LU_CHECK(interleaved_vnorm_vao(log, model->program, model->vertices, &model->vao))
+    LU_CHECK(interleaved_vnorm_vao(log, model->vertices, &model->vao))
     push_model(log, world, model);
 LU_CLEANUP
     status = luary_freevnorm(&vertices, status);
     LU_RETURN
 }
 
-static int build_geometry(lulog *log, GLuint program, world *world) {
+static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_STATUS
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
             NULL, 1, sizeof(geometry), &world->data_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
-    GL_CHECK(GLuint index = glGetUniformBlockIndex(program, "geometry"))
-    GL_CHECK(glUniformBlockBinding(program, index, 1))
+    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->flat, "geometry"))
+    GL_CHECK(glUniformBlockBinding(programs->flat, index, 1))
     GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->data_buffer->name))
     LU_NO_CLEANUP
 }
 
-int build_flight_simple(lulog *log, GLuint program, GLFWwindow *window, world **world) {
+int build_flight_simple(lulog *log, programs *programs, GLFWwindow *window, world **world) {
     LU_STATUS
     LU_CHECK(mkworld(log, world, n_variables, sizeof(geometry), window,
             &respond_to_user, &update_geometry))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
-    LU_CHECK(build_geometry(log, program, *world))
-    LU_CHECK(build_hexagon(log, program, *world))
-    LU_CHECK(build_ship(log, program, *world))
+    LU_CHECK(build_geometry(log, programs, *world))
+    LU_CHECK(build_hexagon(log, programs, *world))
+    LU_CHECK(build_ship(log, programs, *world))
     LU_CHECK(set_window_callbacks(log, window, (*world)->action))
     LU_NO_CLEANUP
 }
