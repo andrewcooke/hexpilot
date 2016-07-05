@@ -38,7 +38,5 @@ size_t luary_sizemodel(luary_model *models);
 
 int mkmodel(lulog *log, model **model, send *send, draw *draw);
 int free_model(model **model, int status);
-int draw_filled_triangles(lulog *log, model *model, struct programs *programs);
-int draw_lines_and_triangles(lulog *log, model *model, struct programs *programs);
 
 #endif

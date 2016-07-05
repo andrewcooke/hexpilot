@@ -36,16 +36,16 @@ static int with_glfw(lulog *log) {
     LU_CHECK(load_opengl_functions(log))
     LU_CHECK(init_opengl(log))
 
-    LU_CHECK(mkuniverse(log, &universe))
-    LU_CHECK(build_black(log, &universe->programs.black))
-    LU_CHECK(build_lit_per_vertex(log, &universe->programs.lit_per_vertex))
-    LU_CHECK(build_flight(log, &universe->programs, window, &universe->flight))
+    LU_CHECK(mkuniverse(log, &universe, sizeof(programs)))
+    LU_CHECK(build_black(log, &((programs*)universe->programs)->black))
+    LU_CHECK(build_lit_per_vertex(log, &((programs*)universe->programs)->lit_per_vertex))
+    LU_CHECK(build_flight(log, universe->programs, window, &universe->flight))
 
     LU_CHECK(init_timing(log, &clock));
     while (!glfwWindowShouldClose(window)) {
         double delta = update_timing(log, &clock);
         LU_CHECK(update_world(log, delta, universe->flight))
-        LU_CHECK(display_world(log, &universe->programs, universe->flight))
+        LU_CHECK(display_world(log, universe->programs, universe->flight))
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

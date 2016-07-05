@@ -9,6 +9,7 @@
 
 #include "geometry.h"
 #include "flight.h"
+#include "programs.h"
 
 
 static int init_keys(lulog *log, user_action *action) {
@@ -120,15 +121,16 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_NO_CLEANUP
 }
 
-int build_flight(lulog *log, programs *programs, GLFWwindow *window, world **world) {
+int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_STATUS
+    programs *p = (programs*) v;
     LU_CHECK(mkworld(log, world, n_variables, sizeof(geometry), window,
             &respond_to_user, &update_geometry))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
-    LU_CHECK(build_geometry(log, programs, *world))
-    LU_CHECK(build_hexagon(log, programs, *world))
-    LU_CHECK(build_ship(log, programs, *world))
+    LU_CHECK(build_geometry(log, p, *world))
+    LU_CHECK(build_hexagon(log, p, *world))
+    LU_CHECK(build_ship(log, p, *world))
     LU_CHECK(set_window_callbacks(log, window, (*world)->action))
     LU_NO_CLEANUP
 }

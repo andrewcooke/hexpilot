@@ -58,7 +58,7 @@ int update_world(lulog *log, double delta, world *world) {
 	LU_NO_CLEANUP
 }
 
-int display_world(lulog *log, programs *programs, world *world) {
+int display_world(lulog *log, void *programs, world *world) {
     LU_STATUS
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
     GL_CHECK(glClearDepth(1.0f))

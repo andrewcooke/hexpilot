@@ -6,9 +6,10 @@
 #include "universe.h"
 
 
-int mkuniverse(lulog *log, universe **universe) {
+int mkuniverse(lulog *log, universe **universe, size_t programs_size) {
     LU_STATUS
     LU_ALLOC(log, *universe, 1)
+    LU_ALLOC_SIZE(log, (*universe)->programs, programs_size)
     (*universe)->log = log;
     LU_NO_CLEANUP
 }

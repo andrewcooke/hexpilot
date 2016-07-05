@@ -7,7 +7,7 @@
 #include "universe.h"
 
 
-int build_flight(lulog *log, programs *programs, GLFWwindow *window, world **world);
+int build_flight(lulog *log, void *programs, GLFWwindow *window, world **world);
 
 
 #endif

@@ -5,18 +5,13 @@
 #include "worlds.h"
 
 
-typedef struct programs {
-	GLuint lit_per_vertex;
-	GLuint black;
-} programs;
-
 typedef struct universe {
     lulog *log;
-    programs programs;
+    void * programs;
     world *flight;
 } universe;
 
-int mkuniverse(lulog *log, universe **universe);
+int mkuniverse(lulog *log, universe **universe, size_t programs_size);
 int free_universe(universe **universe, int status);
 
 #endif
