@@ -7,7 +7,6 @@
 #include "lu/log.h"
 
 #include "../src/tiles.h"
-#include "../src/vertices.h"
 
 
 START_TEST(test_small_hexagon) {
