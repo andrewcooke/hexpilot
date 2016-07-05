@@ -18,6 +18,7 @@ int free_universe(universe **universe, int prev) {
     LU_STATUS
     if (universe && *universe) {
     	status = free_world(&(*universe)->flight, status);
+    	free((*universe)->programs);
     	free(*universe);
         *universe = NULL;
     }

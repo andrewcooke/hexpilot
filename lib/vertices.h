@@ -4,6 +4,7 @@
 
 #include "lu/structs.h"
 #include "lu/vectors.h"
+#include "lu/arrays.h"
 
 
 typedef luvec_f4 vnorm[2];
@@ -19,5 +20,17 @@ int luary_reservevnorm(lulog *log, luary_vnorm *vnorm, size_t n);
 int luary_pushvnorm(lulog *log, luary_vnorm *vnorm, luvec_f4 *v, luvec_f4 *n);
 size_t luary_sizevnorm(luary_vnorm *vnorm);
 int luary_dumpvnorm(lulog *log, luary_vnorm *vnorm, const char *name, size_t nlines);
+
+int strips(lulog *log, luary_ijz *ijz,
+        luary_uint32 **indices, luary_uint32 **offsets, luary_uint32 **counts);
+int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw);
+int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4);
+int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void **out);
+int normalize_z(lulog *log, luary_ijz *vertices);
+int uniquify(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
+        luary_uint32 *counts, luary_ijz *vertices);
+int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
+        luary_uint32 *counts, luary_vecf4 *vertices, luary_vnorm **vnorms);
+int uint2int(lulog *log, luary_uint32 *in, luary_int32 **out);
 
 #endif
