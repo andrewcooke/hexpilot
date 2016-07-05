@@ -1,4 +1,6 @@
 
+#include <flight.h>
+#include <geometry.h>
 #include "lu/log.h"
 #include "lu/status.h"
 
@@ -8,8 +10,6 @@
 #include "error_codes.h"
 
 #include "programs.h"
-#include "flight_geometry.h"
-#include "flight_simple.h"
 
 
 static int init_opengl(lulog *log) {
@@ -37,8 +37,9 @@ static int with_glfw(lulog *log) {
     LU_CHECK(init_opengl(log))
 
     LU_CHECK(mkuniverse(log, &universe))
-    LU_CHECK(build_flat(log, &universe->programs.flat))
-    LU_CHECK(build_flight_simple(log, &universe->programs, window, &universe->flight))
+    LU_CHECK(build_black(log, &universe->programs.black))
+    LU_CHECK(build_lit_per_vertex(log, &universe->programs.lit_per_vertex))
+    LU_CHECK(build_flight(log, &universe->programs, window, &universe->flight))
 
     LU_CHECK(init_timing(log, &clock));
     while (!glfwWindowShouldClose(window)) {

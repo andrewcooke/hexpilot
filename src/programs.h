@@ -6,6 +6,7 @@
 
 #include "glad.h"
 
-int build_flat(lulog *log, GLuint *program);
+int build_lit_per_vertex(lulog *log, GLuint *program);
+int build_black(lulog *log, GLuint *program);
 
 #endif

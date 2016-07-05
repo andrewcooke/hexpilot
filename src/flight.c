@@ -6,8 +6,9 @@
 #include "vertices.h"
 #include "tiles.h"
 #include "shaders.h"
-#include "flight_geometry.h"
-#include "flight_simple.h"
+
+#include "geometry.h"
+#include "flight.h"
 
 
 static int init_keys(lulog *log, user_action *action) {
@@ -111,13 +112,15 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
             NULL, 1, sizeof(geometry), &world->data_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
-    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->flat, "geometry"))
-    GL_CHECK(glUniformBlockBinding(programs->flat, index, 1))
+    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->lit_per_vertex, "geometry"))
+    GL_CHECK(glUniformBlockBinding(programs->lit_per_vertex, index, 1))
+    GL_CHECK(index = glGetUniformBlockIndex(programs->black, "geometry"))
+    GL_CHECK(glUniformBlockBinding(programs->black, index, 1))
     GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->data_buffer->name))
     LU_NO_CLEANUP
 }
 
-int build_flight_simple(lulog *log, programs *programs, GLFWwindow *window, world **world) {
+int build_flight(lulog *log, programs *programs, GLFWwindow *window, world **world) {
     LU_STATUS
     LU_CHECK(mkworld(log, world, n_variables, sizeof(geometry), window,
             &respond_to_user, &update_geometry))

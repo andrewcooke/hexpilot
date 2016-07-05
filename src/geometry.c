@@ -1,4 +1,5 @@
 
+#include <geometry.h>
 #include <math.h>
 
 #include "lu/status.h"
@@ -8,7 +9,6 @@
 #include "error_codes.h"
 #include "buffers.h"
 #include "keys.h"
-#include "flight_geometry.h"
 
 
 // assumes zeroed on stack

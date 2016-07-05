@@ -1,6 +1,6 @@
 
-#ifndef HP_FLIGHT_GEOMETRY_H
-#define HP_FLIGHT_GEOMETRY_H
+#ifndef HP_GEOMETRY_H
+#define HP_GEOMETRY_H
 
 #include "lu/log.h"
 

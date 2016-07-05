@@ -6,7 +6,8 @@
 
 
 typedef struct programs {
-	GLuint flat;
+	GLuint lit_per_vertex;
+	GLuint black;
 } programs;
 
 typedef struct universe {
