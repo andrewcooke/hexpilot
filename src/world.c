@@ -123,33 +123,6 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_NO_CLEANUP
 }
 
-static int init_render(lulog *log, GLFWwindow *window, flight_data *data) {
-    LU_STATUS
-    // http://learnopengl.com/#!Advanced-OpenGL/Framebuffers
-    GL_CHECK(glGenFramebuffers(1, &data->render))
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->render))
-    GL_CHECK(glGenTextures(1, &data->texture))
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->texture))
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    // TODO - do we want to be smarter here?  copy main buffer details?
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL))
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR))
-    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, data->texture, 0))
-    GLuint depth;
-    GL_CHECK(glGenRenderbuffers(1, &depth))
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depth))
-    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height))
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth))
-    // TODO - freeing these, resizing these
-    LU_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,
-            LU_ERR, log, "Frame buffer incomplete")
-LU_CLEANUP
-    GL_CLEAN(glBindFramebuffer(GL_FRAMEBUFFER, 0))
-    LU_RETURN
-}
-
 static int build_render(lulog *log, programs *programs, flight_data *data) {
     LU_STATUS
     float quad[] = {-1,-1, -1,1, 1,-1, 1,1};
@@ -167,8 +140,8 @@ LU_CLEANUP
 static int before_display(lulog *log, void *v, world *world) {
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
-    programs *p = (programs*)v;
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->render))
+    LU_CHECK(check_frame(log, world->action->window, &data->blurred))
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->blurred.render))
     GL_CHECK(glClearColor(0, 0, 0, 1))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     LU_NO_CLEANUP
@@ -183,7 +156,7 @@ static int after_display(lulog *log, void *v, world *world) {
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
     GL_CHECK(glDisable(GL_DEPTH_TEST))
     GL_CHECK(glBindVertexArray(data->quad_vao))
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->texture))
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->blurred.texture))
     GL_CHECK(glUseProgram(p->direct_texture))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 LU_CLEANUP
@@ -199,7 +172,7 @@ int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
             &respond_to_user, &update_geometry, &before_display, &after_display))
     flight_data *data = (flight_data*)(*world)->data;
-    LU_CHECK(init_render(log, window, data))
+    LU_CHECK(init_frame(log, window, &data->blurred))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_render(log, p, data))
