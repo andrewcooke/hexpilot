@@ -15,7 +15,7 @@ int init_frame(lulog *log, GLFWwindow *window, frame *frame) {
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, frame->texture))
     glfwGetFramebufferSize(window, &frame->width, &frame->height);
     // TODO - do we want to be smarter here?  copy main buffer details?
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame->width, frame->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL))
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_RGB, frame->width, frame->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL))
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR))
     GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frame->texture, 0))
