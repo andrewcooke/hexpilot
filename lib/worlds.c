@@ -7,7 +7,7 @@
 
 
 int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
-		GLFWwindow *window, respond *respond, update *update) {
+		GLFWwindow *window, respond *respond, update *update, before *before, after *after) {
     LU_STATUS
     LU_ALLOC(log, *world, 1)
     LU_ALLOC(log, (*world)->variables, n_variables)
@@ -19,6 +19,8 @@ int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
     (*world)->action->window = window;
     (*world)->respond = respond;
     (*world)->update = update;
+    (*world)->before = before;
+    (*world)->after = after;
     LU_NO_CLEANUP
 }
 
@@ -60,12 +62,11 @@ int update_world(lulog *log, double delta, world *world) {
 
 int display_world(lulog *log, void *programs, world *world) {
     LU_STATUS
-//    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
-//    GL_CHECK(glClearDepth(1.0f))
-//    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+    LU_CHECK(world->before(log, programs, world))
     for (size_t i = 0; i < world->models->mem.used; ++i) {
         LU_CHECK(world->models->m[i]->send(log, world->models->m[i], world))
         LU_CHECK(world->models->m[i]->draw(log, world->models->m[i], programs))
     }
+    LU_CHECK(world->after(log, programs, world))
     LU_NO_CLEANUP
 }

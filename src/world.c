@@ -74,7 +74,7 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
     LU_CHECK(interleaved_vnorm_vao(log, model->vertices, &model->vao))
     push_model(log, world, model);
 LU_CLEANUP
-    status = luary_freevnorm(&vertices, status);
+    LU_CLEAN(luary_freevnorm(&vertices, status))
     LU_RETURN
 }
 
@@ -106,7 +106,7 @@ static int build_ship(lulog *log, programs *programs, world *world) {
     LU_CHECK(interleaved_vnorm_vao(log, model->vertices, &model->vao))
     push_model(log, world, model);
 LU_CLEANUP
-    status = luary_freevnorm(&vertices, status);
+    LU_CLEAN(luary_freevnorm(&vertices, status))
     LU_RETURN
 }
 
@@ -152,22 +152,52 @@ LU_CLEANUP
 
 static int build_render(lulog *log, programs *programs, flight_data *data) {
     LU_STATUS
-    float quad[] = {-1,1, -1,-1, 1,-1, -1,1, 1,1, 1,-1};  // TODO - CW?
+    float quad[] = {-1,-1, -1,1, 1,-1, 1,1};
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW, quad, 1, sizeof(quad), &data->quad_buffer))
     GL_CHECK(glGenVertexArrays(1, &data->quad_vao))
     GL_CHECK(glBindVertexArray(data->quad_vao))
     LU_CHECK(bind_buffer(log, data->quad_buffer))
     GL_CHECK(glEnableVertexAttribArray(0))
     GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0))
-    LU_CHECK(unbind_buffer(log, data->quad_buffer))
+LU_CLEANUP
+    LU_CLEAN(unbind_buffer(log, data->quad_buffer))
+    LU_RETURN
+}
+
+static int before_display(lulog *log, void *v, world *world) {
+    LU_STATUS
+    flight_data *data = (flight_data*)world->data;
+    programs *p = (programs*)v;
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->render))
+    GL_CHECK(glClearColor(0, 0, 0, 1))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     LU_NO_CLEANUP
+}
+
+static int after_display(lulog *log, void *v, world *world) {
+    LU_STATUS
+    flight_data *data = (flight_data*)world->data;
+    programs *p = (programs*)v;
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0))
+    GL_CHECK(glClearColor(0, 0, 0, 1))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
+    GL_CHECK(glDisable(GL_DEPTH_TEST))
+    GL_CHECK(glBindVertexArray(data->quad_vao))
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->texture))
+    GL_CHECK(glUseProgram(p->direct_texture))
+    GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+LU_CLEANUP
+    GL_CLEAN(glEnable(GL_DEPTH_TEST))
+    GL_CLEAN(glBindVertexArray(0))
+    GL_CLEAN(glBindTexture(GL_TEXTURE_2D, 0))
+    LU_RETURN
 }
 
 int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_STATUS
     programs *p = (programs*) v;
     LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
-            &respond_to_user, &update_geometry))
+            &respond_to_user, &update_geometry, &before_display, &after_display))
     flight_data *data = (flight_data*)(*world)->data;
     LU_CHECK(init_render(log, window, data))
     LU_CHECK(init_keys(log, (*world)->action))
@@ -179,3 +209,4 @@ int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_CHECK(set_window_callbacks(log, window, (*world)->action))
     LU_NO_CLEANUP
 }
+

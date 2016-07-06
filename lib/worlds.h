@@ -5,8 +5,12 @@
 #include "models.h"
 
 
+struct world;
+
 typedef int respond(lulog *log, double delta, user_action *action, float *variables);
 typedef int update(lulog *log, double delta, float *variables, void *data);
+typedef int before(lulog *log, void *programs, struct world *world);
+typedef int after(lulog *log, void *programs, struct world *world);
 
 typedef struct world {
     float *variables;
@@ -16,10 +20,12 @@ typedef struct world {
     luary_model *models;
     respond *respond;
     update *update;
+    before *before;
+    after *after;
 } world;
 
 int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
-		GLFWwindow *window, respond *respond, update *update);
+		GLFWwindow *window, respond *respond, update *update, before *before, after *after);
 int free_world(world **world, int status);
 int push_model(lulog *log, world *world, model *model);
 

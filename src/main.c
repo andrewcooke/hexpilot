@@ -14,40 +14,14 @@
 
 static int init_opengl(lulog *log) {
     LU_STATUS
-//    GL_CHECK(glEnable(GL_CULL_FACE))
-//    GL_CHECK(glCullFace(GL_BACK))
-//    GL_CHECK(glFrontFace(GL_CW))
+    GL_CHECK(glEnable(GL_CULL_FACE))
+    GL_CHECK(glCullFace(GL_BACK))
+    GL_CHECK(glFrontFace(GL_CW))
     GL_CHECK(glEnable(GL_DEPTH_TEST))
     GL_CHECK(glDepthMask(GL_TRUE))
     GL_CHECK(glDepthFunc(GL_LEQUAL))
     GL_CHECK(glDepthRange(0.0f, 1.0f))
     GL_CHECK(glEnable(GL_MULTISAMPLE))  // see also GLFW_SAMPLES in glfw.c
-    LU_NO_CLEANUP
-}
-
-static int pre_display(lulog *log, programs *programs, world *world) {
-    LU_STATUS
-    flight_data *data = (flight_data*)world->data;
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->render))
-    GL_CHECK(glClearColor(0, 0, 0, 1))
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
-    GL_CHECK(glEnable(GL_DEPTH_TEST))
-    LU_NO_CLEANUP
-}
-
-static int post_display(lulog *log, programs *programs, world *world) {
-    LU_STATUS
-    flight_data *data = (flight_data*)world->data;
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0))
-    GL_CHECK(glClearColor(0, 0, 0, 1))
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
-    GL_CHECK(glDisable(GL_DEPTH_TEST))
-    GL_CHECK(glBindVertexArray(data->quad_vao))
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->texture))
-    GL_CHECK(glUseProgram(programs->direct_texture))
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
-    GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 6 * sizeof(float) * 2));
-    GL_CHECK(glBindVertexArray(0))
     LU_NO_CLEANUP
 }
 
@@ -72,9 +46,7 @@ static int with_glfw(lulog *log) {
     while (!glfwWindowShouldClose(window)) {
         double delta = update_timing(log, &clock);
         LU_CHECK(update_world(log, delta, universe->flight))
-        LU_CHECK(pre_display(log, universe->programs, universe->flight))
         LU_CHECK(display_world(log, universe->programs, universe->flight))
-        LU_CHECK(post_display(log, universe->programs, universe->flight))
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
