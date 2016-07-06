@@ -7,6 +7,7 @@
 
 
 typedef struct frame {
+    int msaa;
     int width;
     int height;
     GLuint render;
@@ -14,7 +15,7 @@ typedef struct frame {
     GLuint depth;
 } frame;
 
-int init_frame(lulog *log, GLFWwindow *window, frame *frame);
+int init_frame(lulog *log, GLFWwindow *window, frame *frame, int msaa);
 int free_frame_contents(lulog *log, frame *frame);
 int check_frame(lulog *log, GLFWwindow *window, frame *frame);
 

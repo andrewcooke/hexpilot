@@ -150,19 +150,12 @@ static int before_display(lulog *log, void *v, world *world) {
 static int after_display(lulog *log, void *v, world *world) {
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
-    programs *p = (programs*)v;
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0))
-    GL_CHECK(glClearColor(0, 0, 0, 1))
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
-    GL_CHECK(glDisable(GL_DEPTH_TEST))
-    GL_CHECK(glBindVertexArray(data->quad_vao))
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->blurred.texture))
-    GL_CHECK(glUseProgram(p->direct_texture))
-    GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->blurred.texture))
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
+    GL_CHECK(glBlitFramebuffer(0, 0, data->blurred.width, data->blurred.height,
+            0, 0, data->blurred.width, data->blurred.height, GL_COLOR_BUFFER_BIT, GL_NEAREST))
 LU_CLEANUP
-    GL_CLEAN(glEnable(GL_DEPTH_TEST))
-    GL_CLEAN(glBindVertexArray(0))
-    GL_CLEAN(glBindTexture(GL_TEXTURE_2D, 0))
+    GL_CLEAN(glBindFramebuffer(GL_FRAMEBUFFER, 0))
     LU_RETURN
 }
 
@@ -172,7 +165,7 @@ int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
             &respond_to_user, &update_geometry, &before_display, &after_display))
     flight_data *data = (flight_data*)(*world)->data;
-    LU_CHECK(init_frame(log, window, &data->blurred))
+    LU_CHECK(init_frame(log, window, &data->blurred, 1))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_render(log, p, data))
