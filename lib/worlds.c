@@ -33,7 +33,7 @@ int free_world(world **world, int prev) {
             }
         }
         free((*world)->data);
-        free((*world)->data_buffer);
+        free((*world)->geometry_buffer);
         status = luary_freemodel(&(*world)->models, status);
         if ((*world)->action) {
             LU_CHECK(free_keys((*world)->action))
@@ -60,9 +60,9 @@ int update_world(lulog *log, double delta, world *world) {
 
 int display_world(lulog *log, void *programs, world *world) {
     LU_STATUS
-    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
-    GL_CHECK(glClearDepth(1.0f))
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+//    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f))
+//    GL_CHECK(glClearDepth(1.0f))
+//    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     for (size_t i = 0; i < world->models->mem.used; ++i) {
         LU_CHECK(world->models->m[i]->send(log, world->models->m[i], world))
         LU_CHECK(world->models->m[i]->draw(log, world->models->m[i], programs))

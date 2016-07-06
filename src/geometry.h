@@ -30,14 +30,14 @@ typedef enum variable_index {
     n_variables
 } variable_index;
 
-typedef struct geometry {
+typedef struct flight_geometry {
     luvec_f4 camera_light_pos;
     lumat_f4 ship_to_hex;
     lumat_f4 ship_to_hex_n;
     lumat_f4 hex_to_camera;
     lumat_f4 hex_to_camera_n;
     lumat_f4 camera_to_clip;
-} geometry;
+} flight_geometry;
 
 typedef struct geometry_buffer {
     luvec_f3 colour;              // 0

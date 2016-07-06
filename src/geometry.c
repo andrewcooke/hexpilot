@@ -42,7 +42,7 @@ static int normal_transform(lulog *log, lumat_f4 *m, lumat_f4 *n) {
     LU_NO_CLEANUP
 }
 
-static int calculate_geometry(lulog *log, float *variables, geometry *geometry) {
+static int calculate_geometry(lulog *log, float *variables, flight_geometry *geometry) {
 
     LU_STATUS
     lumat_f4 ship_to_hex = {}, world_to_camera = {}, m = {};
@@ -103,7 +103,7 @@ static int calculate_geometry(lulog *log, float *variables, geometry *geometry) 
 int update_geometry(lulog *log, double dt, float *variables, void *data) {
     LU_STATUS
     LU_CHECK(calculate_physics(log, dt, variables))
-    LU_CHECK(calculate_geometry(log, variables, (geometry*)data))
+    LU_CHECK(calculate_geometry(log, variables, (flight_geometry*)data))
     LU_NO_CLEANUP
 }
 

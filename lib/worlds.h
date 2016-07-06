@@ -11,7 +11,7 @@ typedef int update(lulog *log, double delta, float *variables, void *data);
 typedef struct world {
     float *variables;
     void *data;
-    buffer *data_buffer;
+    buffer *geometry_buffer;
     user_action *action;
     luary_model *models;
     respond *respond;

@@ -7,8 +7,8 @@
 #include "tiles.h"
 #include "shaders.h"
 
+#include "world.h"
 #include "geometry.h"
-#include "flight.h"
 #include "programs.h"
 
 
@@ -46,18 +46,19 @@ static luvec_f3 hex_red = {1,0,0};
 
 static int send_hex_data(lulog *log, model *model, world *world) {
     LU_STATUS
-//    ludebug(log, "Sending hex geometry");
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->data_buffer->name))
+    // this builds the whole geometry buffer so must be done before ship
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
     geometry_buffer buffer = {};
     luvec_cpyf3(&hex_red, &buffer.colour);
-    geometry *g = (geometry*) world->data;
-    luvec_cpyf4(&g->camera_light_pos, &buffer.camera_light_pos);
-    lumat_cpyf4(&g->hex_to_camera, &buffer.model_to_camera);
-    lumat_cpyf4(&g->hex_to_camera_n, &buffer.model_to_camera_n);
-    lumat_cpyf4(&g->camera_to_clip, &buffer.camera_to_clip);
+    flight_data *data = (flight_data*) world->data;
+    luvec_cpyf4(&data->geometry.camera_light_pos, &buffer.camera_light_pos);
+    lumat_cpyf4(&data->geometry.hex_to_camera, &buffer.model_to_camera);
+    lumat_cpyf4(&data->geometry.hex_to_camera_n, &buffer.model_to_camera_n);
+    lumat_cpyf4(&data->geometry.camera_to_clip, &buffer.camera_to_clip);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(geometry_buffer), &buffer))
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
-    LU_NO_CLEANUP
+LU_CLEANUP
+    GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
+    LU_RETURN
 }
 
 static luvec_f3 ship_cyan = {0,1,1};
@@ -79,18 +80,19 @@ LU_CLEANUP
 
 static int send_ship_data(lulog *log, model *model, world *world) {
     LU_STATUS
-//    ludebug(log, "Sending ship geometry");
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->data_buffer->name))
+    // this patches ship-specific changes into existing geometry buffer
+    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ship_cyan), &ship_cyan))
     lumat_f4 ship_to_camera = {};
-    geometry *g = (geometry*) world->data;
-    lumat_mulf4(&g->hex_to_camera, &g->ship_to_hex, &ship_to_camera);
+    flight_data *data = (flight_data*) world->data;
+    lumat_mulf4(&data->geometry.hex_to_camera, &data->geometry.ship_to_hex, &ship_to_camera);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(ship_to_camera), &ship_to_camera))
     lumat_f4 ship_to_camera_n = {};
-    lumat_mulf4(&g->hex_to_camera_n, &g->ship_to_hex_n, &ship_to_camera_n);
+    lumat_mulf4(&data->geometry.hex_to_camera_n, &data->geometry.ship_to_hex_n, &ship_to_camera_n);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 96, sizeof(ship_to_camera_n), &ship_to_camera_n))
-    GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, 0))
-    LU_NO_CLEANUP
+LU_CLEANUP
+    GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
+    LU_RETURN
 }
 
 static int build_ship(lulog *log, programs *programs, world *world) {
@@ -111,23 +113,66 @@ LU_CLEANUP
 static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_STATUS
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
-            NULL, 1, sizeof(geometry), &world->data_buffer));
+            NULL, 1, sizeof(geometry_buffer), &world->geometry_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
     GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->lit_per_vertex, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->lit_per_vertex, index, 1))
     GL_CHECK(index = glGetUniformBlockIndex(programs->black, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->black, index, 1))
-    GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->data_buffer->name))
+    GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->geometry_buffer->name))
+    LU_NO_CLEANUP
+}
+
+static int init_render(lulog *log, GLFWwindow *window, flight_data *data) {
+    LU_STATUS
+    // http://learnopengl.com/#!Advanced-OpenGL/Framebuffers
+    GL_CHECK(glGenFramebuffers(1, &data->render))
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->render))
+    GL_CHECK(glGenTextures(1, &data->texture))
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->texture))
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    // TODO - do we want to be smarter here?  copy main buffer details?
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL))
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR))
+    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, data->texture, 0))
+    GLuint depth;
+    GL_CHECK(glGenRenderbuffers(1, &depth))
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depth))
+    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height))
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth))
+    // TODO - freeing these, resizing these
+    LU_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,
+            LU_ERR, log, "Frame buffer incomplete")
+LU_CLEANUP
+    GL_CLEAN(glBindFramebuffer(GL_FRAMEBUFFER, 0))
+    LU_RETURN
+}
+
+static int build_render(lulog *log, programs *programs, flight_data *data) {
+    LU_STATUS
+    float quad[] = {-1,1, -1,-1, 1,-1, -1,1, 1,1, 1,-1};  // TODO - CW?
+    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW, quad, 1, sizeof(quad), &data->quad_buffer))
+    GL_CHECK(glGenVertexArrays(1, &data->quad_vao))
+    GL_CHECK(glBindVertexArray(data->quad_vao))
+    LU_CHECK(bind_buffer(log, data->quad_buffer))
+    GL_CHECK(glEnableVertexAttribArray(0))
+    GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0))
+    LU_CHECK(unbind_buffer(log, data->quad_buffer))
     LU_NO_CLEANUP
 }
 
 int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_STATUS
     programs *p = (programs*) v;
-    LU_CHECK(mkworld(log, world, n_variables, sizeof(geometry), window,
+    LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
             &respond_to_user, &update_geometry))
+    flight_data *data = (flight_data*)(*world)->data;
+    LU_CHECK(init_render(log, window, data))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
+    LU_CHECK(build_render(log, p, data))
     LU_CHECK(build_geometry(log, p, *world))
     LU_CHECK(build_hexagon(log, p, *world))
     LU_CHECK(build_ship(log, p, *world))

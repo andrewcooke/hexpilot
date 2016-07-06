@@ -31,6 +31,17 @@ LU_CLEANUP
     LU_RETURN
 }
 
+int build_direct_texture(lulog *log, GLuint *program) {
+    LU_STATUS
+    luary_uint32 *shaders = NULL;
+    LU_CHECK(compile_shader_from_file(log, GL_VERTEX_SHADER, "direct_texture.vert", &shaders))
+    LU_CHECK(compile_shader_from_file(log, GL_FRAGMENT_SHADER, "direct_texture.frag", &shaders))
+    LU_CHECK(link_program(log, shaders, program));
+LU_CLEANUP
+    status = free_shaders(log, &shaders, status);
+    LU_RETURN
+}
+
 int draw_filled_triangles(lulog *log, model *model, programs *programs) {
     LU_STATUS
     GL_CHECK(glUseProgram(programs->lit_per_vertex))

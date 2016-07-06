@@ -8,7 +8,7 @@
 typedef struct universe {
     lulog *log;
     void * programs;
-    world *flight;
+    world *flight;  // TODO - should be more general
 } universe;
 
 int mkuniverse(lulog *log, universe **universe, size_t programs_size);
