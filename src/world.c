@@ -164,9 +164,9 @@ int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
             &respond_to_user, &update_geometry, &before_display, &after_display))
     flight_data *data = (flight_data*)(*world)->data;
-    LU_CHECK(init_frame(log, window, &data->single, 1))
-    LU_CHECK(init_frame(log, window, &data->multiple, 0))
-    LU_CHECK(init_frame(log, window, &data->tmp, 0))
+    LU_CHECK(init_frame(log, window, &data->single, 1, 1))
+    LU_CHECK(init_frame(log, window, &data->multiple, 0, 0))
+    LU_CHECK(init_frame(log, window, &data->tmp, 0, 0))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_render(log, p, data))
