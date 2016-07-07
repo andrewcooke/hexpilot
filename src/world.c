@@ -149,7 +149,7 @@ static int before_display(lulog *log, void *programs, world *world) {
 static int after_display(lulog *log, void *programs, world *world) {
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.texture))
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.render))
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
     GL_CHECK(glBlitFramebuffer(0, 0, data->single.width, data->single.height,
             0, 0, data->single.width, data->single.height, GL_COLOR_BUFFER_BIT, GL_NEAREST))

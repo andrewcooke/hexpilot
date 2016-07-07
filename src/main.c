@@ -40,7 +40,7 @@ static int with_glfw(lulog *log) {
     LU_CHECK(mkuniverse(log, &universe, sizeof(programs)))
     LU_CHECK(build_black(log, &((programs*)universe->programs)->black))
     LU_CHECK(build_lit_per_vertex(log, &((programs*)universe->programs)->lit_per_vertex))
-    LU_CHECK(build_direct_texture(log, &((programs*)universe->programs)->direct_texture))
+//    LU_CHECK(build_direct_texture(log, &((programs*)universe->programs)->direct_texture))
     LU_CHECK(build_flight(log, universe->programs, window, &universe->flight))
 
     LU_CHECK(init_timing(log, &clock));
