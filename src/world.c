@@ -140,20 +140,38 @@ LU_CLEANUP
 static int before_display(lulog *log, void *programs, world *world) {
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
+
     LU_CHECK(check_frame(log, world->action->window, &data->single))
+    LU_CHECK(check_frame(log, world->action->window, &data->tmp))
+    LU_CHECK(check_frame(log, world->action->window, &data->multiple))
+
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->single.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     LU_NO_CLEANUP
 }
 
-static int after_display(lulog *log, void *programs, world *world) {
+static int after_display(lulog *log, void *v, world *world) {
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
+    programs *p = (programs*)v;
+    GL_CHECK(glDisable(GL_DEPTH_TEST))
+
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.render))
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, data->tmp.render))
     GL_CHECK(glBlitFramebuffer(0, 0, data->single.width, data->single.height,
             0, 0, data->single.width, data->single.height, GL_COLOR_BUFFER_BIT, GL_NEAREST))
+
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
+    GL_CHECK(glUseProgram(p->direct_texture))
+    GL_CHECK(glBindVertexArray(data->quad_vao))
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->tmp.texture))
+    GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+
 LU_CLEANUP
+    GL_CHECK(glBindVertexArray(0))
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0))
+    GL_CHECK(glEnable(GL_DEPTH_TEST))
     GL_CLEAN(glBindFramebuffer(GL_FRAMEBUFFER, 0))
     LU_RETURN
 }
