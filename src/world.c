@@ -137,23 +137,22 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int before_display(lulog *log, void *v, world *world) {
+static int before_display(lulog *log, void *programs, world *world) {
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
-    LU_CHECK(check_frame(log, world->action->window, &data->blurred))
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->blurred.render))
-    GL_CHECK(glClearColor(0, 0, 0, 1))
+    LU_CHECK(check_frame(log, world->action->window, &data->single))
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->single.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     LU_NO_CLEANUP
 }
 
-static int after_display(lulog *log, void *v, world *world) {
+static int after_display(lulog *log, void *programs, world *world) {
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->blurred.texture))
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.texture))
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
-    GL_CHECK(glBlitFramebuffer(0, 0, data->blurred.width, data->blurred.height,
-            0, 0, data->blurred.width, data->blurred.height, GL_COLOR_BUFFER_BIT, GL_NEAREST))
+    GL_CHECK(glBlitFramebuffer(0, 0, data->single.width, data->single.height,
+            0, 0, data->single.width, data->single.height, GL_COLOR_BUFFER_BIT, GL_NEAREST))
 LU_CLEANUP
     GL_CLEAN(glBindFramebuffer(GL_FRAMEBUFFER, 0))
     LU_RETURN
@@ -165,7 +164,9 @@ int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
             &respond_to_user, &update_geometry, &before_display, &after_display))
     flight_data *data = (flight_data*)(*world)->data;
-    LU_CHECK(init_frame(log, window, &data->blurred, 1))
+    LU_CHECK(init_frame(log, window, &data->single, 1))
+    LU_CHECK(init_frame(log, window, &data->multiple, 0))
+    LU_CHECK(init_frame(log, window, &data->tmp, 0))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_render(log, p, data))

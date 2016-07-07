@@ -19,7 +19,7 @@ int init_frame(lulog *log, GLFWwindow *window, frame *frame, int msaa) {
     if (msaa) {
         GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, frame->width, frame->height, GL_TRUE))
     } else {
-        GL_CHECK(glTexImage2D(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_RGB, frame->width, frame->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL))
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame->width, frame->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL))
     }
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR))
