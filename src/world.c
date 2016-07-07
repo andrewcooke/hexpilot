@@ -142,7 +142,8 @@ static int before_display(lulog *log, void *programs, world *world) {
     flight_data *data = (flight_data*)world->data;
 
     LU_CHECK(check_frame(log, world->action->window, &data->single))
-    LU_CHECK(check_frame(log, world->action->window, &data->tmp))
+    LU_CHECK(check_frame(log, world->action->window, &data->tmp1))
+    LU_CHECK(check_frame(log, world->action->window, &data->tmp2))
     LU_CHECK(check_frame(log, world->action->window, &data->multiple))
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->single.render))
@@ -156,15 +157,38 @@ static int after_display(lulog *log, void *v, world *world) {
     programs *p = (programs*)v;
     GL_CHECK(glDisable(GL_DEPTH_TEST))
 
+    // blit from single into tmp1 to resolve anti-aliasing
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.render))
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, data->tmp.render))
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, data->tmp1.render))
     GL_CHECK(glBlitFramebuffer(0, 0, data->single.width, data->single.height,
             0, 0, data->single.width, data->single.height, GL_COLOR_BUFFER_BIT, GL_NEAREST))
 
+    // add multiple and tmp1 into tmp2
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
+    GL_CHECK(glUseProgram(p->merge_frames.name))
+    LU_CHECK(use_uniform_texture(log, p->merge_frames.frame1, data->tmp1.texture))
+    LU_CHECK(use_uniform_texture(log, p->merge_frames.frame2, data->multiple.texture))
+    GL_CHECK(glBindVertexArray(data->quad_vao))
+    GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+
+    // copy tmp2 into output
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0))
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
     GL_CHECK(glUseProgram(p->direct_texture.name))
-    LU_CHECK(use_uniform_texture(log, p->direct_texture.frame, data->tmp.texture))
+    LU_CHECK(use_uniform_texture(log, p->direct_texture.frame, data->tmp2.texture))
+    GL_CHECK(glBindVertexArray(data->quad_vao))
+    GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+
+    // blur tmp2 horizontally into tmp1
+
+    // blur tmp1 vertically into multiple
+
+    // copy tmp2 back to multiple
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->multiple.render))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
+    GL_CHECK(glUseProgram(p->direct_texture.name))
+    LU_CHECK(use_uniform_texture(log, p->direct_texture.frame, data->tmp2.texture))
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
@@ -184,7 +208,8 @@ int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     flight_data *data = (flight_data*)(*world)->data;
     LU_CHECK(init_frame(log, window, &data->single, 1, 1))
     LU_CHECK(init_frame(log, window, &data->multiple, 0, 0))
-    LU_CHECK(init_frame(log, window, &data->tmp, 0, 0))
+    LU_CHECK(init_frame(log, window, &data->tmp1, 0, 0))
+    LU_CHECK(init_frame(log, window, &data->tmp2, 0, 0))
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_render(log, p, data))

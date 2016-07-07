@@ -15,6 +15,8 @@ typedef struct direct_texture {
 
 typedef struct merge_frames {
     GLuint name;
+    GLuint frame1;
+    GLuint frame2;
 } merge_frames;
 
 typedef struct programs {
@@ -27,6 +29,7 @@ typedef struct programs {
 int build_lit_per_vertex(lulog *log, GLuint *program);
 int build_black(lulog *log, GLuint *program);
 int build_direct_texture(lulog *log, direct_texture *program);
+int build_merge_frames(lulog *log, merge_frames *program);
 
 int draw_filled_triangles(lulog *log, model *model, programs *programs);
 int draw_lines_and_triangles(lulog *log, model *model, programs *programs);

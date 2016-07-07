@@ -8,6 +8,5 @@ uniform sampler2D frame;
 
 void main()
 { 
-    colour = vec4(vec3(1 - texture(frame, tex_coords)), 1);
-//    colour = texture(frame, tex_coords);
+    colour = texture(frame, tex_coords);
 }

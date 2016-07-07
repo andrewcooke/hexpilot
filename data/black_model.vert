@@ -14,7 +14,7 @@ flat out vec4 interpColour;
 
 void main() {
   vec4 camera_position = model_to_camera * position;
-  vec4 fudge = vec4(camera_position.x, camera_position.y, 1.001 * camera_position.z, camera_position.w);
+  vec4 fudge = vec4(camera_position.x, camera_position.y, camera_position.z - 0.001, camera_position.w);
   gl_Position = camera_to_clip * fudge;
   interpColour = vec4(0, 0, 0, 1);
 }
