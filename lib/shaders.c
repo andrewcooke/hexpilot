@@ -101,6 +101,26 @@ LU_CLEANUP
     LU_RETURN2(prev_status)
 }
 
+
+int set_uniform(lulog *log, GLuint program, const char *name, GLuint *uniform, GLuint index) {
+    LU_STATUS
+    GL_CHECK(glUseProgram(program))
+    GL_CHECK(GLuint locn = glGetUniformLocation(program, name))
+    GL_CHECK(glUniform1i(locn, index))
+    *uniform = index;
+LU_CLEANUP
+    GL_CHECK(glUseProgram(0))
+    LU_RETURN
+}
+
+int use_uniform_texture(lulog *log, GLuint uniform, GLuint texture) {
+    LU_STATUS
+    glActiveTexture(GL_TEXTURE0 + uniform);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    LU_NO_CLEANUP
+}
+
+
 int interleaved_vnorm_vao(lulog *log, buffer *buffer, GLuint *vao) {
     LU_STATUS
     GL_CHECK(glGenVertexArrays(1, vao))

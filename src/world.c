@@ -163,9 +163,9 @@ static int after_display(lulog *log, void *v, world *world) {
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))
-    GL_CHECK(glUseProgram(p->direct_texture))
+    GL_CHECK(glUseProgram(p->direct_texture.name))
+    LU_CHECK(use_uniform_texture(log, p->direct_texture.frame, data->tmp.texture))
     GL_CHECK(glBindVertexArray(data->quad_vao))
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, data->tmp.texture))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
 LU_CLEANUP

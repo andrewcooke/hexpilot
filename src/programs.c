@@ -31,12 +31,13 @@ LU_CLEANUP
     LU_RETURN
 }
 
-int build_direct_texture(lulog *log, GLuint *program) {
+int build_direct_texture(lulog *log, direct_texture *program) {
     LU_STATUS
     luary_uint32 *shaders = NULL;
     LU_CHECK(compile_shader_from_file(log, GL_VERTEX_SHADER, "direct_texture.vert", &shaders))
     LU_CHECK(compile_shader_from_file(log, GL_FRAGMENT_SHADER, "direct_texture.frag", &shaders))
-    LU_CHECK(link_program(log, shaders, program));
+    LU_CHECK(link_program(log, shaders, &program->name))
+    LU_CHECK(set_uniform(log, program->name, "frame", &program->frame, 0))
 LU_CLEANUP
     status = free_shaders(log, &shaders, status);
     LU_RETURN
