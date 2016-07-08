@@ -17,8 +17,8 @@ void main()
     {
         for (int i = 1; i < 5; ++i)
         {
-            result += 0.9 * texture(frame, tex_coords + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
-            result += 0.9 * texture(frame, tex_coords - vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+            result += 0.65 * texture(frame, tex_coords + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+            result += 0.65 * texture(frame, tex_coords - vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
         }
     }
     else

@@ -42,7 +42,7 @@ static int respond_to_user(lulog *log, double dt, user_action *action, float *va
 }
 
 
-static luvec_f3 hex_red = {1,0,0};
+static luvec_f3 hex_red = {0,0.5,0.2};
 
 static int send_hex_data(lulog *log, model *model, world *world) {
     LU_STATUS
