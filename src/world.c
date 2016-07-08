@@ -181,14 +181,20 @@ static int after_display(lulog *log, void *v, world *world) {
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
     // blur tmp2 horizontally into tmp1
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp1.render))
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
+    GL_CHECK(glUseProgram(p->blur.name))
+    LU_CHECK(use_uniform_texture(log, p->blur.frame, data->tmp2.texture))
+    GL_CHECK(glUniform1i(p->blur.horizontal, 1))
+    GL_CHECK(glBindVertexArray(data->quad_vao))
+    GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
     // blur tmp1 vertically into multiple
-
-    // copy tmp2 back to multiple
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->multiple.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
-    GL_CHECK(glUseProgram(p->direct_texture.name))
-    LU_CHECK(use_uniform_texture(log, p->direct_texture.frame, data->tmp2.texture))
+    GL_CHECK(glUseProgram(p->blur.name))
+    LU_CHECK(use_uniform_texture(log, p->blur.frame, data->tmp1.texture))
+    GL_CHECK(glUniform1i(p->blur.horizontal, 0))
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 

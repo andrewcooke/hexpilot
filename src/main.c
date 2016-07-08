@@ -18,6 +18,7 @@ static int init_opengl(lulog *log) {
     GL_CHECK(glCullFace(GL_BACK))
     GL_CHECK(glFrontFace(GL_CW))
     GL_CHECK(glEnable(GL_DEPTH_TEST))
+    GL_CHECK(glEnable(GL_LINE_SMOOTH))
     GL_CHECK(glDepthMask(GL_TRUE))
     GL_CHECK(glDepthFunc(GL_LEQUAL))
     GL_CHECK(glDepthRange(0.0f, 1.0f))
@@ -42,6 +43,7 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_lit_per_vertex(log, &((programs*)universe->programs)->lit_per_vertex))
     LU_CHECK(build_direct_texture(log, &((programs*)universe->programs)->direct_texture))
     LU_CHECK(build_merge_frames(log, &((programs*)universe->programs)->merge_frames))
+    LU_CHECK(build_blur(log, &((programs*)universe->programs)->blur))
     LU_CHECK(build_flight(log, universe->programs, window, &universe->flight))
 
     LU_CHECK(init_timing(log, &clock));
