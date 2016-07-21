@@ -28,13 +28,15 @@ typedef struct blur {
 typedef struct programs {
     GLuint lit_per_vertex;
     GLuint black;
-    direct_texture direct_texture;
+    GLuint flat;
+    direct_texture copy_frame;
     merge_frames merge_frames;
     blur blur;
 } programs;
 
 int build_lit_per_vertex(lulog *log, GLuint *program);
 int build_black(lulog *log, GLuint *program);
+int build_flat(lulog *log, GLuint *program);
 int build_direct_texture(lulog *log, direct_texture *program);
 int build_merge_frames(lulog *log, merge_frames *program);
 int build_blur(lulog *log, blur *program);

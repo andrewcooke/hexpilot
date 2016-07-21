@@ -115,8 +115,10 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
             NULL, 1, sizeof(geometry_buffer), &world->geometry_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
-    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->lit_per_vertex, "geometry"))
-    GL_CHECK(glUniformBlockBinding(programs->lit_per_vertex, index, 1))
+//    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->lit_per_vertex, "geometry"))
+//    GL_CHECK(glUniformBlockBinding(programs->lit_per_vertex, index, 1))
+    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->flat, "geometry"))
+    GL_CHECK(glUniformBlockBinding(programs->flat, index, 1))
     GL_CHECK(index = glGetUniformBlockIndex(programs->black, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->black, index, 1))
     GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->geometry_buffer->name))
@@ -192,8 +194,8 @@ static int after_display_blur(lulog *log, void *v, world *world) {
     // copy tmp2 into output
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
-    GL_CHECK(glUseProgram(p->direct_texture.name))
-    LU_CHECK(use_uniform_texture(log, p->direct_texture.frame, data->tmp2.texture))
+    GL_CHECK(glUseProgram(p->copy_frame.name))
+    LU_CHECK(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture))
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
