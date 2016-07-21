@@ -14,14 +14,13 @@ typedef struct flight_data {
     flight_geometry geometry;
     buffer *quad_buffer;
     GLuint quad_vao;
-    // render new frame to single, blit that to tmp1 to sample, then add to
-    // multiple in tmp1.  copy tmp1 to output then blut via tmp2 into multiple.
     frame single;
     frame multiple;
     frame tmp1;
     frame tmp2;
 } flight_data;
 
-int build_flight(lulog *log, void *programs, GLFWwindow *window, world **world);
+int build_flight_blur(lulog *log, void *programs, GLFWwindow *window, world **world);
+int build_flight_direct(lulog *log, void *v, GLFWwindow *window, world **world);
 
 #endif

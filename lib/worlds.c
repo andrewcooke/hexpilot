@@ -62,11 +62,15 @@ int update_world(lulog *log, double delta, world *world) {
 
 int display_world(lulog *log, void *programs, world *world) {
     LU_STATUS
-    LU_CHECK(world->before(log, programs, world))
+    if (world->before) {
+        LU_CHECK(world->before(log, programs, world))
+    }
     for (size_t i = 0; i < world->models->mem.used; ++i) {
         LU_CHECK(world->models->m[i]->send(log, world->models->m[i], world))
         LU_CHECK(world->models->m[i]->draw(log, world->models->m[i], programs))
     }
-    LU_CHECK(world->after(log, programs, world))
+    if (world->after) {
+        LU_CHECK(world->after(log, programs, world))
+    }
     LU_NO_CLEANUP
 }

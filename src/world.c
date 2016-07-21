@@ -42,14 +42,14 @@ static int respond_to_user(lulog *log, double dt, user_action *action, float *va
 }
 
 
-static luvec_f3 hex_red = {0,0.5,0.2};
+static luvec_f3 hex_colour = {0,0.5,0.2};
 
 static int send_hex_data(lulog *log, model *model, world *world) {
     LU_STATUS
     // this builds the whole geometry buffer so must be done before ship
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
     geometry_buffer buffer = {};
-    luvec_cpyf3(&hex_red, &buffer.colour);
+    luvec_cpyf3(&hex_colour, &buffer.colour);
     flight_data *data = (flight_data*) world->data;
     luvec_cpyf4(&data->geometry.camera_light_pos, &buffer.camera_light_pos);
     lumat_cpyf4(&data->geometry.hex_to_camera, &buffer.model_to_camera);
@@ -123,6 +123,9 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_NO_CLEANUP
 }
 
+/**
+ * copy a frame to the display buffer.
+ */
 static int build_render(lulog *log, programs *programs, flight_data *data) {
     LU_STATUS
     float quad[] = {-1,-1, -1,1, 1,-1, 1,1};
@@ -137,24 +140,38 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static int before_display(lulog *log, void *programs, world *world) {
+static int before_display_clear(lulog *log, void *programs, world *world) {
+    LU_STATUS
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+    LU_NO_CLEANUP
+}
+
+static int before_display_blur(lulog *log, void *programs, world *world) {
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
 
-    LU_CHECK(check_frame(log, world->action->window, &data->single))
-    LU_CHECK(check_frame(log, world->action->window, &data->tmp1))
-    LU_CHECK(check_frame(log, world->action->window, &data->tmp2))
-    LU_CHECK(check_frame(log, world->action->window, &data->multiple))
+    LU_CHECK(rescale_frame(log, world->action->window, &data->single))
+    LU_CHECK(rescale_frame(log, world->action->window, &data->tmp1))
+    LU_CHECK(rescale_frame(log, world->action->window, &data->tmp2))
+    LU_CHECK(rescale_frame(log, world->action->window, &data->multiple))
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->single.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
     LU_NO_CLEANUP
 }
 
-static int after_display(lulog *log, void *v, world *world) {
+/**
+ * assuming that the current display has been rendered into buffer
+ * single.render, combine that with the previous blurred display,
+ * and move the result to output.  then blur further and save for
+ * next iteration.  requires tmp1 and tmp2 for workspace.
+ */
+static int after_display_blur(lulog *log, void *v, world *world) {
+
     LU_STATUS
     flight_data *data = (flight_data*)world->data;
     programs *p = (programs*)v;
+
     GL_CHECK(glDisable(GL_DEPTH_TEST))
 
     // blit from single into tmp1 to resolve anti-aliasing
@@ -206,11 +223,11 @@ LU_CLEANUP
     LU_RETURN
 }
 
-int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
+int build_flight_blur(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_STATUS
     programs *p = (programs*) v;
     LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
-            &respond_to_user, &update_geometry, &before_display, &after_display))
+            &respond_to_user, &update_geometry, &before_display_blur, &after_display_blur))
     flight_data *data = (flight_data*)(*world)->data;
     LU_CHECK(init_frame(log, window, &data->single, 1, 1))
     LU_CHECK(init_frame(log, window, &data->multiple, 0, 0))
@@ -219,6 +236,21 @@ int build_flight(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_render(log, p, data))
+    LU_CHECK(build_geometry(log, p, *world))
+    LU_CHECK(build_hexagon(log, p, *world))
+    LU_CHECK(build_ship(log, p, *world))
+    LU_CHECK(set_window_callbacks(log, window, (*world)->action))
+    LU_NO_CLEANUP
+}
+
+int build_flight_direct(lulog *log, void *v, GLFWwindow *window, world **world) {
+    LU_STATUS
+    programs *p = (programs*) v;
+    LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
+            &respond_to_user, &update_geometry, &before_display_clear, NULL))
+    flight_data *data = (flight_data*)(*world)->data;
+    LU_CHECK(init_keys(log, (*world)->action))
+    LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_geometry(log, p, *world))
     LU_CHECK(build_hexagon(log, p, *world))
     LU_CHECK(build_ship(log, p, *world))

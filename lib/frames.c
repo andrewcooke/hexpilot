@@ -66,7 +66,7 @@ LU_CLEANUP
     LU_RETURN
 }
 
-int check_frame(lulog *log, GLFWwindow *window, frame *frame) {
+int rescale_frame(lulog *log, GLFWwindow *window, frame *frame) {
     LU_STATUS
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
