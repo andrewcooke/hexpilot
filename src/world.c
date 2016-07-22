@@ -69,6 +69,7 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
     model *model = NULL;
     luary_vnorm *vertices = NULL;
     LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_line_edges));
+//    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_filled_triangles));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
@@ -116,9 +117,9 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
             NULL, 1, sizeof(geometry_buffer), &world->geometry_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
-//    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->lit_per_vertex, "geometry"))
-//    GL_CHECK(glUniformBlockBinding(programs->lit_per_vertex, index, 1))
-    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->line_edges, "geometry"))
+    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->lit_per_vertex, "geometry"))
+    GL_CHECK(glUniformBlockBinding(programs->lit_per_vertex, index, 1))
+    GL_CHECK(index = glGetUniformBlockIndex(programs->line_edges, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->line_edges, index, 1))
     GL_CHECK(index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->triangle_edges, index, 1))
