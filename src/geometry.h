@@ -37,6 +37,7 @@ typedef struct flight_geometry {
     lumat_f4 hex_to_camera;
     lumat_f4 hex_to_camera_n;
     lumat_f4 camera_to_clip;
+    lumat_f4 camera_to_clip_n;
 } flight_geometry;
 
 typedef struct geometry_buffer {
@@ -46,6 +47,7 @@ typedef struct geometry_buffer {
     lumat_f4 model_to_camera;     // 32
     lumat_f4 model_to_camera_n;   // 96
     lumat_f4 camera_to_clip;      // 160
+    lumat_f4 camera_to_clip_n;    // 224
 } geometry_buffer;
 
 int init_geometry(lulog *log, float *variables);

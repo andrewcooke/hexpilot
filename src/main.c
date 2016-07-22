@@ -14,9 +14,9 @@
 
 static int init_opengl(lulog *log) {
     LU_STATUS
-    GL_CHECK(glEnable(GL_CULL_FACE))
-    GL_CHECK(glCullFace(GL_BACK))
-    GL_CHECK(glFrontFace(GL_CW))
+//    GL_CHECK(glEnable(GL_CULL_FACE))
+//    GL_CHECK(glCullFace(GL_BACK))
+//    GL_CHECK(glFrontFace(GL_CW))
     GL_CHECK(glEnable(GL_DEPTH_TEST))
     GL_CHECK(glDepthMask(GL_TRUE))
     GL_CHECK(glDepthFunc(GL_LEQUAL))

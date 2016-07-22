@@ -36,9 +36,16 @@ static int calculate_physics(lulog *log, double dt, float *variables) {
 
 static int normal_transform(lulog *log, lumat_f4 *m, lumat_f4 *n) {
     LU_STATUS
-    lumat_f4 x = {};
-    LU_CHECK(lumat_invf4(log, m, &x));
-    lumat_trnf4(&x, n);
+    int i;
+    lumat_f4 copy = {}, inv = {};
+    lumat_cpyf4(m, &copy);
+    for (i = 0; i < 4; ++i) {
+        copy[lumat_idx4(i, 3)] = 0;
+        copy[lumat_idx4(3, i)] = 0;
+    }
+    copy[lumat_idx4(3, 3)] = 1;
+    LU_CHECK(lumat_invf4(log, &copy, &inv));
+    lumat_trnf4(&inv, n);
     LU_NO_CLEANUP
 }
 
@@ -51,7 +58,8 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
     // from the origin.  that seems quite reasonable for the world, too.
     // so we use hex coords as the world space.
 
-    lumat_rotf4_z(-variables[ship_angle] + M_PI/2, &geometry->ship_to_hex);
+//    lumat_rotf4_z(-variables[ship_angle] + M_PI/2, &geometry->ship_to_hex);
+    lumat_rotf4_z(-variables[ship_angle] + 0.8*M_PI/2, &geometry->ship_to_hex);
     lumat_offf4_3(-variables[ship_x], -variables[ship_y], variables[ship_z], &m);
     lumat_mulf4_in(&m, &geometry->ship_to_hex);
     LU_CHECK(normal_transform(log, &geometry->ship_to_hex, &geometry->ship_to_hex_n))
@@ -97,6 +105,8 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
                       0, scale_y,           0,           0,
                       0,       0, (n+f)/(n-f), 2*f*n/(n-f),
                       0,       0,          -1,           0, &geometry->camera_to_clip);
+    LU_CHECK(normal_transform(log,  &geometry->camera_to_clip,  &geometry->camera_to_clip_n))
+
     LU_NO_CLEANUP
 }
 

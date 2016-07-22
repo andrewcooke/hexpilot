@@ -55,6 +55,7 @@ static int send_hex_data(lulog *log, model *model, world *world) {
     lumat_cpyf4(&data->geometry.hex_to_camera, &buffer.model_to_camera);
     lumat_cpyf4(&data->geometry.hex_to_camera_n, &buffer.model_to_camera_n);
     lumat_cpyf4(&data->geometry.camera_to_clip, &buffer.camera_to_clip);
+    lumat_cpyf4(&data->geometry.camera_to_clip_n, &buffer.camera_to_clip_n);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(geometry_buffer), &buffer))
 LU_CLEANUP
     GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
