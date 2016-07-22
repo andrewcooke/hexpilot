@@ -49,7 +49,7 @@ static int send_hex_data(lulog *log, model *model, world *world) {
     // this builds the whole geometry buffer so must be done before ship
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
     geometry_buffer buffer = {};
-    luvec_cpyf3(&hex_colour, &buffer.colour);
+    luvec_cpyf3(&hex_colour, &buffer.model_colour);
     flight_data *data = (flight_data*) world->data;
     luvec_cpyf4(&data->geometry.camera_light_pos, &buffer.camera_light_pos);
     lumat_cpyf4(&data->geometry.hex_to_camera, &buffer.model_to_camera);
@@ -67,7 +67,7 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
     LU_STATUS
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_lines_and_triangles));
+    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_line_edges));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
@@ -99,7 +99,7 @@ static int build_ship(lulog *log, programs *programs, world *world) {
     LU_STATUS
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_lines_and_triangles));
+    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_triangle_edges));
     LU_CHECK(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
@@ -117,8 +117,10 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
 //    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->lit_per_vertex, "geometry"))
 //    GL_CHECK(glUniformBlockBinding(programs->lit_per_vertex, index, 1))
-    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->flat, "geometry"))
-    GL_CHECK(glUniformBlockBinding(programs->flat, index, 1))
+    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->line_edges, "geometry"))
+    GL_CHECK(glUniformBlockBinding(programs->line_edges, index, 1))
+    GL_CHECK(index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
+    GL_CHECK(glUniformBlockBinding(programs->triangle_edges, index, 1))
     GL_CHECK(index = glGetUniformBlockIndex(programs->black, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->black, index, 1))
     GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->geometry_buffer->name))

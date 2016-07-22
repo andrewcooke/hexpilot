@@ -1,8 +1,8 @@
 #version 330
 
-flat in vec4 interpColour;
-out vec4 outputColor;
+flat in vec4 frag_colour;
+out vec4 colour;
 
 void main() {
-    outputColor = interpColour;
+    colour = frag_colour;
 }

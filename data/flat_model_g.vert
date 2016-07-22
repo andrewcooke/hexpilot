@@ -10,10 +10,10 @@ layout(std140) uniform geometry {
   mat4 camera_to_clip;
 };
 
-flat out vec4 frag_colour;
+flat out vec4 geom_colour;
 
 void main() {
   vec4 camera_position = model_to_camera * position;
   gl_Position = camera_to_clip * camera_position;
-  frag_colour = vec4(model_colour, 1);
+  geom_colour = vec4(model_colour, 1);
 }

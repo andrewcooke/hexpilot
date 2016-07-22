@@ -40,7 +40,7 @@ typedef struct flight_geometry {
 } flight_geometry;
 
 typedef struct geometry_buffer {
-    luvec_f3 colour;              // 0
+    luvec_f3 model_colour;        // 0
     float padding;
     luvec_f4 camera_light_pos;    // 16
     lumat_f4 model_to_camera;     // 32
