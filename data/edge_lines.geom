@@ -1,31 +1,65 @@
 #version 330
  
 layout(triangles) in;
-layout(triangle_strip, max_vertices=6) out;
+layout(triangle_strip, max_vertices=18) out;
 
 flat in vec4 geom_colour[];
 flat in vec4 geom_normal[];
 flat out vec4 frag_colour;
+
+const float line_width = 0.002;
+const vec3 view = vec3(0, 0, -1);
  
 void main()
 {
+
   frag_colour = geom_colour[0];
-  float seen = dot(vec4(0, 0, 1, 0), geom_normal[2]);
-  vec4 a = gl_in[0].gl_Position;
-  vec4 b = gl_in[1].gl_Position;
-  vec4 c = gl_in[2].gl_Position;
-  gl_Position = a;
-  EmitVertex();
-  gl_Position = b;
-  EmitVertex();
-  gl_Position = c;
-  EmitVertex();
-  EndPrimitive();
-  gl_Position = a+0.2*geom_normal[2];
-  EmitVertex();
-  gl_Position = b+0.2*geom_normal[2];
-  EmitVertex();
-  gl_Position = c+0.2*geom_normal[2];
-  EmitVertex();
-  EndPrimitive();
+  vec4 n = geom_normal[2];
+  float seen = dot(view, n.xyz);
+  
+  if (seen > 0) {
+
+    vec4 a = gl_in[0].gl_Position;
+    vec4 b = gl_in[1].gl_Position;
+    vec4 c = gl_in[2].gl_Position;
+    
+    vec4 ab = b - a; ab.w = 0;
+    vec4 bc = c - b; bc.w = 0;
+    vec4 ca = a - c; ca.w = 0;
+    
+    vec3 xab = normalize(cross(ab.xyz, n.xyz));
+    vec3 xbc = normalize(cross(bc.xyz, n.xyz));
+    vec3 xca = normalize(cross(ca.xyz, n.xyz));
+  
+    vec4 d = vec4(xab * line_width / length(cross(view, xab)), 0);
+    gl_Position = a + a.w * d; EmitVertex();
+    gl_Position = b + b.w * d; EmitVertex();
+    gl_Position = a - a.w * d; EmitVertex();
+    EndPrimitive();
+    gl_Position = b + b.w * d; EmitVertex();
+    gl_Position = b - b.w * d; EmitVertex();
+    gl_Position = a - a.w * d; EmitVertex();
+    EndPrimitive();
+
+    d = vec4(xbc * line_width / length(cross(view, xbc)), 0);
+    gl_Position = b + b.w * d; EmitVertex();
+    gl_Position = c + c.w * d; EmitVertex();
+    gl_Position = b - b.w * d; EmitVertex();
+    EndPrimitive();
+    gl_Position = c + c.w * d; EmitVertex();
+    gl_Position = c - c.w * d; EmitVertex();
+    gl_Position = b - b.w * d; EmitVertex();
+    EndPrimitive();
+
+    d = vec4(xca * line_width / length(cross(view, xca)), 0);
+    gl_Position = c + c.w * d; EmitVertex();
+    gl_Position = a + a.w * d; EmitVertex();
+    gl_Position = c - c.w * d; EmitVertex();
+    EndPrimitive();
+    gl_Position = a + a.w * d; EmitVertex();
+    gl_Position = a - a.w * d; EmitVertex();
+    gl_Position = c - c.w * d; EmitVertex();
+    EndPrimitive();
+
+   }
 }

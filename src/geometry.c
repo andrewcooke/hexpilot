@@ -58,8 +58,8 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
     // from the origin.  that seems quite reasonable for the world, too.
     // so we use hex coords as the world space.
 
-//    lumat_rotf4_z(-variables[ship_angle] + M_PI/2, &geometry->ship_to_hex);
-    lumat_rotf4_z(-variables[ship_angle] + 0.8*M_PI/2, &geometry->ship_to_hex);
+    lumat_rotf4_z(-variables[ship_angle] + M_PI/2, &geometry->ship_to_hex);
+//    lumat_rotf4_z(-variables[ship_angle] + 0.8*M_PI/2, &geometry->ship_to_hex);
     lumat_offf4_3(-variables[ship_x], -variables[ship_y], variables[ship_z], &m);
     lumat_mulf4_in(&m, &geometry->ship_to_hex);
     LU_CHECK(normal_transform(log, &geometry->ship_to_hex, &geometry->ship_to_hex_n))

@@ -68,7 +68,7 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
     LU_STATUS
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_line_edges));
+    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_triangle_edges));
 //    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_filled_triangles));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,

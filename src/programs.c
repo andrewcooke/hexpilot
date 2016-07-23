@@ -126,13 +126,12 @@ int draw_line_edges(lulog *log, model *model, programs *programs) {
     LU_STATUS
     GL_CHECK(glBindVertexArray(model->vao))
     GL_CHECK(glUseProgram(programs->black))
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
     GL_CHECK(glUseProgram(programs->line_edges))
     GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
 LU_CLEANUP
+    GL_CLEAN(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
     GL_CLEAN(glBindVertexArray(0))
     GL_CLEAN(glUseProgram(0))
     LU_RETURN
@@ -142,13 +141,12 @@ int draw_triangle_edges(lulog *log, model *model, programs *programs) {
     LU_STATUS
     GL_CHECK(glBindVertexArray(model->vao))
     GL_CHECK(glUseProgram(programs->black))
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
+    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
     GL_CHECK(glUseProgram(programs->triangle_edges))
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
 LU_CLEANUP
+    GL_CLEAN(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
     GL_CLEAN(glBindVertexArray(0))
     GL_CLEAN(glUseProgram(0))
     LU_RETURN

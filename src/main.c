@@ -14,9 +14,9 @@
 
 static int init_opengl(lulog *log) {
     LU_STATUS
-//    GL_CHECK(glEnable(GL_CULL_FACE))
-//    GL_CHECK(glCullFace(GL_BACK))
-//    GL_CHECK(glFrontFace(GL_CW))
+    GL_CHECK(glEnable(GL_CULL_FACE))
+    GL_CHECK(glCullFace(GL_BACK))
+    GL_CHECK(glFrontFace(GL_CW))
     GL_CHECK(glEnable(GL_DEPTH_TEST))
     GL_CHECK(glDepthMask(GL_TRUE))
     GL_CHECK(glDepthFunc(GL_LEQUAL))
@@ -45,8 +45,8 @@ static int with_glfw(lulog *log) {
     LU_CHECK(build_direct_texture(log, &((programs*)universe->programs)->copy_frame))
     LU_CHECK(build_merge_frames(log, &((programs*)universe->programs)->merge_frames))
     LU_CHECK(build_blur(log, &((programs*)universe->programs)->blur))
-//    LU_CHECK(build_flight_blur(log, universe->programs, window, &universe->flight))
-    LU_CHECK(build_flight_direct(log, universe->programs, window, &universe->flight))
+    LU_CHECK(build_flight_blur(log, universe->programs, window, &universe->flight))
+//    LU_CHECK(build_flight_direct(log, universe->programs, window, &universe->flight))
 
     LU_CHECK(init_timing(log, &clock));
     while (!glfwWindowShouldClose(window)) {
