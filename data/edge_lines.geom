@@ -23,13 +23,13 @@ void main()
     vec4 b = gl_in[1].gl_Position;
     vec4 c = gl_in[2].gl_Position;
     
-    vec4 ab = b - a; ab.w = 0;
-    vec4 bc = c - b; bc.w = 0;
-    vec4 ca = a - c; ca.w = 0;
+    vec3 ab = (b - a).xyz;
+    vec3 bc = (c - b).xyz;
+    vec3 ca = (a - c).xyz;
     
-    vec3 xab = normalize(cross(ab.xyz, n.xyz));
-    vec3 xbc = normalize(cross(bc.xyz, n.xyz));
-    vec3 xca = normalize(cross(ca.xyz, n.xyz));
+    vec3 xab = normalize(cross(ab, n.xyz));
+    vec3 xbc = normalize(cross(bc, n.xyz));
+    vec3 xca = normalize(cross(ca, n.xyz));
   
     vec4 d = vec4(xab * line_width / length(cross(view, xab)), 0);
     gl_Position = a + a.w * d; EmitVertex();
