@@ -26,25 +26,19 @@ typedef struct blur {
 } blur;
 
 typedef struct programs {
-    GLuint lit_per_vertex;
     GLuint black;
-    GLuint line_edges;
     GLuint triangle_edges;
     direct_texture copy_frame;
     merge_frames merge_frames;
     blur blur;
 } programs;
 
-int build_lit_per_vertex(lulog *log, GLuint *program);
 int build_black(lulog *log, GLuint *program);
-int build_line_edges(lulog *log, GLuint *program);
 int build_triangle_edges(lulog *log, GLuint *program);
 int build_direct_texture(lulog *log, direct_texture *program);
 int build_merge_frames(lulog *log, merge_frames *program);
 int build_blur(lulog *log, blur *program);
 
-int draw_filled_triangles(lulog *log, model *model, programs *programs);
-int draw_line_edges(lulog *log, model *model, programs *programs);
 int draw_triangle_edges(lulog *log, model *model, programs *programs);
 
 #endif

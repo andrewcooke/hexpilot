@@ -9,7 +9,7 @@ flat out vec4 frag_colour;
 
 const float line_width = 0.002;
 const vec3 view = vec3(0, 0, -1);
- 
+
 void main()
 {
 

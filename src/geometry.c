@@ -20,9 +20,6 @@ int init_geometry(lulog *log, float *variables) {
     variables[camera_distance] = 4;
     variables[ship_angle] = 0;
     variables[ship_z] = 1;
-    variables[light_x] = 1;
-    variables[light_y] = 1;
-    variables[light_z] = 1;
     return LU_OK;
 }
 
@@ -59,7 +56,6 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
     // so we use hex coords as the world space.
 
     lumat_rotf4_z(-variables[ship_angle] + M_PI/2, &geometry->ship_to_hex);
-//    lumat_rotf4_z(-variables[ship_angle] + 0.8*M_PI/2, &geometry->ship_to_hex);
     lumat_offf4_3(-variables[ship_x], -variables[ship_y], variables[ship_z], &m);
     lumat_mulf4_in(&m, &geometry->ship_to_hex);
     LU_CHECK(normal_transform(log, &geometry->ship_to_hex, &geometry->ship_to_hex_n))
@@ -83,12 +79,6 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
     lumat_offf4_3(0, 0, -variables[camera_distance], &m);
     lumat_mulf4_in(&m, &geometry->hex_to_camera);
     LU_CHECK(normal_transform(log,  &geometry->hex_to_camera,  &geometry->hex_to_camera_n))
-
-    // transform light direction to camera space
-    luvec_f4 model_light_pos =
-        {variables[light_x], variables[light_y], variables[light_z], 0};
-    luvec_mulf4(&rotation, &model_light_pos, &geometry->camera_light_pos);
-    luvec_nrmf4_3in(&geometry->camera_light_pos);
 
     // from page 66 of LM3DGP, but with the signs of near_z and far_z
     // changed (for some reason the author decided those should be

@@ -2,10 +2,10 @@
 
 in vec2 tex_coords;
 
-out vec4 colour;
-
 uniform sampler2D frame1;
 uniform sampler2D frame2;
+
+out vec4 colour;
 
 void main()
 {

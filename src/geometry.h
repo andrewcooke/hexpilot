@@ -24,14 +24,10 @@ typedef enum variable_index {
     buffer_y,
     near_z,
     far_z,
-    light_x,
-    light_y,
-    light_z,
     n_variables
 } variable_index;
 
 typedef struct flight_geometry {
-    luvec_f4 camera_light_pos;
     lumat_f4 ship_to_hex;
     lumat_f4 ship_to_hex_n;
     lumat_f4 hex_to_camera;
@@ -41,13 +37,12 @@ typedef struct flight_geometry {
 } flight_geometry;
 
 typedef struct geometry_buffer {
-    luvec_f3 model_colour;        // 0
+    luvec_f3 model_colour;
     float padding;
-    luvec_f4 camera_light_pos;    // 16
-    lumat_f4 model_to_camera;     // 32
-    lumat_f4 model_to_camera_n;   // 96
-    lumat_f4 camera_to_clip;      // 160
-    lumat_f4 camera_to_clip_n;    // 224
+    lumat_f4 model_to_camera;
+    lumat_f4 model_to_camera_n;
+    lumat_f4 camera_to_clip;
+    lumat_f4 camera_to_clip_n;
 } geometry_buffer;
 
 int init_geometry(lulog *log, float *variables);

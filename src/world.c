@@ -51,7 +51,6 @@ static int send_hex_data(lulog *log, model *model, world *world) {
     geometry_buffer buffer = {};
     luvec_cpyf3(&hex_colour, &buffer.model_colour);
     flight_data *data = (flight_data*) world->data;
-    luvec_cpyf4(&data->geometry.camera_light_pos, &buffer.camera_light_pos);
     lumat_cpyf4(&data->geometry.hex_to_camera, &buffer.model_to_camera);
     lumat_cpyf4(&data->geometry.hex_to_camera_n, &buffer.model_to_camera_n);
     lumat_cpyf4(&data->geometry.camera_to_clip, &buffer.camera_to_clip);
@@ -69,7 +68,6 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
     model *model = NULL;
     luary_vnorm *vertices = NULL;
     LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_triangle_edges));
-//    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_filled_triangles));
     LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
     LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
@@ -88,15 +86,16 @@ static int send_ship_data(lulog *log, model *model, world *world) {
     lumat_f4 ship_to_camera = {};
     flight_data *data = (flight_data*) world->data;
     lumat_mulf4(&data->geometry.hex_to_camera, &data->geometry.ship_to_hex, &ship_to_camera);
-    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(ship_to_camera), &ship_to_camera))
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(ship_to_camera), &ship_to_camera))
     lumat_f4 ship_to_camera_n = {};
     lumat_mulf4(&data->geometry.hex_to_camera_n, &data->geometry.ship_to_hex_n, &ship_to_camera_n);
-    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 96, sizeof(ship_to_camera_n), &ship_to_camera_n))
+    GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 80, sizeof(ship_to_camera_n), &ship_to_camera_n))
 LU_CLEANUP
     GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
     LU_RETURN
 }
 
+// TODO - remove ugly dangerous explicit offsets
 static int build_ship(lulog *log, programs *programs, world *world) {
     LU_STATUS
     model *model = NULL;
@@ -117,11 +116,7 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
             NULL, 1, sizeof(geometry_buffer), &world->geometry_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
-    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->lit_per_vertex, "geometry"))
-    GL_CHECK(glUniformBlockBinding(programs->lit_per_vertex, index, 1))
-    GL_CHECK(index = glGetUniformBlockIndex(programs->line_edges, "geometry"))
-    GL_CHECK(glUniformBlockBinding(programs->line_edges, index, 1))
-    GL_CHECK(index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
+    GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->triangle_edges, index, 1))
     GL_CHECK(index = glGetUniformBlockIndex(programs->black, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->black, index, 1))

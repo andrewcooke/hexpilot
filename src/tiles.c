@@ -77,8 +77,6 @@ int ship_vnormal_strips(lulog *log, double step,
     LU_STATUS
     float points[][4] = {{-1,-3,0,1},{-1,3,0,1},{5,0,0,1},{0,0,1,1}};
     uint32_t index[] = {1,0,2,3,1,0};
-//    float points[][4] = {{-10,-30,0,1},{-10,30,0,1},{50,0,0,1}};
-//    uint32_t index[] = {0,1,2};
     size_t np = sizeof(points) / sizeof(points[0]), ni = sizeof(index) / sizeof(index[0]);
     luary_vecf4 *f4 = NULL;
     luary_uint32 *ioffsets = NULL, *indices = NULL;
