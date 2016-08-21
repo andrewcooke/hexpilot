@@ -13,7 +13,7 @@
 
 // assumes zeroed on stack
 int init_geometry(lulog *log, float *variables) {
-    variables[far_z] = -1000;  // scan hexagon limits?
+    variables[far_z] = -100;  // scan hexagon limits?
     variables[near_z] = -1;
     variables[camera_zoom] = 1;
     variables[camera_elevation] = M_PI/4;

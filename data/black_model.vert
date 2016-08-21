@@ -8,6 +8,7 @@ layout(std140) uniform geometry {
   mat4 model_to_camera;
   mat4 model_to_camera_n;
   mat4 camera_to_clip;
+  float line_width;
 };
 
 flat out vec4 frag_colour;

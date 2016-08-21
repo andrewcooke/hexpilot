@@ -265,8 +265,9 @@ int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
     LU_STATUS
     LU_CHECK(luary_mkvnormn(log, vnorms, vertices->mem.used))
     for (size_t i = 0; i < offsets->mem.used; ++i) {
+        size_t offset = offsets->i[i];
         for (size_t j = 0; j < counts->i[i]; ++j) {
-            size_t k = offsets->i[i] + j;
+            size_t k = offset + j;
             luvec_f4 n = {};
             luvec_f4 *p0 = &vertices->v[indices->i[k]];
             if (j > 1) {

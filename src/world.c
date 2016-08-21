@@ -55,6 +55,7 @@ static int send_hex_data(lulog *log, model *model, world *world) {
     lumat_cpyf4(&data->geometry.hex_to_camera_n, &buffer.model_to_camera_n);
     lumat_cpyf4(&data->geometry.camera_to_clip, &buffer.camera_to_clip);
     lumat_cpyf4(&data->geometry.camera_to_clip_n, &buffer.camera_to_clip_n);
+    buffer.line_width = 0.002;
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(geometry_buffer), &buffer))
 LU_CLEANUP
     GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
@@ -139,12 +140,6 @@ static int build_render(lulog *log, programs *programs, flight_data *data) {
 LU_CLEANUP
     LU_CLEAN(unbind_buffer(log, data->quad_buffer))
     LU_RETURN
-}
-
-static int before_display_clear(lulog *log, void *programs, world *world) {
-    LU_STATUS
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
-    LU_NO_CLEANUP
 }
 
 static int before_display_blur(lulog *log, void *programs, world *world) {
@@ -237,21 +232,6 @@ int build_flight_blur(lulog *log, void *v, GLFWwindow *window, world **world) {
     LU_CHECK(init_keys(log, (*world)->action))
     LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_render(log, p, data))
-    LU_CHECK(build_geometry(log, p, *world))
-    LU_CHECK(build_hexagon(log, p, *world))
-    LU_CHECK(build_ship(log, p, *world))
-    LU_CHECK(set_window_callbacks(log, window, (*world)->action))
-    LU_NO_CLEANUP
-}
-
-int build_flight_direct(lulog *log, void *v, GLFWwindow *window, world **world) {
-    LU_STATUS
-    programs *p = (programs*) v;
-    LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
-            &respond_to_user, &update_geometry, &before_display_clear, NULL))
-    flight_data *data = (flight_data*)(*world)->data;
-    LU_CHECK(init_keys(log, (*world)->action))
-    LU_CHECK(init_geometry(log, (*world)->variables))
     LU_CHECK(build_geometry(log, p, *world))
     LU_CHECK(build_hexagon(log, p, *world))
     LU_CHECK(build_ship(log, p, *world))

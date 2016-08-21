@@ -43,6 +43,7 @@ typedef struct geometry_buffer {
     lumat_f4 model_to_camera_n;
     lumat_f4 camera_to_clip;
     lumat_f4 camera_to_clip_n;
+    float line_width;
 } geometry_buffer;
 
 int init_geometry(lulog *log, float *variables);

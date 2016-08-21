@@ -38,11 +38,13 @@ static int with_glfw(lulog *log) {
     LU_CHECK(init_opengl(log))
 
     LU_CHECK(mkuniverse(log, &universe, sizeof(programs)))
+
     LU_CHECK(build_black(log, &((programs*)universe->programs)->black))
     LU_CHECK(build_triangle_edges(log, &((programs*)universe->programs)->triangle_edges))
     LU_CHECK(build_direct_texture(log, &((programs*)universe->programs)->copy_frame))
     LU_CHECK(build_merge_frames(log, &((programs*)universe->programs)->merge_frames))
     LU_CHECK(build_blur(log, &((programs*)universe->programs)->blur))
+
     LU_CHECK(build_flight_blur(log, universe->programs, window, &universe->flight))
 
     LU_CHECK(init_timing(log, &clock));
