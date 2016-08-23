@@ -26,6 +26,14 @@ void triangle(in vec4 a, in vec4 b, in vec4 c) {
     EndPrimitive();
 }
 
+void inset(in vec4 corner, in vec3 edge1norm, in vec4 margin1, in vec3 edge2norm, in vec4 margin2, 
+           out vec4 inset) {
+    float sine = length(cross(edge1norm, edge2norm));
+    vec3 step1 = edge2norm * length(margin1) / sine;
+    vec3 step2 = edge1norm * length(margin2) / sine;
+    inset = camera_to_clip * (corner + vec4(step2 - step1, 0));
+}
+
 void main()
 {
 
@@ -38,42 +46,50 @@ void main()
     vec3 bc = normalize((c - b).xyz);
     vec3 ca = normalize((a - c).xyz);
         
-    vec3 xab = cross(ab, n.xyz);
-    vec3 xbc = cross(bc, n.xyz);
-    vec3 xca = cross(ca, n.xyz);
+    vec4 xab = vec4(cross(ab, n.xyz), 0);
+    vec4 xbc = vec4(cross(bc, n.xyz), 0);
+    vec4 xca = vec4(cross(ca, n.xyz), 0);
 
     vec3 o = ((a + b + c)/3).xyz;
-    float k = 0.003 * length(o);
+    float k = 0.001 * length(o);
     o = normalize(o);
 
-    float kab = length(cross(xab, o));
-    float kbc = length(cross(xbc, o));
-    float kca = length(cross(xca, o));
+    float kab = length(cross(xab.xyz, o));
+    float kbc = length(cross(xbc.xyz, o));
+    float kca = length(cross(xca.xyz, o));
     
     if (kab > 0.1 && kbc > 0.1 && kca > 0.1) {
 
         xab = xab * k / kab; 
         xbc = xbc * k / kbc; 
         xca = xca * k / kca;
-        
-        // signs are a mess here
-        vec4 da = vec4(dot(xab, ca) * ca + dot(xca, ab) * ab, 0);
-        vec4 db = vec4(dot(xbc, ab) * ab + dot(xab, bc) * bc, 0);
-        vec4 dc = vec4(dot(xca, bc) * bc + dot(xbc, ca) * ca, 0);
-        
-        vec4 a0 = camera_to_clip * (a + da);
-        vec4 a1 = camera_to_clip * (a - da);
-        vec4 b0 = camera_to_clip * (b + db);
-        vec4 b1 = camera_to_clip * (b - db);
-        vec4 c0 = camera_to_clip * (c + dc);
-        vec4 c1 = camera_to_clip * (c - dc);
-    
+
         frag_colour = vec4(model_colour, 1);
+
+        vec4 a0 = camera_to_clip * (a + xab);
+        vec4 a1 = camera_to_clip * (a - xab);
+        vec4 b0 = camera_to_clip * (b + xab);
+        vec4 b1 = camera_to_clip * (b - xab);
         triangle(a0, a1, b0); triangle(b0, a1, b1);
+        
+        b0 = camera_to_clip * (b + xbc);
+        b1 = camera_to_clip * (b - xbc);
+        vec4 c0 = camera_to_clip * (c + xbc);
+        vec4 c1 = camera_to_clip * (c - xbc);
         triangle(b0, b1, c0); triangle(c0, b1, c1);
+        
+        c0 = camera_to_clip * (c + xca);
+        c1 = camera_to_clip * (c - xca);
+        a0 = camera_to_clip * (a + xca);
+        a1 = camera_to_clip * (a - xca);
         triangle(c0, c1, a0); triangle(a0, c1, a1);
     
+    
         frag_colour = vec4(0, 0, 0, 1);
+   
+        inset(a, ab, xab, ca, xca, a0);
+        inset(b, bc, xbc, ab, xab, b0);
+        inset(c, ca, xca, bc, xbc, c0);
         triangle(a0, b0, c0);
         
     } else {
