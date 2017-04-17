@@ -119,8 +119,6 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
     GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->triangle_edges, index, 1))
-    GL_CHECK(index = glGetUniformBlockIndex(programs->black, "geometry"))
-    GL_CHECK(glUniformBlockBinding(programs->black, index, 1))
     GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->geometry_buffer->name))
     LU_NO_CLEANUP
 }
@@ -193,21 +191,33 @@ static int after_display_blur(lulog *log, void *v, world *world) {
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
-    // blur tmp2 horizontally into tmp1
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp1.render))
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
-    GL_CHECK(glUseProgram(p->blur.name))
-    LU_CHECK(use_uniform_texture(log, p->blur.frame, data->tmp2.texture))
-    GL_CHECK(glUniform1i(p->blur.horizontal, 1))
-    GL_CHECK(glBindVertexArray(data->quad_vao))
-    GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+    for (int loop = 0; loop < 4; ++loop) {
 
-    // blur tmp1 vertically into multiple
+        // blur tmp2 horizontally into tmp1
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp1.render))
+        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
+        GL_CHECK(glUseProgram(p->blur.name))
+        LU_CHECK(use_uniform_texture(log, p->blur.frame, data->tmp2.texture))
+        GL_CHECK(glUniform1i(p->blur.horizontal, 1))
+        GL_CHECK(glBindVertexArray(data->quad_vao))
+        GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+
+        // blur tmp1 vertically into tmp2
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render))
+        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
+        GL_CHECK(glUseProgram(p->blur.name))
+        LU_CHECK(use_uniform_texture(log, p->blur.frame, data->tmp1.texture))
+        GL_CHECK(glUniform1i(p->blur.horizontal, 0))
+        GL_CHECK(glBindVertexArray(data->quad_vao))
+        GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+
+    }
+
+    // copy tmp2 into multiple to save
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->multiple.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
-    GL_CHECK(glUseProgram(p->blur.name))
-    LU_CHECK(use_uniform_texture(log, p->blur.frame, data->tmp1.texture))
-    GL_CHECK(glUniform1i(p->blur.horizontal, 0))
+    GL_CHECK(glUseProgram(p->copy_frame.name))
+    LU_CHECK(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture))
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 

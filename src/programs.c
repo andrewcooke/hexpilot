@@ -10,20 +10,6 @@
 
 
 /**
- * render as black triangles (used to occlude hidden data when plotting lines).
- */
-int build_black(lulog *log, GLuint *program) {
-    LU_STATUS
-    luary_uint32 *shaders = NULL;
-    LU_CHECK(compile_shader_from_file(log, GL_VERTEX_SHADER, "black_model.vert", &shaders))
-    LU_CHECK(compile_shader_from_file(log, GL_FRAGMENT_SHADER, "direct_colour.frag", &shaders))
-    LU_CHECK(link_program(log, shaders, program));
-LU_CLEANUP
-    status = free_shaders(log, &shaders, status);
-    LU_RETURN
-}
-
-/**
  * edges using geometry shader.
  */
 int build_triangle_edges(lulog *log, GLuint *program) {
@@ -89,12 +75,10 @@ LU_CLEANUP
 int draw_triangle_edges(lulog *log, model *model, programs *programs) {
     LU_STATUS
     GL_CHECK(glBindVertexArray(model->vao))
-    GL_CHECK(glUseProgram(programs->black))
-//    GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
 //    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE))
     GL_CHECK(glUseProgram(programs->triangle_edges))
     GL_CHECK(glMultiDrawArrays(GL_TRIANGLE_STRIP, model->offsets->i, model->counts->i, model->counts->mem.used));
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
+//    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
 LU_CLEANUP
     GL_CLEAN(glBindVertexArray(0))
     GL_CLEAN(glUseProgram(0))
