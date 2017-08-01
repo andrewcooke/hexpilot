@@ -1,4 +1,5 @@
 
+#include <status_codes.h>
 #include <string.h>
 
 #include "lu/log.h"
@@ -8,7 +9,6 @@
 
 #include "models.h"
 #include "universe.h"
-#include "error_codes.h"
 
 
 LUARY_MKBASE(model, luary_model, model*, m)

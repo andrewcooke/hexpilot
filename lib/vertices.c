@@ -1,5 +1,6 @@
 
 #include <math.h>
+#include <status_codes.h>
 #include <string.h>
 
 #include "lu/status.h"
@@ -13,7 +14,6 @@
 #include "lu/log.h"
 
 #include "vertices.h"
-#include "error_codes.h"
 
 
 LUARY_MKBASE(vnorm, luary_vnorm, vnorm, vn)

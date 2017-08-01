@@ -1,4 +1,5 @@
 
+#include <status_codes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -7,7 +8,6 @@
 
 #include "hexpilot.h"
 #include "shaders.h"
-#include "error_codes.h"
 
 
 const char *shader_type_str(lulog *log, GLenum shader_type) {

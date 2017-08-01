@@ -1,5 +1,6 @@
 
 #include <math.h>
+#include <status_codes.h>
 #include <string.h>
 
 #include "lu/status.h"
@@ -12,7 +13,6 @@
 
 #include "tiles.h"
 #include "vertices.h"
-#include "error_codes.h"
 
 
 static int hexagon_common(lulog *log, uint64_t seed,

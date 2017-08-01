@@ -1,7 +1,7 @@
 
+#include <status_codes.h>
 #include "lu/status.h"
 
-#include "error_codes.h"
 #include "glad.h"
 #include "frames.h"
 

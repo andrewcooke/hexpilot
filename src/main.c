@@ -1,5 +1,6 @@
 
 #include <geometry.h>
+#include <status_codes.h>
 #include <world.h>
 #include "lu/log.h"
 #include "lu/status.h"
@@ -7,8 +8,6 @@
 #include "glfw.h"
 #include "universe.h"
 #include "worlds.h"
-#include "error_codes.h"
-
 #include "programs.h"
 
 
@@ -26,7 +25,7 @@ static int init_opengl(lulog *log) {
     LU_NO_CLEANUP
 }
 
-static int with_glfw(lulog *log) {
+static int main_with_glfw(lulog *log) {
 
     LU_STATUS
     GLFWwindow *window = NULL;
@@ -67,12 +66,12 @@ LU_CLEANUP
 int main(int argc, char** argv) {
     LU_STATUS
     lulog *log = NULL;
-    lulog_mkstderr(&log, lulog_level_debug);
+    LU_CHECK(lulog_mkstderr(&log, lulog_level_debug))
     // is this always true?  unclear to me, but we use pre-built uint32 arrays
     LU_ASSERT(sizeof(GLuint) == sizeof(uint32_t), HP_ERR, log,
             "Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(uint32_t))
     LU_CHECK(init_glfw(log))
-    LU_CHECK(with_glfw(log))
+    LU_CHECK(main_with_glfw(log))
 LU_CLEANUP
     if (log) status = log->free(&log, status);
     return status ? 1 : 0;

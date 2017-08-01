@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <status_codes.h>
 #include <string.h>
 
 #include "lu/log.h"
@@ -8,7 +9,6 @@
 #include "lu/vectors.h"
 
 #include "glfw.h"
-#include "error_codes.h"
 
 
 static lulog *LOG = NULL;

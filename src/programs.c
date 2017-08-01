@@ -1,11 +1,10 @@
 
+#include <status_codes.h>
 #include "lu/status.h"
 #include "lu/arrays.h"
-#include "lu/error_codes.h"
+#include "lu/status_codes.h"
 
 #include "shaders.h"
-#include "error_codes.h"
-
 #include "programs.h"
 
 
