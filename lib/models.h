@@ -30,7 +30,7 @@ typedef struct luary_model {
     lumem mem;
 } luary_model;
 
-int luary_mkmodeln(lulog *log, luary_model **models, size_t n);
+int luary_mkmodel(lulog *log, luary_model **models, size_t n);
 int luary_freemodel(luary_model **models, int prev_status);
 int luary_reservemodel(lulog *log, luary_model *models, size_t n);
 int luary_pushmodel(lulog *log, luary_model *models, model *model);
