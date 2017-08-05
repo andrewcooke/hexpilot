@@ -25,7 +25,7 @@ int set_keys(lulog *log, keys *keys, const char *name,
     LU_NO_CLEANUP
 }
 
-LUARY_MKBASE(control, luary_control, control, c)
+LUARY_MKBASE(control, control, c)
 
 int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x) {
     LU_STATUS

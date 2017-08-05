@@ -16,7 +16,7 @@
 #include "vertices.h"
 
 
-LUARY_MKBASE(vnorm, luary_vnorm, vnorm, vn)
+LUARY_MKBASE(vnorm, vnorm, vn)
 
 int luary_pushvnorm(lulog *log, luary_vnorm *vn, luvec_f4 *v, luvec_f4 *n) {
     LU_STATUS
@@ -163,9 +163,9 @@ int strips(lulog *log, luary_ijz *ijz,
     LU_CHECK(lutle_range(log, ijz, &bl, &tr, NULL))
     bl.i--; bl.j--; tr.i++; tr.j++;  // add border for failed lookups
     LU_CHECK(mkindex(log, ijz, bl, tr, &index))
-    LU_CHECK(luary_mkuint32n(log, indices, 4 * ijz->mem.used))  // guess some overhead
-    LU_CHECK(luary_mkuint32n(log, offsets, tr.j - bl.j + 1))  // optimistic?
-    LU_CHECK(luary_mkuint32n(log, counts, tr.j - bl.j + 1))  // optimistic?
+    LU_CHECK(luary_mkuint32(log, indices, 4 * ijz->mem.used))  // guess some overhead
+    LU_CHECK(luary_mkuint32(log, offsets, tr.j - bl.j + 1))  // optimistic?
+    LU_CHECK(luary_mkuint32(log, counts, tr.j - bl.j + 1))  // optimistic?
     size_t current = 0;
     while (current < ijz->mem.used) {
         LU_CHECK(addstrip(log, ijz, &current, index, bl, tr, *indices, *offsets, *counts))
@@ -178,7 +178,7 @@ LU_CLEANUP
 
 int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw) {
     LU_STATUS
-    LU_CHECK(luary_mkfxyzwn(log, fxyzw, ijz->mem.used))
+    LU_CHECK(luary_mkfxyzw(log, fxyzw, ijz->mem.used))
     for (size_t i = 0; i < ijz->mem.used; ++i) {
         ludta_ijz *p = &ijz->ijz[i];
         float x = (p->i + p->j * cos(M_PI/3)) * step;
@@ -191,7 +191,7 @@ int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw) {
 
 int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
     LU_STATUS
-    LU_CHECK(luary_mkvecf4n(log, f4, ijz->mem.used))
+    LU_CHECK(luary_mkvecf4(log, f4, ijz->mem.used))
     float lo[] = {0, 0, ijz->ijz[0].z}, hi[] = {0, 0, ijz->ijz[0].z};
     for (size_t i = 0; i < ijz->mem.used; ++i) {
         ludta_ijz *p = &ijz->ijz[i];
@@ -210,7 +210,7 @@ int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
 
 int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void **out) {
     LU_STATUS
-    LU_CHECK(luary_mkvoidn(log, out, in->mem.used))
+    LU_CHECK(luary_mkvoid(log, out, in->mem.used))
     for (size_t i = 0; i < in->mem.used; ++i) {
         LU_CHECK(luary_pushvoid(log, *out, (void*)(chunk * in->i[i])))
     }
@@ -263,7 +263,7 @@ int uniquify(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
 int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
         luary_uint32 *counts, luary_vecf4 *vertices, luary_vnorm **vnorms) {
     LU_STATUS
-    LU_CHECK(luary_mkvnormn(log, vnorms, vertices->mem.used))
+    LU_CHECK(luary_mkvnorm(log, vnorms, vertices->mem.used))
     for (size_t i = 0; i < offsets->mem.used; ++i) {
         size_t offset = offsets->i[i];
         for (size_t j = 0; j < counts->i[i]; ++j) {
@@ -292,7 +292,7 @@ int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
 
 int uint2int(lulog *log, luary_uint32 *in, luary_int32 **out) {
     LU_STATUS
-    LU_CHECK(luary_mkint32n(log, out, in->mem.used))
+    LU_CHECK(luary_mkint32(log, out, in->mem.used))
     for (size_t i = 0; i < in->mem.used; ++i) {
         LU_CHECK(luary_pushint32(log, *out, in->i[i]))
     }

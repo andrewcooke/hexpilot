@@ -56,7 +56,7 @@ int compile_shader_from_string(lulog *log, GLenum shader_type, const char *sourc
         goto exit;
     }
     if (!*shaders) {
-        LU_CHECK(luary_mkuint32n(log, shaders, 1))
+        LU_CHECK(luary_mkuint32(log, shaders, 1))
     }
     LU_CHECK(luary_pushuint32(log, *shaders, shader))
     luinfo(log, "Compiled %s shader", shader_type_str(log, shader_type));

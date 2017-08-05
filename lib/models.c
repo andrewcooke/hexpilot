@@ -11,7 +11,7 @@
 #include "universe.h"
 
 
-LUARY_MKBASE(model, luary_model, model*, m)
+LUARY_MKBASE(model, model*, m)
 
 int luary_pushmodel(lulog *log, luary_model *models, model *model) {
     LU_STATUS

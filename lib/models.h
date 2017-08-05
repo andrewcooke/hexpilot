@@ -34,7 +34,6 @@ int luary_mkmodeln(lulog *log, luary_model **models, size_t n);
 int luary_freemodel(luary_model **models, int prev_status);
 int luary_reservemodel(lulog *log, luary_model *models, size_t n);
 int luary_pushmodel(lulog *log, luary_model *models, model *model);
-size_t luary_sizemodel(luary_model *models);
 
 int mkmodel(lulog *log, model **model, send *send, draw *draw);
 int free_model(model **model, int status);

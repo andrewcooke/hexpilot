@@ -11,10 +11,10 @@ int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
     LU_STATUS
     LU_ALLOC(log, *world, 1)
     LU_ALLOC(log, (*world)->variables, n_variables)
-    LU_CHECK(luary_mkmodeln(log, &(*world)->models, 1))
+    LU_CHECK(luary_mkmodel(log, &(*world)->models, 1))
     LU_ALLOC_SIZE(log, (*world)->data, data_size);
     LU_ALLOC(log, (*world)->action, 1)
-    LU_CHECK(luary_mkcontroln(log, &(*world)->action->controls, 1))
+    LU_CHECK(luary_mkcontrol(log, &(*world)->action->controls, 1))
     (*world)->action->log = log;
     (*world)->action->window = window;
     (*world)->respond = respond;

@@ -80,16 +80,16 @@ int ship_vnormal_strips(lulog *log, double step,
     size_t np = sizeof(points) / sizeof(points[0]), ni = sizeof(index) / sizeof(index[0]);
     luary_vecf4 *f4 = NULL;
     luary_uint32 *ioffsets = NULL, *indices = NULL;
-    LU_CHECK(luary_mkvecf4n(log, &f4, np))
+    LU_CHECK(luary_mkvecf4(log, &f4, np))
     memcpy(f4->v, points, sizeof(points)); f4->mem.used = np;
     for (size_t i = 0; i < f4->mem.used; ++i) {
         luvec_sclf4_3in(step, &f4->v[i]);
     }
-    LU_CHECK(luary_mkuint32n(log, &indices, ni))
+    LU_CHECK(luary_mkuint32(log, &indices, ni))
     memcpy(indices->i, index, sizeof(index)); indices->mem.used = ni;
-    LU_CHECK(luary_mkuint32n(log, &ioffsets, 1))
+    LU_CHECK(luary_mkuint32(log, &ioffsets, 1))
     LU_CHECK(luary_pushuint32(log, ioffsets, 0))
-    LU_CHECK(luary_mkuint32n(log, counts, 1))
+    LU_CHECK(luary_mkuint32(log, counts, 1))
     LU_CHECK(luary_pushuint32(log, *counts, ni))
     LU_CHECK(normals(log, indices, ioffsets, *counts, f4, vertices))
     LU_CHECK(uint2int(log, ioffsets, offsets))
