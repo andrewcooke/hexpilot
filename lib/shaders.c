@@ -28,7 +28,7 @@ int compile_shader_from_file(lulog *log, GLenum shader_type, const char *filenam
 		luary_uint32 **shaders) {
 	LU_STATUS
 	lustr source = {};
-	LU_CHECK(lufle_find_and_read(log, hp_xstr(DATADIR), HEXPILOT, filename,
+	LU_CHECK(lufle_find_and_read_config(log, hp_xstr(DATADIR), HEXPILOT, filename,
 			HEXPILOT_DATA, &source))
 	LU_CHECK(compile_shader_from_string(log, shader_type, source.c, shaders))
 LU_CLEANUP

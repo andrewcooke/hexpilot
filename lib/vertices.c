@@ -9,7 +9,7 @@
 #include "lu/arrays.h"
 #include "lu/minmax.h"
 #include "lu/structs.h"
-#include "lu/vectors.h"
+#include "lu/gl.h"
 #include "lu/array_macros.h"
 #include "lu/log.h"
 
@@ -18,7 +18,7 @@
 
 LUARY_MKBASE(vnorm, vnorm, vn)
 
-int luary_pushvnorm(lulog *log, luary_vnorm *vn, luvec_f4 *v, luvec_f4 *n) {
+int luary_pushvnorm(lulog *log, luary_vnorm *vn, luglv *v, luglv *n) {
     LU_STATUS
     LU_CHECK(luary_reservevnorm(log, vn, 1))
     for (size_t i = 0; i < 4; ++i) {
@@ -32,7 +32,7 @@ int luary_pushvnorm(lulog *log, luary_vnorm *vn, luvec_f4 *v, luvec_f4 *n) {
 static char bv[100];
 static char bn[100];
 LUARY_MKDUMP(luary_dumpvnorm, luary_vnorm, "%s/%s",
-        luvec_strf4(&ptr->vn[i][0], 100, bv), luvec_strf4(&ptr->vn[i][1], 100, bn))
+        luglv_str(&ptr->vn[i][0], 100, bv), luglv_str(&ptr->vn[i][1], 100, bn))
 
 static int ijeq(ludta_ij ij1, ludta_ij ij2) {
     return ij1.i == ij2.i && ij1.j == ij2.j;
@@ -268,18 +268,18 @@ int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
         size_t offset = offsets->i[i];
         for (size_t j = 0; j < counts->i[i]; ++j) {
             size_t k = offset + j;
-            luvec_f4 n = {};
-            luvec_f4 *p0 = &vertices->v[indices->i[k]];
+            luglv n = {};
+            luglv *p0 = &vertices->v[indices->i[k]];
             if (j > 1) {
-                luvec_f4 *p1 = &vertices->v[indices->i[k-1]];
-                luvec_f4 *p2 = &vertices->v[indices->i[k-2]];
-                luvec_f4 e1 = {}, e2 = {};
-                luvec_subf4_3(p1, p0, &e1);
-                luvec_subf4_3(p2, p1, &e2);
-                luvec_crsf4_3(&e1, &e2, &n);
-                luvec_nrmf4_3in(&n);
+                luglv *p1 = &vertices->v[indices->i[k-1]];
+                luglv *p2 = &vertices->v[indices->i[k-2]];
+                luglv e1 = {}, e2 = {};
+                luglv_sub(p1, p0, &e1);
+                luglv_sub(p2, p1, &e2);
+                luglv_cross(&e1, &e2, &n);
+                luglv_norm_inplace(&n);
                 // alternate windows are reversed in strip
-                if (j % 2) luvec_sclf4_3in(-1, &n);
+                if (j % 2) luglv_scale_inplace(-1, &n);
                 n[3] = 0;
             }
             LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)

@@ -28,21 +28,21 @@ typedef enum variable_index {
 } variable_index;
 
 typedef struct flight_geometry {
-    lumat_f4 ship_to_hex;
-    lumat_f4 ship_to_hex_n;
-    lumat_f4 hex_to_camera;
-    lumat_f4 hex_to_camera_n;
-    lumat_f4 camera_to_clip;
-    lumat_f4 camera_to_clip_n;
+    luglm ship_to_hex;
+    luglm ship_to_hex_n;
+    luglm hex_to_camera;
+    luglm hex_to_camera_n;
+    luglm camera_to_clip;
+    luglm camera_to_clip_n;
 } flight_geometry;
 
 typedef struct geometry_buffer {
-    luvec_f3 model_colour;
+    luglc model_colour;
     float padding;
-    lumat_f4 model_to_camera;
-    lumat_f4 model_to_camera_n;
-    lumat_f4 camera_to_clip;
-    lumat_f4 camera_to_clip_n;
+    luglm model_to_camera;
+    luglm model_to_camera_n;
+    luglm camera_to_clip;
+    luglm camera_to_clip_n;
     float line_width;
 } geometry_buffer;
 

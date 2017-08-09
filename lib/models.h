@@ -20,7 +20,7 @@ typedef struct model {
     buffer *vertices;
     luary_int32 *offsets;
     luary_uint32 *counts;
-    luvec_f3 colour;
+    luglc colour;
     send *send;
     draw *draw;
 } model;

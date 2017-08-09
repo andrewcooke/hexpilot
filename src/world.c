@@ -42,19 +42,19 @@ static int respond_to_user(lulog *log, double dt, user_action *action, float *va
 }
 
 
-static luvec_f3 hex_colour = {0,0.5,0.2};
+static luglc hex_colour = {0,0.5,0.2};
 
 static int send_hex_data(lulog *log, model *model, world *world) {
     LU_STATUS
     // this builds the whole geometry buffer so must be done before ship
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
     geometry_buffer buffer = {};
-    luvec_cpyf3(&hex_colour, &buffer.model_colour);
+    luglc_copy(&hex_colour, &buffer.model_colour);
     flight_data *data = (flight_data*) world->data;
-    lumat_cpyf4(&data->geometry.hex_to_camera, &buffer.model_to_camera);
-    lumat_cpyf4(&data->geometry.hex_to_camera_n, &buffer.model_to_camera_n);
-    lumat_cpyf4(&data->geometry.camera_to_clip, &buffer.camera_to_clip);
-    lumat_cpyf4(&data->geometry.camera_to_clip_n, &buffer.camera_to_clip_n);
+    luglm_copy(&data->geometry.hex_to_camera, &buffer.model_to_camera);
+    luglm_copy(&data->geometry.hex_to_camera_n, &buffer.model_to_camera_n);
+    luglm_copy(&data->geometry.camera_to_clip, &buffer.camera_to_clip);
+    luglm_copy(&data->geometry.camera_to_clip_n, &buffer.camera_to_clip_n);
     buffer.line_width = 0.002;
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(geometry_buffer), &buffer))
 LU_CLEANUP
@@ -62,7 +62,7 @@ LU_CLEANUP
     LU_RETURN
 }
 
-static luvec_f3 ship_cyan = {0,1,1};
+static luglc ship_cyan = {0,1,1};
 
 static int build_hexagon(lulog *log, programs *programs, world *world) {
     LU_STATUS
@@ -84,12 +84,12 @@ static int send_ship_data(lulog *log, model *model, world *world) {
     // this patches ship-specific changes into existing geometry buffer
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ship_cyan), &ship_cyan))
-    lumat_f4 ship_to_camera = {};
+    luglm ship_to_camera = {};
     flight_data *data = (flight_data*) world->data;
-    lumat_mulf4(&data->geometry.hex_to_camera, &data->geometry.ship_to_hex, &ship_to_camera);
+    luglm_mult(&data->geometry.hex_to_camera, &data->geometry.ship_to_hex, &ship_to_camera);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(ship_to_camera), &ship_to_camera))
-    lumat_f4 ship_to_camera_n = {};
-    lumat_mulf4(&data->geometry.hex_to_camera_n, &data->geometry.ship_to_hex_n, &ship_to_camera_n);
+    luglm ship_to_camera_n = {};
+    luglm_mult(&data->geometry.hex_to_camera_n, &data->geometry.ship_to_hex_n, &ship_to_camera_n);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 80, sizeof(ship_to_camera_n), &ship_to_camera_n))
 LU_CLEANUP
     GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))

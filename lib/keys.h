@@ -3,7 +3,7 @@
 #define HP_KEYS_H
 
 #include "lu/log.h"
-#include "lu/vectors.h"
+#include "lu/gl.h"
 
 #include "glad.h"
 #include <GLFW/glfw3.h>

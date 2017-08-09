@@ -83,7 +83,7 @@ int ship_vnormal_strips(lulog *log, double step,
     LU_CHECK(luary_mkvecf4(log, &f4, np))
     memcpy(f4->v, points, sizeof(points)); f4->mem.used = np;
     for (size_t i = 0; i < f4->mem.used; ++i) {
-        luvec_sclf4_3in(step, &f4->v[i]);
+        luglv_scale_inplace(step, &f4->v[i]);
     }
     LU_CHECK(luary_mkuint32(log, &indices, ni))
     memcpy(indices->i, index, sizeof(index)); indices->mem.used = ni;
