@@ -2,10 +2,11 @@
 #ifndef HP_MODELS_H
 #define HP_MODELS_H
 
-#include "lu/arrays.h"
+#include "lu/data/int32.h"
 
 #include "buffers.h"
 #include "keys.h"
+#include "data/uint32.h"
 
 
 struct model;

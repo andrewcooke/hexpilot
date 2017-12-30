@@ -1,5 +1,5 @@
 
-#include <status_codes.h>
+#include <status.h>
 #include <string.h>
 
 #include "lu/log.h"
@@ -22,7 +22,7 @@ int luary_pushmodel(lulog *log, luary_model *models, model *model) {
 
 int mkmodel(lulog *log, model **model, send *send, draw *draw) {
     int status = LU_OK;
-    lu_alloc(log, *model, 1);
+    LU_ALLOC(log, *model, 1);
     (*model)->draw = draw;
     (*model)->send = send;
     finally:

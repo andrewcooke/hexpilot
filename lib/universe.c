@@ -1,16 +1,16 @@
 
 #include <stdlib.h>
 
-#include "status_codes.h"
 #include "lu/internal.h"
 
+#include "status.h"
 #include "universe.h"
 
 
 int mkuniverse(lulog *log, universe **universe, size_t programs_size) {
 	int status = LU_OK;
-	lu_alloc(log, *universe, 1);
-	lu_alloc_size(log, (*universe)->programs, programs_size);
+	LU_ALLOC(log, *universe, 1);
+	LU_ALLOC_SIZE(log, (*universe)->programs, programs_size);
 	(*universe)->log = log;
 	finally:
 	return status;

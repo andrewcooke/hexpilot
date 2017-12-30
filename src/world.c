@@ -1,7 +1,7 @@
 
+#include <status.h>
 #include "lu/internal.h"
 
-#include "status_codes.h"
 #include "glfw.h"
 #include "vertices.h"
 #include "tiles.h"

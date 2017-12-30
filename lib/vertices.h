@@ -5,6 +5,13 @@
 #include "lu/structs.h"
 #include "lu/vectors.h"
 #include "lu/arrays.h"
+#include "lu/data/fxyzw.h"
+#include "lu/data/ijz.h"
+#include "lu/data/int32.h"
+#include "lu/data/void.h"
+
+#include "data/uint32.h"
+#include "data/vecf4.h"
 
 
 typedef luglv vnorm[2];

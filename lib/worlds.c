@@ -1,5 +1,5 @@
 
-#include "status_codes.h"
+#include <status.h>
 #include "lu/internal.h"
 
 #include "worlds.h"
@@ -9,11 +9,11 @@
 int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
 		GLFWwindow *window, respond *respond, update *update, before *before, after *after) {
 	int status = LU_OK;
-	lu_alloc(log, *world, 1);
-	lu_alloc(log, (*world)->variables, n_variables);
+	LU_ALLOC(log, *world, 1);
+	LU_ALLOC(log, (*world)->variables, n_variables);
 	try(luary_mkmodel(log, &(*world)->models, 1));
-	lu_alloc_size(log, (*world)->data, data_size);
-	lu_alloc(log, (*world)->action, 1);
+	LU_ALLOC_SIZE(log, (*world)->data, data_size);
+	LU_ALLOC(log, (*world)->action, 1);
 	try(luary_mkcontrol(log, &(*world)->action->controls, 1));
 	(*world)->action->log = log;
 	(*world)->action->window = window;

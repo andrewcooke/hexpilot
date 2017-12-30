@@ -1,5 +1,5 @@
 
-#include <status_codes.h>
+#include <status.h>
 #include <string.h>
 
 #include "lu/dynamic_memory.h"
@@ -14,7 +14,7 @@ int set_keys(lulog *log, keys *keys, const char *name,
         float force, float kv, float kx, float lo, float hi,
         size_t index) {
     int status = LU_OK;
-    lu_alloc(log, keys->name, strlen(name) + 1)
+    LU_ALLOC(log, keys->name, strlen(name) + 1)
     strcpy(keys->name, name);
     keys->keys[0] = key0; keys->mods[0] = mod0;
     keys->keys[1] = key1; keys->mods[1] = mod1;

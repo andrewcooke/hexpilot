@@ -1,5 +1,6 @@
 
 #include <math.h>
+#include <status.h>
 #include <string.h>
 
 #include "lu/internal.h"
@@ -10,7 +11,6 @@
 #include "lu/structs.h"
 #include "lu/vectors.h"
 
-#include "status_codes.h"
 #include "tiles.h"
 #include "vertices.h"
 

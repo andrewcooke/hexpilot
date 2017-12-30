@@ -2,7 +2,7 @@
 #ifndef HP_ERROR_CODES_H
 #define HP_ERROR_CODES_H
 
-#include "lu/status_codes.h"
+#include "lu/status.h"
 
 #define HP_OFFSET 0x100
 #define HP_ERR (HP_OFFSET | 1)

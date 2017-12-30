@@ -1,9 +1,10 @@
 
-#include <status_codes.h>
+#include <status.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "lu/internal.h"
+#include "lu/log.h"
 #include "lu/files.h"
 
 #include "hexpilot.h"

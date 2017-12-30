@@ -1,5 +1,5 @@
 
-#include <status_codes.h>
+#include <status.h>
 #include <string.h>
 
 #include "lu/log.h"
@@ -12,7 +12,7 @@ int load_buffer(lulog *log, GLenum target, GLenum usage,
         const void *data, size_t count, size_t chunk, buffer **buffer) {
     int status = LU_OK;
     size_t bytes = chunk * count;
-    lu_alloc(log, *buffer, 1);
+    LU_ALLOC(log, *buffer, 1);
     (*buffer)->target = target;
     gl_try(glGenBuffers(1, &(*buffer)->name));
     try(bind_buffer(log, *buffer));
