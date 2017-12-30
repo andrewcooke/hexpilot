@@ -26,18 +26,18 @@ const char *shader_type_str(lulog *log, GLenum shader_type) {
 
 int compile_shader_from_file(lulog *log, GLenum shader_type, const char *filename,
 		luary_uint32 **shaders) {
-	LU_STATUS
+	int status = LU_OK;
 	lustr source = {};
-	LU_CHECK(lufle_find_and_read_config(log, hp_xstr(DATADIR), HEXPILOT, filename,
+	try(lufle_find_and_read_config(log, hp_xstr(DATADIR), HEXPILOT, filename,
 			HEXPILOT_DATA, &source))
-	LU_CHECK(compile_shader_from_string(log, shader_type, source.c, shaders))
-LU_CLEANUP
+	try(compile_shader_from_string(log, shader_type, source.c, shaders))
+exit:
 	status = lustr_free(&source, status);
-	LU_RETURN
+	return status;
 }
 
 int compile_shader_from_string(lulog *log, GLenum shader_type, const char *source, luary_uint32 **shaders) {
-    LU_STATUS
+    int status = LU_OK;
     ludebug(log, "Compiling %s shader:", shader_type_str(log, shader_type));
     lulog_lines(log, lulog_level_debug, source);
     GL_CHECK(GLuint shader = glCreateShader(shader_type))
@@ -56,15 +56,15 @@ int compile_shader_from_string(lulog *log, GLenum shader_type, const char *sourc
         goto exit;
     }
     if (!*shaders) {
-        LU_CHECK(luary_mkuint32(log, shaders, 1))
+        try(luary_mkuint32(log, shaders, 1))
     }
-    LU_CHECK(luary_pushuint32(log, *shaders, shader))
+    try(luary_pushuint32(log, *shaders, shader))
     luinfo(log, "Compiled %s shader", shader_type_str(log, shader_type));
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 int link_program(lulog *log, luary_uint32 *shaders, GLuint *program) {
-    LU_STATUS
+    int status = LU_OK;
     GL_CHECK(*program = glCreateProgram())
     for (size_t i = 0; i < shaders->mem.used; ++i) {
         GL_CHECK(glAttachShader(*program, shaders->i[i]))
@@ -86,54 +86,54 @@ int link_program(lulog *log, luary_uint32 *shaders, GLuint *program) {
         GL_CHECK(glDetachShader(*program, shaders->i[i]))
     }
     luinfo(log, "Linked program with %zu shaders", shaders->mem.used);
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 int free_shaders(lulog *log, luary_uint32 **shaders, int prev_status) {
-    LU_STATUS
+    int status = LU_OK;
     if (shaders && *shaders) {
         for (size_t i = 0; i < (*shaders)->mem.used; ++i) {
             GL_CHECK(glDeleteShader((*shaders)->i[i]));
         }
     }
-LU_CLEANUP
+exit:
     status = luary_freeuint32(shaders, status);
-    LU_RETURN2(prev_status)
+    return prev_status ? prev_status : status;
 }
 
 
 int set_uniform(lulog *log, GLuint program, const char *name, GLuint *uniform, GLuint index) {
-    LU_STATUS
+    int status = LU_OK;
     GL_CHECK(glUseProgram(program))
     GL_CHECK(GLuint locn = glGetUniformLocation(program, name))
     GL_CHECK(glUniform1i(locn, index))
     *uniform = index;
-LU_CLEANUP
+exit:
     GL_CHECK(glUseProgram(0))
-    LU_RETURN
+    return status;
 }
 
 int use_uniform_texture(lulog *log, GLuint uniform, GLuint texture) {
-    LU_STATUS
+    int status = LU_OK;
     glActiveTexture(GL_TEXTURE0 + uniform);
     glBindTexture(GL_TEXTURE_2D, texture);
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 
 int interleaved_vnorm_vao(lulog *log, buffer *buffer, GLuint *vao) {
-    LU_STATUS
+    int status = LU_OK;
     GL_CHECK(glGenVertexArrays(1, vao))
     GL_CHECK(glBindVertexArray(*vao))
-    LU_CHECK(bind_buffer(log, buffer))
+    try(bind_buffer(log, buffer))
     GL_CHECK(glEnableVertexAttribArray(0))
     GL_CHECK(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, 0))
     GL_CHECK(glEnableVertexAttribArray(1))
     GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 32, (void*)16))
-LU_CLEANUP
+exit:
     GL_CLEAN(glBindVertexArray(0))
     LU_CLEAN(unbind_buffer(log, buffer))
-    LU_RETURN
+    return status;
 }
 
 

@@ -24,15 +24,15 @@ int init_geometry(lulog *log, float *variables) {
 }
 
 static int calculate_physics(lulog *log, double dt, float *variables) {
-    LU_STATUS
+    int status = LU_OK;
     variables[ship_angle] += variables[ship_rotation];
     variables[ship_x] -= variables[ship_speed] * sinf(variables[ship_angle]);
     variables[ship_y] -= variables[ship_speed] * cosf(variables[ship_angle]);
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 static int normal_transform(lulog *log, luglm *m, luglm *n) {
-    LU_STATUS
+    int status = LU_OK;
     int i;
     luglm copy = {}, inv = {};
     luglm_copy(m, &copy);
@@ -41,14 +41,14 @@ static int normal_transform(lulog *log, luglm *m, luglm *n) {
         copy[luglm_idx(3, i)] = 0;
     }
     copy[luglm_idx(3, 3)] = 1;
-    LU_CHECK(lumat_inv(log, &copy, &inv));
+    try(lumat_inv(log, &copy, &inv));
     luglm_trans(&inv, n);
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 static int calculate_geometry(lulog *log, float *variables, flight_geometry *geometry) {
 
-    LU_STATUS
+    int status = LU_OK;
     luglm ship_to_hex = {}, world_to_camera = {}, m = {};
 
     // the hex surface goes from -1 to 1 in z and extends outwards in x, y
@@ -58,7 +58,7 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
     luglm_rotz(-variables[ship_angle] + M_PI/2, &geometry->ship_to_hex);
     luglm_offset(-variables[ship_x], -variables[ship_y], variables[ship_z], &m);
     luglm_mult_inplace(&m, &geometry->ship_to_hex);
-    LU_CHECK(normal_transform(log, &geometry->ship_to_hex, &geometry->ship_to_hex_n))
+    try(normal_transform(log, &geometry->ship_to_hex, &geometry->ship_to_hex_n))
 
     // camera space is described in "learning modern 3d graphics
     // programming", page 60 onwards.  the projection plane is at
@@ -78,7 +78,7 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
     // retreat back along camera view
     luglm_offset(0, 0, -variables[camera_distance], &m);
     luglm_mult_inplace(&m, &geometry->hex_to_camera);
-    LU_CHECK(normal_transform(log,  &geometry->hex_to_camera,  &geometry->hex_to_camera_n))
+    try(normal_transform(log,  &geometry->hex_to_camera,  &geometry->hex_to_camera_n))
 
     // from page 66 of LM3DGP, but with the signs of near_z and far_z
     // changed (for some reason the author decided those should be
@@ -95,16 +95,16 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
                       0, scale_y,           0,           0,
                       0,       0, (n+f)/(n-f), 2*f*n/(n-f),
                       0,       0,          -1,           0, &geometry->camera_to_clip);
-    LU_CHECK(normal_transform(log,  &geometry->camera_to_clip,  &geometry->camera_to_clip_n))
+    try(normal_transform(log,  &geometry->camera_to_clip,  &geometry->camera_to_clip_n))
 
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 int update_geometry(lulog *log, double dt, float *variables, void *data) {
-    LU_STATUS
-    LU_CHECK(calculate_physics(log, dt, variables))
-    LU_CHECK(calculate_geometry(log, variables, (flight_geometry*)data))
-    LU_NO_CLEANUP
+    int status = LU_OK;
+    try(calculate_physics(log, dt, variables))
+    try(calculate_geometry(log, variables, (flight_geometry*)data))
+    exit:return status;
 }
 
 

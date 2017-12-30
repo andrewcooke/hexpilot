@@ -12,7 +12,7 @@
 
 
 static int init_opengl(lulog *log) {
-    LU_STATUS
+    int status = LU_OK;
     GL_CHECK(glEnable(GL_CULL_FACE))
     GL_CHECK(glCullFace(GL_BACK))
     GL_CHECK(glFrontFace(GL_CW))
@@ -22,57 +22,57 @@ static int init_opengl(lulog *log) {
     GL_CHECK(glDepthRange(0.0f, 1.0f))
     GL_CHECK(glEnable(GL_MULTISAMPLE))
     GL_CHECK(glClearColor(0, 0, 0, 1))
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 static int main_with_glfw(lulog *log) {
 
-    LU_STATUS
+    int status = LU_OK;
     GLFWwindow *window = NULL;
     universe *universe = NULL;
     timing clock;
 
-    LU_CHECK(create_glfw_context(log, &window))
-    LU_CHECK(load_opengl_functions(log))
-    LU_CHECK(init_opengl(log))
+    try(create_glfw_context(log, &window))
+    try(load_opengl_functions(log))
+    try(init_opengl(log))
 
-    LU_CHECK(mkuniverse(log, &universe, sizeof(programs)))
+    try(mkuniverse(log, &universe, sizeof(programs)))
 
-    LU_CHECK(build_triangle_edges(log, &((programs*)universe->programs)->triangle_edges))
-    LU_CHECK(build_direct_texture(log, &((programs*)universe->programs)->copy_frame))
-    LU_CHECK(build_merge_frames(log, &((programs*)universe->programs)->merge_frames))
-    LU_CHECK(build_blur(log, &((programs*)universe->programs)->blur))
+    try(build_triangle_edges(log, &((programs*)universe->programs)->triangle_edges))
+    try(build_direct_texture(log, &((programs*)universe->programs)->copy_frame))
+    try(build_merge_frames(log, &((programs*)universe->programs)->merge_frames))
+    try(build_blur(log, &((programs*)universe->programs)->blur))
 
-    LU_CHECK(build_flight_blur(log, universe->programs, window, &universe->flight))
+    try(build_flight_blur(log, universe->programs, window, &universe->flight))
 
-    LU_CHECK(init_timing(log, &clock));
+    try(init_timing(log, &clock));
     while (!glfwWindowShouldClose(window)) {
         double delta = update_timing(log, &clock);
-        LU_CHECK(update_world(log, delta, universe->flight))
-        LU_CHECK(display_world(log, universe->programs, universe->flight))
+        try(update_world(log, delta, universe->flight))
+        try(display_world(log, universe->programs, universe->flight))
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     ludebug(log, "Clean exit");
 
-LU_CLEANUP
+exit:
     glfwTerminate();
     // TODO - need to free world buffers etc
     status = free_universe(&universe, status);
-    LU_RETURN
+    return status;
 }
 
 
 int main(int argc, char** argv) {
-    LU_STATUS
+    int status = LU_OK;
     lulog *log = NULL;
-    LU_CHECK(lulog_mkstderr(&log, lulog_level_debug))
+    try(lulog_mkstderr(&log, lulog_level_debug))
     // is this always true?  unclear to me, but we use pre-built uint32 arrays
     LU_ASSERT(sizeof(GLuint) == sizeof(uint32_t), HP_ERR, log,
             "Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(uint32_t))
-    LU_CHECK(init_glfw(log))
-    LU_CHECK(main_with_glfw(log))
-LU_CLEANUP
+    try(init_glfw(log))
+    try(main_with_glfw(log))
+exit:
     if (log) status = log->free(&log, status);
     return status ? 1 : 0;
 }

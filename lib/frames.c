@@ -7,7 +7,7 @@
 
 
 int init_frame(lulog *log, GLFWwindow *window, frame *frame, int msaa, int depth) {
-    LU_STATUS
+    int status = LU_OK;
 
     // http://learnopengl.com/#!Advanced-OpenGL/Framebuffers
     // http://www.learnopengl.com/#!Advanced-OpenGL/Anti-Aliasing
@@ -49,30 +49,30 @@ int init_frame(lulog *log, GLFWwindow *window, frame *frame, int msaa, int depth
     LU_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,
             LU_ERR, log, "Frame buffer incomplete")
 
-LU_CLEANUP
+exit:
     GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0))
     GL_CLEAN(glBindFramebuffer(GL_FRAMEBUFFER, 0))
-    LU_RETURN
+    return status;
 }
 
 int free_frame_contents(lulog *log, frame *frame) {
-    LU_STATUS
-LU_CLEANUP
+    int status = LU_OK;
+exit:
     if (frame->depth) {
         GL_CLEAN(glDeleteRenderbuffers(1, &frame->depth))
     }
     GL_CLEAN(glDeleteTextures(1, &frame->texture))
     GL_CLEAN(glDeleteFramebuffers(1, &frame->render))
-    LU_RETURN
+    return status;
 }
 
 int rescale_frame(lulog *log, GLFWwindow *window, frame *frame) {
-    LU_STATUS
+    int status = LU_OK;
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     if (width != frame->width || height != frame->height) {
-        LU_CHECK(free_frame_contents(log, frame))
-        LU_CHECK(init_frame(log, window, frame, frame->msaa, frame->depth))
+        try(free_frame_contents(log, frame))
+        try(init_frame(log, window, frame, frame->msaa, frame->depth))
     }
-    LU_NO_CLEANUP
+    exit:return status;
 }

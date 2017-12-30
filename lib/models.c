@@ -14,17 +14,17 @@
 LUARY_MKBASE(model, model*, m)
 
 int luary_pushmodel(lulog *log, luary_model *models, model *model) {
-    LU_STATUS
-    LU_CHECK(luary_reservemodel(log, models, 1))
+    int status = LU_OK;
+    try(luary_reservemodel(log, models, 1))
     models->m[models->mem.used++] = model;
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 int mkmodel(lulog *log, model **model, send *send, draw *draw) {
-    LU_STATUS
+    int status = LU_OK;
     LU_ALLOC(log, *model, 1)
     (*model)->draw = draw;
     (*model)->send = send;
-    LU_NO_CLEANUP
+    exit:return status;
 }
 

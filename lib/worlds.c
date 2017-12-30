@@ -1,6 +1,7 @@
 
 #include <status_codes.h>
 #include "lu/status.h"
+#include "lu/status_codes.h"
 
 #include "worlds.h"
 #include "universe.h"
@@ -8,24 +9,25 @@
 
 int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
 		GLFWwindow *window, respond *respond, update *update, before *before, after *after) {
-    LU_STATUS
+    int status = LU_OK;
     LU_ALLOC(log, *world, 1)
     LU_ALLOC(log, (*world)->variables, n_variables)
-    LU_CHECK(luary_mkmodel(log, &(*world)->models, 1))
+    try(luary_mkmodel(log, &(*world)->models, 1))
     LU_ALLOC_SIZE(log, (*world)->data, data_size);
     LU_ALLOC(log, (*world)->action, 1)
-    LU_CHECK(luary_mkcontrol(log, &(*world)->action->controls, 1))
+    try(luary_mkcontrol(log, &(*world)->action->controls, 1))
     (*world)->action->log = log;
     (*world)->action->window = window;
     (*world)->respond = respond;
     (*world)->update = update;
     (*world)->before = before;
     (*world)->after = after;
-    LU_NO_CLEANUP
+    exit:
+	return status;
 }
 
 int free_world(world **world, int prev) {
-    LU_STATUS
+    int status = LU_OK;
     if (world && *world) {
         if ((*world)->models) {
             for (size_t i = 0; i < (*world)->models->mem.used; ++i) {
@@ -38,14 +40,14 @@ int free_world(world **world, int prev) {
         free((*world)->geometry_buffer);
         status = luary_freemodel(&(*world)->models, status);
         if ((*world)->action) {
-            LU_CHECK(free_keys((*world)->action))
+            try(free_keys((*world)->action))
             free((*world)->action);
         }
         free(*world);
         *world = NULL;
     }
-LU_CLEANUP
-    LU_RETURN2(prev)
+exit:
+    return prev ? prev : status;
 }
 
 int push_model(lulog *log, world *world, model *model) {
@@ -54,23 +56,23 @@ int push_model(lulog *log, world *world, model *model) {
 
 
 int update_world(lulog *log, double delta, world *world) {
-	LU_STATUS
-    LU_CHECK(world->respond(log, delta, world->action, world->variables))
-    LU_CHECK(world->update(log, delta, world->variables, world->data))
-	LU_NO_CLEANUP
+	int status = LU_OK;
+    try(world->respond(log, delta, world->action, world->variables))
+    try(world->update(log, delta, world->variables, world->data))
+	exit:return status;
 }
 
 int display_world(lulog *log, void *programs, world *world) {
-    LU_STATUS
+    int status = LU_OK;
     if (world->before) {
-        LU_CHECK(world->before(log, programs, world))
+        try(world->before(log, programs, world))
     }
     for (size_t i = 0; i < world->models->mem.used; ++i) {
-        LU_CHECK(world->models->m[i]->send(log, world->models->m[i], world))
-        LU_CHECK(world->models->m[i]->draw(log, world->models->m[i], programs))
+        try(world->models->m[i]->send(log, world->models->m[i], world))
+        try(world->models->m[i]->draw(log, world->models->m[i], programs))
     }
     if (world->after) {
-        LU_CHECK(world->after(log, programs, world))
+        try(world->after(log, programs, world))
     }
-    LU_NO_CLEANUP
+    exit:return status;
 }

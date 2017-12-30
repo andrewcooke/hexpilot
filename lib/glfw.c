@@ -18,15 +18,15 @@ static void on_error(int error, const char *message) {
 }
 
 int init_glfw(lulog *log) {
-    LU_STATUS
+    int status = LU_OK;
     LOG = log;
     glfwSetErrorCallback(on_error);
     LU_ASSERT(glfwInit(), HP_ERR_GLFW, log, "Could not start GLFW")
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 int create_glfw_context(lulog *log, GLFWwindow **window) {
-    LU_STATUS
+    int status = LU_OK;
     // not clear to me to what extent these duplicate or conflict with glad
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -37,18 +37,18 @@ int create_glfw_context(lulog *log, GLFWwindow **window) {
             HP_ERR_GLFW, log, "Could not create window")
     glfwMakeContextCurrent(*window);
     glfwSwapInterval(1);  // 0 to see raw fps
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 int load_opengl_functions(lulog *log) {
-    LU_STATUS
+    int status = LU_OK;
     LU_ASSERT(gladLoadGLLoader((GLADloadproc) glfwGetProcAddress),
             HP_ERR_GLAD, log, "Could not load OpenGL via glad")
     LU_ASSERT(GLVersion.major > 1, HP_ERR_OPENGL, log,
             "Bad OpenGL version: %d.%d", GLVersion.major, GLVersion.minor)
     luinfo(log, "OpenGL %s, GLSL %s",
             glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 static void key_callback(GLFWwindow *window, int key, int scancode, int act, int mods) {
@@ -76,19 +76,19 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int act, int
 }
 
 int set_window_callbacks(lulog *log, GLFWwindow *window, user_action *action) {
-    LU_STATUS
+    int status = LU_OK;
     glfwSetWindowUserPointer(window, action);
     glfwSetKeyCallback(window, &key_callback);
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 
 int init_timing(lulog *log, timing *clock) {
-    LU_STATUS
+    int status = LU_OK;
     timing zero = {};
     *clock = zero;
     clock->previous = clock->seconds = glfwGetTime();
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 double update_timing(lulog *log, timing *clock) {

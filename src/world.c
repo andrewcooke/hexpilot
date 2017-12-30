@@ -13,39 +13,39 @@
 
 
 static int init_keys(lulog *log, user_action *action) {
-    LU_STATUS
+    int status = LU_OK;
     keys k = {};
-    LU_CHECK(set_keys(log, &k, "+/-", 61, 1, 45, 0,
+    try(set_keys(log, &k, "+/-", 61, 1, 45, 0,
             15, 10, 0,
             0.1, 10, camera_zoom))
-    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 1))
-    LU_CHECK(set_keys(log, &k, "left/right", 262, 0, 263, 0,
+    try(luary_pushcontrol(log, action->controls, &k, 1))
+    try(set_keys(log, &k, "left/right", 262, 0, 263, 0,
             0.3, 5, 5,
             -0.5, 0.5, ship_rotation))
-    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 0))
-    LU_CHECK(set_keys(log, &k, "up/down",
+    try(luary_pushcontrol(log, action->controls, &k, 0))
+    try(set_keys(log, &k, "up/down",
             265, 0, 264, 0,
             2, 10, 0,
             0, 4, ship_speed))
-    LU_CHECK(luary_pushcontrol(log, action->controls, &k, 0))
-    LU_NO_CLEANUP
+    try(luary_pushcontrol(log, action->controls, &k, 0))
+    exit:return status;
 }
 
 static int respond_to_user(lulog *log, double dt, user_action *action, float *variables) {
-    LU_STATUS
-    LU_CHECK(update_controls(log, dt, action->controls, variables))
+    int status = LU_OK;
+    try(update_controls(log, dt, action->controls, variables))
     int width, height;
     glfwGetFramebufferSize(action->window, &width, &height);
     GL_CHECK(glViewport(0, 0, width, height))
     variables[buffer_x] = width; variables[buffer_y] = height;
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 
 static luglc hex_colour = {0,0.5,0.2};
 
 static int send_hex_data(lulog *log, model *model, world *world) {
-    LU_STATUS
+    int status = LU_OK;
     // this builds the whole geometry buffer so must be done before ship
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
     geometry_buffer buffer = {};
@@ -57,30 +57,30 @@ static int send_hex_data(lulog *log, model *model, world *world) {
     luglm_copy(&data->geometry.camera_to_clip_n, &buffer.camera_to_clip_n);
     buffer.line_width = 0.002;
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(geometry_buffer), &buffer))
-LU_CLEANUP
+exit:
     GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
-    LU_RETURN
+    return status;
 }
 
 static luglc ship_cyan = {0,1,1};
 
 static int build_hexagon(lulog *log, programs *programs, world *world) {
-    LU_STATUS
+    int status = LU_OK;
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_hex_data, &draw_triangle_edges));
-    LU_CHECK(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
-    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+    try(mkmodel(log, &model, &send_hex_data, &draw_triangle_edges));
+    try(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts))
+    try(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
-    LU_CHECK(interleaved_vnorm_vao(log, model->vertices, &model->vao))
+    try(interleaved_vnorm_vao(log, model->vertices, &model->vao))
     push_model(log, world, model);
-LU_CLEANUP
+exit:
     LU_CLEAN(luary_freevnorm(&vertices, status))
-    LU_RETURN
+    return status;
 }
 
 static int send_ship_data(lulog *log, model *model, world *world) {
-    LU_STATUS
+    int status = LU_OK;
     // this patches ship-specific changes into existing geometry buffer
     GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, world->geometry_buffer->name))
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ship_cyan), &ship_cyan))
@@ -91,67 +91,67 @@ static int send_ship_data(lulog *log, model *model, world *world) {
     luglm ship_to_camera_n = {};
     luglm_mult(&data->geometry.hex_to_camera_n, &data->geometry.ship_to_hex_n, &ship_to_camera_n);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 80, sizeof(ship_to_camera_n), &ship_to_camera_n))
-LU_CLEANUP
+exit:
     GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
-    LU_RETURN
+    return status;
 }
 
 // TODO - remove ugly dangerous explicit offsets
 static int build_ship(lulog *log, programs *programs, world *world) {
-    LU_STATUS
+    int status = LU_OK;
     model *model = NULL;
     luary_vnorm *vertices = NULL;
-    LU_CHECK(mkmodel(log, &model, &send_ship_data, &draw_triangle_edges));
-    LU_CHECK(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts))
-    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+    try(mkmodel(log, &model, &send_ship_data, &draw_triangle_edges));
+    try(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts))
+    try(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
-    LU_CHECK(interleaved_vnorm_vao(log, model->vertices, &model->vao))
+    try(interleaved_vnorm_vao(log, model->vertices, &model->vao))
     push_model(log, world, model);
-LU_CLEANUP
+exit:
     LU_CLEAN(luary_freevnorm(&vertices, status))
-    LU_RETURN
+    return status;
 }
 
 static int build_geometry(lulog *log, programs *programs, world *world) {
-    LU_STATUS
-    LU_CHECK(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
+    int status = LU_OK;
+    try(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
             NULL, 1, sizeof(geometry_buffer), &world->geometry_buffer));
     // http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
     GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->triangle_edges, index, 1))
     GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->geometry_buffer->name))
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 /**
  * copy a frame to the display buffer.
  */
 static int build_render(lulog *log, programs *programs, flight_data *data) {
-    LU_STATUS
+    int status = LU_OK;
     float quad[] = {-1,-1, -1,1, 1,-1, 1,1};
-    LU_CHECK(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW, quad, 1, sizeof(quad), &data->quad_buffer))
+    try(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW, quad, 1, sizeof(quad), &data->quad_buffer))
     GL_CHECK(glGenVertexArrays(1, &data->quad_vao))
     GL_CHECK(glBindVertexArray(data->quad_vao))
-    LU_CHECK(bind_buffer(log, data->quad_buffer))
+    try(bind_buffer(log, data->quad_buffer))
     GL_CHECK(glEnableVertexAttribArray(0))
     GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0))
-LU_CLEANUP
+exit:
     LU_CLEAN(unbind_buffer(log, data->quad_buffer))
-    LU_RETURN
+    return status;
 }
 
 static int before_display_blur(lulog *log, void *programs, world *world) {
-    LU_STATUS
+    int status = LU_OK;
     flight_data *data = (flight_data*)world->data;
 
-    LU_CHECK(rescale_frame(log, world->action->window, &data->single))
-    LU_CHECK(rescale_frame(log, world->action->window, &data->tmp1))
-    LU_CHECK(rescale_frame(log, world->action->window, &data->tmp2))
-    LU_CHECK(rescale_frame(log, world->action->window, &data->multiple))
+    try(rescale_frame(log, world->action->window, &data->single))
+    try(rescale_frame(log, world->action->window, &data->tmp1))
+    try(rescale_frame(log, world->action->window, &data->tmp2))
+    try(rescale_frame(log, world->action->window, &data->multiple))
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->single.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
-    LU_NO_CLEANUP
+    exit:return status;
 }
 
 /**
@@ -162,7 +162,7 @@ static int before_display_blur(lulog *log, void *programs, world *world) {
  */
 static int after_display_blur(lulog *log, void *v, world *world) {
 
-    LU_STATUS
+    int status = LU_OK;
     flight_data *data = (flight_data*)world->data;
     programs *p = (programs*)v;
 
@@ -178,8 +178,8 @@ static int after_display_blur(lulog *log, void *v, world *world) {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
     GL_CHECK(glUseProgram(p->merge_frames.name))
-    LU_CHECK(use_uniform_texture(log, p->merge_frames.frame1, data->tmp1.texture))
-    LU_CHECK(use_uniform_texture(log, p->merge_frames.frame2, data->multiple.texture))
+    try(use_uniform_texture(log, p->merge_frames.frame1, data->tmp1.texture))
+    try(use_uniform_texture(log, p->merge_frames.frame2, data->multiple.texture))
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
@@ -187,7 +187,7 @@ static int after_display_blur(lulog *log, void *v, world *world) {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
     GL_CHECK(glUseProgram(p->copy_frame.name))
-    LU_CHECK(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture))
+    try(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture))
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
@@ -197,7 +197,7 @@ static int after_display_blur(lulog *log, void *v, world *world) {
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp1.render))
         GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
         GL_CHECK(glUseProgram(p->blur.name))
-        LU_CHECK(use_uniform_texture(log, p->blur.frame, data->tmp2.texture))
+        try(use_uniform_texture(log, p->blur.frame, data->tmp2.texture))
         GL_CHECK(glUniform1i(p->blur.horizontal, 1))
         GL_CHECK(glBindVertexArray(data->quad_vao))
         GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
@@ -206,7 +206,7 @@ static int after_display_blur(lulog *log, void *v, world *world) {
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render))
         GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
         GL_CHECK(glUseProgram(p->blur.name))
-        LU_CHECK(use_uniform_texture(log, p->blur.frame, data->tmp1.texture))
+        try(use_uniform_texture(log, p->blur.frame, data->tmp1.texture))
         GL_CHECK(glUniform1i(p->blur.horizontal, 0))
         GL_CHECK(glBindVertexArray(data->quad_vao))
         GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
@@ -217,35 +217,35 @@ static int after_display_blur(lulog *log, void *v, world *world) {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->multiple.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
     GL_CHECK(glUseProgram(p->copy_frame.name))
-    LU_CHECK(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture))
+    try(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture))
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
-LU_CLEANUP
+exit:
     GL_CHECK(glBindVertexArray(0))
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0))
     GL_CHECK(glEnable(GL_DEPTH_TEST))
     GL_CLEAN(glBindFramebuffer(GL_FRAMEBUFFER, 0))
-    LU_RETURN
+    return status;
 }
 
 int build_flight_blur(lulog *log, void *v, GLFWwindow *window, world **world) {
-    LU_STATUS
+    int status = LU_OK;
     programs *p = (programs*) v;
-    LU_CHECK(mkworld(log, world, n_variables, sizeof(flight_data), window,
+    try(mkworld(log, world, n_variables, sizeof(flight_data), window,
             &respond_to_user, &update_geometry, &before_display_blur, &after_display_blur))
     flight_data *data = (flight_data*)(*world)->data;
-    LU_CHECK(init_frame(log, window, &data->single, 1, 1))
-    LU_CHECK(init_frame(log, window, &data->multiple, 0, 0))
-    LU_CHECK(init_frame(log, window, &data->tmp1, 0, 0))
-    LU_CHECK(init_frame(log, window, &data->tmp2, 0, 0))
-    LU_CHECK(init_keys(log, (*world)->action))
-    LU_CHECK(init_geometry(log, (*world)->variables))
-    LU_CHECK(build_render(log, p, data))
-    LU_CHECK(build_geometry(log, p, *world))
-    LU_CHECK(build_hexagon(log, p, *world))
-    LU_CHECK(build_ship(log, p, *world))
-    LU_CHECK(set_window_callbacks(log, window, (*world)->action))
-    LU_NO_CLEANUP
+    try(init_frame(log, window, &data->single, 1, 1))
+    try(init_frame(log, window, &data->multiple, 0, 0))
+    try(init_frame(log, window, &data->tmp1, 0, 0))
+    try(init_frame(log, window, &data->tmp2, 0, 0))
+    try(init_keys(log, (*world)->action))
+    try(init_geometry(log, (*world)->variables))
+    try(build_render(log, p, data))
+    try(build_geometry(log, p, *world))
+    try(build_hexagon(log, p, *world))
+    try(build_ship(log, p, *world))
+    try(set_window_callbacks(log, window, (*world)->action))
+    exit:return status;
 }
 
