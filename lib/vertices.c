@@ -26,7 +26,7 @@ int luary_pushvnorm(lulog *log, luary_vnorm *vn, luglv *v, luglv *n) {
         vn->vn[vn->mem.used][1][i] = (*n)[i];
     }
     vn->mem.used++;
-    exit:return status;
+    finally:return status;
 }
 
 static char bv[100];
@@ -59,7 +59,7 @@ static int mkindex(lulog *log, luary_ijz *ijz, ludta_ij bl, ludta_ij tr,
         // note that we add 1 - zero means missing
         (*index)[ijz2index(ijz->ijz[i], bl, tr)] = i+1;
     }
-    exit:return status;
+    finally:return status;
 }
 
 static inline ludta_ij upleft(ludta_ijz p) {
@@ -93,7 +93,7 @@ static int addpoints(lulog *log, luary_ijz *ijz, size_t *current,
                 // the current index) in step so we can restart correctly
                 // for the next strip.  this is only possible if the points
                 // are sorted (which enumerate should guarantee).
-                LU_ASSERT(ijeq(right(ijz->ijz[*current]), ijz2ij(ijz->ijz[*current+1])), LU_ERR,
+                assert(ijeq(right(ijz->ijz[*current]), ijz2ij(ijz->ijz[*current+1])), LU_ERR,
                         log, "Unsorted points?  Current at (%d,%d), next at (%d,%d), prev at (%d,%d), downright at (%d,%d)",
                         ijz->ijz[*current].i, ijz->ijz[*current].j,
                         ijz->ijz[*current+1].i, ijz->ijz[*current+1].j,
@@ -105,10 +105,10 @@ static int addpoints(lulog *log, luary_ijz *ijz, size_t *current,
             pprev = pnext; nextisup = !nextisup;
         } else {
             *current = *current + 1;
-            goto exit;
+            goto finally;
         }
     } while (*current < ijz->mem.used);
-    exit:return status;
+    finally:return status;
 }
 
 static int addstrip(lulog *log, luary_ijz *ijz, size_t *current, size_t *index,
@@ -136,9 +136,9 @@ static int addstrip(lulog *log, luary_ijz *ijz, size_t *current, size_t *index,
         size_t i3 = index[ij2index(right(*p1), bl, tr)];
         ludta_ijz *p3 = i3 ? &ijz->ijz[i3-1] : NULL;
         if (p3) {
-            LU_ASSERT(*current + 1 < ijz->mem.used, LU_ERR, log,
+            assert(*current + 1 < ijz->mem.used, LU_ERR, log,
                     "Unsorted points?  No data at %zu", *current + 1);
-            LU_ASSERT(p3 == &ijz->ijz[*current + 1], LU_ERR, log,
+            assert(p3 == &ijz->ijz[*current + 1], LU_ERR, log,
                     "Unsorted points?  p3=(%d,%d), p1=(%d,%d), next=(%d,%d)",
                     p3->i, p3->j, p1->i, p1->j, ijz->ijz[*current + 1].i, ijz->ijz[*current + 1].j)
         }
@@ -152,7 +152,7 @@ static int addstrip(lulog *log, luary_ijz *ijz, size_t *current, size_t *index,
             *current = *current+1;
         }
     }
-    exit:return status;
+    finally:return status;
 }
 
 int strips(lulog *log, luary_ijz *ijz,
@@ -171,7 +171,7 @@ int strips(lulog *log, luary_ijz *ijz,
         try(addstrip(log, ijz, &current, index, bl, tr, *indices, *offsets, *counts))
     }
     luinfo(log, "Generated %zu triangle strips", (*offsets)->mem.used);
-exit:
+finally:
     free(index);
     return status;
 }
@@ -186,7 +186,7 @@ int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw) {
         float z = p->z;
         try(luary_pushfxyzw(log, *fxyzw, x, y, z, 1.0f))
     }
-    exit:return status;
+    finally:return status;
 }
 
 int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
@@ -205,7 +205,7 @@ int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
     }
     ludebug(log, "Data cover range %0.2f - %0.2f, %0.2f - %0.2f, %0.2f - %0.2f",
             lo[0], hi[0], lo[1], hi[1], lo[2], hi[2]);
-    exit:return status;
+    finally:return status;
 }
 
 int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void **out) {
@@ -214,7 +214,7 @@ int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void **out) {
     for (size_t i = 0; i < in->mem.used; ++i) {
         try(luary_pushvoid(log, *out, (void*)(chunk * in->i[i])))
     }
-    exit:return status;
+    finally:return status;
 }
 
 int normalize_z(lulog *log, luary_ijz *vertices) {
@@ -234,7 +234,7 @@ int normalize_z(lulog *log, luary_ijz *vertices) {
             vertices->ijz[i].z = 0.0;
         }
     }
-    exit:return status;
+    finally:return status;
 }
 
 // this duplicates points so that none are shared between two triangle
@@ -257,7 +257,7 @@ int uniquify(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
     }
     ludebug(log, "Uniquify increased vertex count from %zu to %zu (%.0f%%)",
             before, vertices->mem.used, 100.0 * (vertices->mem.used - before) / before);
-    exit:return status;
+    finally:return status;
 }
 
 int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
@@ -282,11 +282,11 @@ int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
                 if (j % 2) luglv_scale_inplace(-1, &n);
                 n[3] = 0;
             }
-            LU_ASSERT(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
+            assert(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used)
             try(luary_pushvnorm(log, *vnorms, p0, &n))
         }
     }
-    exit:return status;
+    finally:return status;
 }
 
 
@@ -296,6 +296,6 @@ int uint2int(lulog *log, luary_uint32 *in, luary_int32 **out) {
     for (size_t i = 0; i < in->mem.used; ++i) {
         try(luary_pushint32(log, *out, in->i[i]))
     }
-    exit:return status;
+    finally:return status;
 }
 

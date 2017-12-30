@@ -28,7 +28,7 @@ static int calculate_physics(lulog *log, double dt, float *variables) {
     variables[ship_angle] += variables[ship_rotation];
     variables[ship_x] -= variables[ship_speed] * sinf(variables[ship_angle]);
     variables[ship_y] -= variables[ship_speed] * cosf(variables[ship_angle]);
-    exit:return status;
+    finally:return status;
 }
 
 static int normal_transform(lulog *log, luglm *m, luglm *n) {
@@ -43,7 +43,7 @@ static int normal_transform(lulog *log, luglm *m, luglm *n) {
     copy[luglm_idx(3, 3)] = 1;
     try(lumat_inv(log, &copy, &inv));
     luglm_trans(&inv, n);
-    exit:return status;
+    finally:return status;
 }
 
 static int calculate_geometry(lulog *log, float *variables, flight_geometry *geometry) {
@@ -97,14 +97,14 @@ static int calculate_geometry(lulog *log, float *variables, flight_geometry *geo
                       0,       0,          -1,           0, &geometry->camera_to_clip);
     try(normal_transform(log,  &geometry->camera_to_clip,  &geometry->camera_to_clip_n))
 
-    exit:return status;
+    finally:return status;
 }
 
 int update_geometry(lulog *log, double dt, float *variables, void *data) {
     int status = LU_OK;
     try(calculate_physics(log, dt, variables))
     try(calculate_geometry(log, variables, (flight_geometry*)data))
-    exit:return status;
+    finally:return status;
 }
 
 

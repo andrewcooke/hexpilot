@@ -22,7 +22,7 @@ int set_keys(lulog *log, keys *keys, const char *name,
     keys->force = force; keys->kv = kv; keys->kx = kx;
     keys->limits[0] = lo; keys->limits[1] = hi;
     keys->index = index;
-    exit:return status;
+    finally:return status;
 }
 
 LUARY_MKBASE(control, control, c)
@@ -32,7 +32,7 @@ int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x) 
     try(luary_reservecontrol(log, controls, 1))
     variables v = {};
     controls->c[controls->mem.used++] = (control){*keys, v};
-    exit:return status;
+    finally:return status;
 }
 
 int free_keys(user_action *action) {
@@ -41,7 +41,7 @@ int free_keys(user_action *action) {
         free(action->controls->c[i].k.name);
     }
     status = luary_freecontrol(&action->controls, status);
-    exit:return status;
+    finally:return status;
 }
 
 
@@ -61,7 +61,7 @@ int update_control(lulog *log, double dt, control *c, float *x) {
     c->v.v += force * dt;
     *x += c->v.v * dt;
     *x = max(c->k.limits[0], min(c->k.limits[1], *x));
-    exit:return status;
+    finally:return status;
 }
 
 int update_controls(lulog *log, double dt, luary_control *controls, float *variables) {
@@ -70,7 +70,7 @@ int update_controls(lulog *log, double dt, luary_control *controls, float *varia
         try(update_control(log, dt, &controls->c[i],
                 &variables[controls->c[i].k.index]))
     }
-    exit:return status;
+    finally:return status;
 }
 
 

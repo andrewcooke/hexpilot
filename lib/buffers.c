@@ -21,17 +21,17 @@ int load_buffer(lulog *log, GLenum target, GLenum usage,
     try(unbind_buffer(log, *buffer))
     luinfo(log, "Loaded %zu bytes (%zu x %zu) to buffer %u",
             bytes, count, chunk, buffer);
-    exit:return status;
+    finally:return status;
 }
 
 int bind_buffer(lulog *log, buffer *buffer) {
     int status = LU_OK;
     GL_CHECK(glBindBuffer(buffer->target, buffer->name))
-    exit:return status;
+    finally:return status;
 }
 
 int unbind_buffer(lulog *log, buffer *buffer) {
     int status = LU_OK;
     GL_CHECK(glBindBuffer(buffer->target, 0))
-    exit:return status;
+    finally:return status;
 }

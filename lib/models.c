@@ -17,7 +17,7 @@ int luary_pushmodel(lulog *log, luary_model *models, model *model) {
     int status = LU_OK;
     try(luary_reservemodel(log, models, 1))
     models->m[models->mem.used++] = model;
-    exit:return status;
+    finally:return status;
 }
 
 int mkmodel(lulog *log, model **model, send *send, draw *draw) {
@@ -25,6 +25,6 @@ int mkmodel(lulog *log, model **model, send *send, draw *draw) {
     LU_ALLOC(log, *model, 1)
     (*model)->draw = draw;
     (*model)->send = send;
-    exit:return status;
+    finally:return status;
 }
 

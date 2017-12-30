@@ -6,6 +6,7 @@
 
 #include "lu/log.h"
 #include "lu/status.h"
+#include "lu/internal.h"
 #include "lu/vectors.h"
 
 #include "glfw.h"
@@ -21,8 +22,9 @@ int init_glfw(lulog *log) {
     int status = LU_OK;
     LOG = log;
     glfwSetErrorCallback(on_error);
-    LU_ASSERT(glfwInit(), HP_ERR_GLFW, log, "Could not start GLFW")
-    exit:return status;
+    assert(glfwInit(), HP_ERR_GLFW, log, "Could not start GLFW");
+    finally:
+	return status;
 }
 
 int create_glfw_context(lulog *log, GLFWwindow **window) {
@@ -33,22 +35,24 @@ int create_glfw_context(lulog *log, GLFWwindow **window) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
-    LU_ASSERT(*window = glfwCreateWindow(320, 320, "hexpilot", NULL, NULL),
-            HP_ERR_GLFW, log, "Could not create window")
+    assert(*window = glfwCreateWindow(320, 320, "hexpilot", NULL, NULL),
+            HP_ERR_GLFW, log, "Could not create window");
     glfwMakeContextCurrent(*window);
     glfwSwapInterval(1);  // 0 to see raw fps
-    exit:return status;
+    finally:
+	return status;
 }
 
 int load_opengl_functions(lulog *log) {
     int status = LU_OK;
-    LU_ASSERT(gladLoadGLLoader((GLADloadproc) glfwGetProcAddress),
-            HP_ERR_GLAD, log, "Could not load OpenGL via glad")
-    LU_ASSERT(GLVersion.major > 1, HP_ERR_OPENGL, log,
-            "Bad OpenGL version: %d.%d", GLVersion.major, GLVersion.minor)
+    assert(gladLoadGLLoader((GLADloadproc) glfwGetProcAddress),
+            HP_ERR_GLAD, log, "Could not load OpenGL via glad");
+    assert(GLVersion.major > 1, HP_ERR_OPENGL, log,
+            "Bad OpenGL version: %d.%d", GLVersion.major, GLVersion.minor);
     luinfo(log, "OpenGL %s, GLSL %s",
             glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
-    exit:return status;
+    finally:
+	return status;
 }
 
 static void key_callback(GLFWwindow *window, int key, int scancode, int act, int mods) {
@@ -79,7 +83,8 @@ int set_window_callbacks(lulog *log, GLFWwindow *window, user_action *action) {
     int status = LU_OK;
     glfwSetWindowUserPointer(window, action);
     glfwSetKeyCallback(window, &key_callback);
-    exit:return status;
+    finally:
+	return status;
 }
 
 
@@ -88,7 +93,8 @@ int init_timing(lulog *log, timing *clock) {
     timing zero = {};
     *clock = zero;
     clock->previous = clock->seconds = glfwGetTime();
-    exit:return status;
+    finally:
+	return status;
 }
 
 double update_timing(lulog *log, timing *clock) {

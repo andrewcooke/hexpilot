@@ -22,7 +22,7 @@ int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
     (*world)->update = update;
     (*world)->before = before;
     (*world)->after = after;
-    exit:
+    finally:
 	return status;
 }
 
@@ -46,7 +46,7 @@ int free_world(world **world, int prev) {
         free(*world);
         *world = NULL;
     }
-exit:
+finally:
     return prev ? prev : status;
 }
 
@@ -59,7 +59,7 @@ int update_world(lulog *log, double delta, world *world) {
 	int status = LU_OK;
     try(world->respond(log, delta, world->action, world->variables))
     try(world->update(log, delta, world->variables, world->data))
-	exit:return status;
+	finally:return status;
 }
 
 int display_world(lulog *log, void *programs, world *world) {
@@ -74,5 +74,5 @@ int display_world(lulog *log, void *programs, world *world) {
     if (world->after) {
         try(world->after(log, programs, world))
     }
-    exit:return status;
+    finally:return status;
 }

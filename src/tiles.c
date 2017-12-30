@@ -27,7 +27,7 @@ static int hexagon_common(lulog *log, uint64_t seed,
     try(hexagon->enumerate(hexagon, log, config, -1, vertices))
     try(normalize_z(log, *vertices));
     try(strips(log, *vertices, indices, offsets, counts))
-exit:
+finally:
     status = lutle_freeconfig(&config, status);
     if (hexagon) status = hexagon->free(&hexagon, status);
     return status;
@@ -45,7 +45,7 @@ int hexagon_vertex_strips(lulog *log, uint64_t seed,
             &ijz, indices, &ioffsets, counts))
     try(ijz2fxyzw(log, ijz, step, vertices))
     try(offsets2void(log, ioffsets, sizeof(*(*indices)->i), offsets))
-exit:
+finally:
     status = luary_freeuint32(&ioffsets, status);
     status = luary_freeijz(&ijz, status);
     return status;
@@ -64,7 +64,7 @@ int hexagon_vnormal_strips(lulog *log, uint64_t seed,
     try(ijz2vecf4(log, ijz, step, &f4))
     try(normals(log, indices, ioffsets, *counts, f4, vertices))
     try(uint2int(log, ioffsets, offsets))
-exit:
+finally:
     status = luary_freeuint32(&ioffsets, status);
     status = luary_freeuint32(&indices, status);
     status = luary_freeijz(&ijz, status);
@@ -94,7 +94,7 @@ int ship_vnormal_strips(lulog *log, double step,
     try(normals(log, indices, ioffsets, *counts, f4, vertices))
     try(uint2int(log, ioffsets, offsets))
     luary_dumpvnorm(log, *vertices, "Ship vnorms", (*vertices)->mem.used);
-exit:
+finally:
     status = luary_freevecf4(&f4, status);
     status = luary_freeuint32(&ioffsets, status);
     status = luary_freeuint32(&indices, status);

@@ -12,7 +12,7 @@ int mkuniverse(lulog *log, universe **universe, size_t programs_size) {
     LU_ALLOC(log, *universe, 1);
     LU_ALLOC_SIZE(log, (*universe)->programs, programs_size)
     (*universe)->log = log;
-    exit:
+    finally:
 	return status;
 }
 
@@ -24,6 +24,6 @@ int free_universe(universe **universe, int prev) {
     	free(*universe);
         *universe = NULL;
     }
-exit:
+finally:
     return prev ? prev : status;
 }

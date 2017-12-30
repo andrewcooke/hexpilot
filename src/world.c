@@ -28,7 +28,7 @@ static int init_keys(lulog *log, user_action *action) {
             2, 10, 0,
             0, 4, ship_speed))
     try(luary_pushcontrol(log, action->controls, &k, 0))
-    exit:return status;
+    finally:return status;
 }
 
 static int respond_to_user(lulog *log, double dt, user_action *action, float *variables) {
@@ -38,7 +38,7 @@ static int respond_to_user(lulog *log, double dt, user_action *action, float *va
     glfwGetFramebufferSize(action->window, &width, &height);
     GL_CHECK(glViewport(0, 0, width, height))
     variables[buffer_x] = width; variables[buffer_y] = height;
-    exit:return status;
+    finally:return status;
 }
 
 
@@ -57,7 +57,7 @@ static int send_hex_data(lulog *log, model *model, world *world) {
     luglm_copy(&data->geometry.camera_to_clip_n, &buffer.camera_to_clip_n);
     buffer.line_width = 0.002;
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(geometry_buffer), &buffer))
-exit:
+finally:
     GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
     return status;
 }
@@ -74,7 +74,7 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
     try(interleaved_vnorm_vao(log, model->vertices, &model->vao))
     push_model(log, world, model);
-exit:
+finally:
     LU_CLEAN(luary_freevnorm(&vertices, status))
     return status;
 }
@@ -91,7 +91,7 @@ static int send_ship_data(lulog *log, model *model, world *world) {
     luglm ship_to_camera_n = {};
     luglm_mult(&data->geometry.hex_to_camera_n, &data->geometry.ship_to_hex_n, &ship_to_camera_n);
     GL_CHECK(glBufferSubData(GL_UNIFORM_BUFFER, 80, sizeof(ship_to_camera_n), &ship_to_camera_n))
-exit:
+finally:
     GL_CLEAN(glBindBuffer(GL_UNIFORM_BUFFER, 0))
     return status;
 }
@@ -107,7 +107,7 @@ static int build_ship(lulog *log, programs *programs, world *world) {
             vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices))
     try(interleaved_vnorm_vao(log, model->vertices, &model->vao))
     push_model(log, world, model);
-exit:
+finally:
     LU_CLEAN(luary_freevnorm(&vertices, status))
     return status;
 }
@@ -120,7 +120,7 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
     GL_CHECK(GLuint index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
     GL_CHECK(glUniformBlockBinding(programs->triangle_edges, index, 1))
     GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->geometry_buffer->name))
-    exit:return status;
+    finally:return status;
 }
 
 /**
@@ -135,7 +135,7 @@ static int build_render(lulog *log, programs *programs, flight_data *data) {
     try(bind_buffer(log, data->quad_buffer))
     GL_CHECK(glEnableVertexAttribArray(0))
     GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0))
-exit:
+finally:
     LU_CLEAN(unbind_buffer(log, data->quad_buffer))
     return status;
 }
@@ -151,7 +151,7 @@ static int before_display_blur(lulog *log, void *programs, world *world) {
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, data->single.render))
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
-    exit:return status;
+    finally:return status;
 }
 
 /**
@@ -221,7 +221,7 @@ static int after_display_blur(lulog *log, void *v, world *world) {
     GL_CHECK(glBindVertexArray(data->quad_vao))
     GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
 
-exit:
+finally:
     GL_CHECK(glBindVertexArray(0))
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0))
     GL_CHECK(glEnable(GL_DEPTH_TEST))
@@ -246,6 +246,6 @@ int build_flight_blur(lulog *log, void *v, GLFWwindow *window, world **world) {
     try(build_hexagon(log, p, *world))
     try(build_ship(log, p, *world))
     try(set_window_callbacks(log, window, (*world)->action))
-    exit:return status;
+    finally:return status;
 }
 
