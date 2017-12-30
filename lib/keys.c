@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "lu/dynamic_memory.h"
-#include "lu/status.h"
 #include "lu/array_macros.h"
 
 #include "keys.h"
@@ -15,7 +14,7 @@ int set_keys(lulog *log, keys *keys, const char *name,
         float force, float kv, float kx, float lo, float hi,
         size_t index) {
     int status = LU_OK;
-    LU_ALLOC(log, keys->name, strlen(name) + 1)
+    lu_alloc(log, keys->name, strlen(name) + 1)
     strcpy(keys->name, name);
     keys->keys[0] = key0; keys->mods[0] = mod0;
     keys->keys[1] = key1; keys->mods[1] = mod1;

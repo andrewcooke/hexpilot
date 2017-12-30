@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "lu/log.h"
-#include "lu/status.h"
 #include "lu/internal.h"
 #include "lu/vectors.h"
 

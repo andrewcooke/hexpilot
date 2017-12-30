@@ -3,7 +3,6 @@
 #include <status_codes.h>
 #include <string.h>
 
-#include "lu/status.h"
 #include "lu/tiles.h"
 #include "lu/random.h"
 #include "lu/arrays.h"
@@ -54,7 +53,7 @@ static int mkindex(lulog *log, luary_ijz *ijz, ludta_ij bl, ludta_ij tr,
         size_t **index) {
     int status = LU_OK;
     size_t nx = tr.i - bl.i + 1, ny = tr.j - bl.j + 1;
-    LU_ALLOC(log, *index, nx*ny)
+    lu_alloc(log, *index, nx*ny)
     for (size_t i = 0; i < ijz->mem.used; ++i) {
         // note that we add 1 - zero means missing
         (*index)[ijz2index(ijz->ijz[i], bl, tr)] = i+1;

@@ -3,7 +3,6 @@
 #include <status_codes.h>
 #include <world.h>
 #include "lu/log.h"
-#include "lu/status.h"
 #include "lu/internal.h"
 
 #include "glfw.h"
@@ -14,15 +13,15 @@
 
 static int init_opengl(lulog *log) {
 	int status = LU_OK;
-	GL_CHECK(glEnable(GL_CULL_FACE))
-	GL_CHECK(glCullFace(GL_BACK))
-	GL_CHECK(glFrontFace(GL_CW))
-	GL_CHECK(glEnable(GL_DEPTH_TEST))
-	GL_CHECK(glDepthMask(GL_TRUE))
-	GL_CHECK(glDepthFunc(GL_LEQUAL))
-	GL_CHECK(glDepthRange(0.0f, 1.0f))
-	GL_CHECK(glEnable(GL_MULTISAMPLE))
-	GL_CHECK(glClearColor(0, 0, 0, 1))
+	gl_try(glEnable(GL_CULL_FACE))
+	gl_try(glCullFace(GL_BACK))
+	gl_try(glFrontFace(GL_CW))
+	gl_try(glEnable(GL_DEPTH_TEST))
+	gl_try(glDepthMask(GL_TRUE))
+	gl_try(glDepthFunc(GL_LEQUAL))
+	gl_try(glDepthRange(0.0f, 1.0f))
+	gl_try(glEnable(GL_MULTISAMPLE))
+	gl_try(glClearColor(0, 0, 0, 1))
 	finally:return status;
 }
 

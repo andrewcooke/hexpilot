@@ -2,6 +2,8 @@
 #ifndef HP_ERROR_CODES_H
 #define HP_ERROR_CODES_H
 
+#include "lu/status_codes.h"
+
 #define HP_OFFSET 0x100
 #define HP_ERR (HP_OFFSET | 1)
 #define HP_ERR_GLFW (HP_OFFSET | 2)
@@ -10,7 +12,7 @@
 
 // warning - this generates two statements.
 // (chosen to allow declarations in operation that remain in-scope)
-#define GL_CHECK(operation) operation; {\
+#define gl_try(operation) operation; {\
     GLenum err = glGetError();\
     if (err != GL_NO_ERROR) {\
         luerror(log, "OpenGL Error #%x in %s (%s:%d)", err, __func__, __FILE__, __LINE__);\
