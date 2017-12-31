@@ -2,8 +2,8 @@
 #include <status.h>
 #include <string.h>
 
-#include "lu/dynamic_memory.h"
-#include "lu/array_macros.h"
+#include "lu/memory.h"
+#include "lu/arrays.h"
 
 #include "keys.h"
 #include "worlds.h"

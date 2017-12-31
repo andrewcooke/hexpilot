@@ -4,7 +4,7 @@
 
 #include "lu/log.h"
 #include "lu/gl.h"
-#include "lu/dynamic_memory.h"
+#include "lu/memory.h"
 
 #include "glad.h"
 #include <GLFW/glfw3.h>

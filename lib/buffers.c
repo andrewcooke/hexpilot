@@ -3,7 +3,8 @@
 #include <string.h>
 
 #include "lu/log.h"
-#include "lu/array_macros.h"
+#include "lu/arrays.h"
+#include "lu/memory.h"
 
 #include "buffers.h"
 

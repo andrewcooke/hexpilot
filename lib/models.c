@@ -3,8 +3,8 @@
 #include <string.h>
 
 #include "lu/log.h"
-#include "lu/array_macros.h"
-#include "lu/dynamic_memory.h"
+#include "lu/arrays.h"
+#include "lu/memory.h"
 
 #include "models.h"
 #include "universe.h"

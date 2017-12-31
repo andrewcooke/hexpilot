@@ -9,7 +9,7 @@
 #include "lu/arrays.h"
 #include "lu/minmax.h"
 #include "lu/structs.h"
-#include "lu/vectors.h"
+#include "lu/gl/vectors.h"
 
 #include "tiles.h"
 #include "vertices.h"
