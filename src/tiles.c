@@ -8,7 +8,6 @@
 #include "lu/random.h"
 #include "lu/arrays.h"
 #include "lu/minmax.h"
-#include "lu/structs.h"
 #include "lu/gl/vectors.h"
 
 #include "tiles.h"

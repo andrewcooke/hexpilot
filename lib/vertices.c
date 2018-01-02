@@ -7,7 +7,6 @@
 #include "lu/random.h"
 #include "lu/arrays.h"
 #include "lu/minmax.h"
-#include "lu/structs.h"
 #include "lu/gl.h"
 #include "lu/arrays.h"
 #include "lu/log.h"

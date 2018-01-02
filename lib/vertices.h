@@ -2,7 +2,6 @@
 #ifndef HP_VERTICES_H
 #define HP_VERTICES_H
 
-#include "lu/structs.h"
 #include "lu/vectors.h"
 #include "lu/arrays.h"
 #include "lu/data/fxyzw.h"
