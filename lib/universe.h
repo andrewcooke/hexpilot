@@ -11,7 +11,7 @@ typedef struct universe {
     world *flight;  // TODO - should be more general
 } universe;
 
-int mkuniverse(lulog *log, universe **universe, size_t programs_size);
-int free_universe(universe **universe, int status);
+int universe_mk(lulog *log, universe **universe, size_t programs_size);
+int universe_free(universe **universe, int status);
 
 #endif

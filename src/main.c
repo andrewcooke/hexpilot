@@ -32,25 +32,25 @@ static int main_with_glfw(lulog *log) {
 	universe *universe = NULL;
 	timing clock;
 
-	try(create_glfw_context(log, &window))
-    		try(load_opengl_functions(log))
-			try(init_opengl(log))
+	try(create_glfw_context(log, &window));
+	try(load_opengl_functions(log));
+	try(init_opengl(log));
 
-			try(mkuniverse(log, &universe, sizeof(programs)))
+	try(universe_mk(log, &universe, sizeof(programs)));
 
-			try(build_triangle_edges(log, &((programs*)universe->programs)->triangle_edges))
-			try(build_direct_texture(log, &((programs*)universe->programs)->copy_frame))
-			try(build_merge_frames(log, &((programs*)universe->programs)->merge_frames))
-			try(build_blur(log, &((programs*)universe->programs)->blur))
+	try(build_triangle_edges(log, &((programs*)universe->programs)->triangle_edges));
+	try(build_direct_texture(log, &((programs*)universe->programs)->copy_frame));
+	try(build_merge_frames(log, &((programs*)universe->programs)->merge_frames));
+	try(build_blur(log, &((programs*)universe->programs)->blur));
 
-			try(build_flight_blur(log, universe->programs, window, &universe->flight))
+	try(build_flight_blur(log, universe->programs, window, &universe->flight));
 
-			try(init_timing(log, &clock));
+	try(init_timing(log, &clock));
 	while (!glfwWindowShouldClose(window)) {
 		double delta = update_timing(log, &clock);
-		try(update_world(log, delta, universe->flight))
-        		try(display_world(log, universe->programs, universe->flight))
-				glfwSwapBuffers(window);
+		try(world_update(log, delta, universe->flight));
+		try(world_display(log, universe->programs, universe->flight));
+		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 	ludebug(log, "Clean finally");
@@ -58,7 +58,7 @@ static int main_with_glfw(lulog *log) {
 	finally:
 	glfwTerminate();
 	// TODO - need to free world buffers etc
-	status = free_universe(&universe, status);
+	status = universe_free(&universe, status);
 	return status;
 }
 
@@ -66,12 +66,12 @@ static int main_with_glfw(lulog *log) {
 int main(int argc, char** argv) {
 	int status = LU_OK;
 	lulog *log = NULL;
-	try(lulog_mkstderr(&log, lulog_level_debug));
+	try(lulog_stderr_mk(&log, lulog_level_debug));
 	// is this always true?  unclear to me, but we use pre-built uint32 arrays
 	assert(sizeof(GLuint) == sizeof(uint32_t), HP_ERR, log,
 			"Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(uint32_t))
-	try(init_glfw(log))
-	try(main_with_glfw(log))
+	try(init_glfw(log));
+	try(main_with_glfw(log));
 	finally:
 	if (log) status = log->free(&log, status);
 	return status ? 1 : 0;

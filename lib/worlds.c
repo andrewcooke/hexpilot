@@ -6,15 +6,15 @@
 #include "universe.h"
 
 
-int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
+int world_mk(lulog *log, world **world, size_t n_variables, size_t data_size,
 		GLFWwindow *window, respond *respond, update *update, before *before, after *after) {
 	int status = LU_OK;
 	LU_ALLOC(log, *world, 1);
 	LU_ALLOC(log, (*world)->variables, n_variables);
-	try(luary_mkmodel(log, &(*world)->models, 1));
+	try(luary_model_mk(log, &(*world)->models, 1));
 	LU_ALLOC_SIZE(log, (*world)->data, data_size);
 	LU_ALLOC(log, (*world)->action, 1);
-	try(luary_mkcontrol(log, &(*world)->action->controls, 1));
+	try(luary_control_mk(log, &(*world)->action->controls, 1));
 	(*world)->action->log = log;
 	(*world)->action->window = window;
 	(*world)->respond = respond;
@@ -25,21 +25,21 @@ int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
 	return status;
 }
 
-int free_world(world **world, int prev) {
+int world_free(world **world, int prev) {
 	int status = LU_OK;
 	if (world && *world) {
 		if ((*world)->models) {
 			for (size_t i = 0; i < (*world)->models->mem.used; ++i) {
-				status = luary_freeint32(&(*world)->models->m[i]->offsets, status);
-				status = luary_freeuint32(&(*world)->models->m[i]->counts, status);
+				status = luary_int32_free(&(*world)->models->m[i]->offsets, status);
+				status = luary_uint32_free(&(*world)->models->m[i]->counts, status);
 				free((*world)->models->m[i]); (*world)->models->m[i] = NULL;
 			}
 		}
 		free((*world)->data);
 		free((*world)->geometry_buffer);
-		status = luary_freemodel(&(*world)->models, status);
+		status = luary_model_free(&(*world)->models, status);
 		if ((*world)->action) {
-			try(free_keys((*world)->action));
+			try(keys_free((*world)->action));
 			free((*world)->action);
 		}
 		free(*world);
@@ -49,12 +49,12 @@ int free_world(world **world, int prev) {
 	return prev ? prev : status;
 }
 
-int push_model(lulog *log, world *world, model *model) {
-	return luary_pushmodel(log, world->models, model);
+int model_push(lulog *log, world *world, model *model) {
+	return luary_model_push(log, world->models, model);
 }
 
 
-int update_world(lulog *log, double delta, world *world) {
+int world_update(lulog *log, double delta, world *world) {
 	int status = LU_OK;
 	try(world->respond(log, delta, world->action, world->variables));
 	try(world->update(log, delta, world->variables, world->data));
@@ -62,7 +62,7 @@ int update_world(lulog *log, double delta, world *world) {
 	return status;
 }
 
-int display_world(lulog *log, void *programs, world *world) {
+int world_display(lulog *log, void *programs, world *world) {
 	int status = LU_OK;
 	if (world->before) {
 		try(world->before(log, programs, world));

@@ -21,13 +21,13 @@ static int hexagon_common(lulog *log, uint64_t seed,
 	int status = LU_OK;
 	lutle_config *config = NULL;
 	lutle_tile *hexagon = NULL;
-	try(lutle_defaultconfig(log, &config, seed));
-	try(lutle_mkhexagon(log, &hexagon, side, subsamples, octweight));
+	try(lutle_config_default(log, &config, seed));
+	try(lutle_hexagon_mk(log, &hexagon, side, subsamples, octweight));
 	try(hexagon->enumerate(hexagon, log, config, -1, vertices));
 	try(normalize_z(log, *vertices));
 	try(strips(log, *vertices, indices, offsets, counts));
 	finally:
-	status = lutle_freeconfig(&config, status);
+	status = lutle_config_free(&config, status);
 	if (hexagon) status = hexagon->free(&hexagon, status);
 	return status;
 }
@@ -45,8 +45,8 @@ int hexagon_vertex_strips(lulog *log, uint64_t seed,
 	try(ijz2fxyzw(log, ijz, step, vertices));
 	try(offsets2void(log, ioffsets, sizeof(*(*indices)->i), offsets));
 	finally:
-	status = luary_freeuint32(&ioffsets, status);
-	status = luary_freeijz(&ijz, status);
+	status = luary_uint32_free(&ioffsets, status);
+	status = luary_ijz_free(&ijz, status);
 	return status;
 }
 
@@ -64,10 +64,10 @@ int hexagon_vnormal_strips(lulog *log, uint64_t seed,
 	try(normals(log, indices, ioffsets, *counts, f4, vertices));
 	try(uint2int(log, ioffsets, offsets));
 	finally:
-	status = luary_freeuint32(&ioffsets, status);
-	status = luary_freeuint32(&indices, status);
-	status = luary_freeijz(&ijz, status);
-	status = luary_freevecf4(&f4, status);
+	status = luary_uint32_free(&ioffsets, status);
+	status = luary_uint32_free(&indices, status);
+	status = luary_ijz_free(&ijz, status);
+	status = luary_vecf4_free(&f4, status);
 	return status;
 }
 
@@ -79,24 +79,24 @@ int ship_vnormal_strips(lulog *log, double step,
 	size_t np = sizeof(points) / sizeof(points[0]), ni = sizeof(index) / sizeof(index[0]);
 	luary_vecf4 *f4 = NULL;
 	luary_uint32 *ioffsets = NULL, *indices = NULL;
-	try(luary_mkvecf4(log, &f4, np));
+	try(luary_vecf4_mk(log, &f4, np));
 	memcpy(f4->v, points, sizeof(points)); f4->mem.used = np;
 	for (size_t i = 0; i < f4->mem.used; ++i) {
 		luglv_scale_inplace(step, &f4->v[i]);
 	}
-	try(luary_mkuint32(log, &indices, ni));
+	try(luary_uint32_mk(log, &indices, ni));
 	memcpy(indices->i, index, sizeof(index)); indices->mem.used = ni;
-	try(luary_mkuint32(log, &ioffsets, 1));
-	try(luary_pushuint32(log, ioffsets, 0));
-	try(luary_mkuint32(log, counts, 1));
-	try(luary_pushuint32(log, *counts, ni));
+	try(luary_uint32_mk(log, &ioffsets, 1));
+	try(luary_uint32_push(log, ioffsets, 0));
+	try(luary_uint32_mk(log, counts, 1));
+	try(luary_uint32_push(log, *counts, ni));
 	try(normals(log, indices, ioffsets, *counts, f4, vertices));
 	try(uint2int(log, ioffsets, offsets));
-	luary_dumpvnorm(log, *vertices, "Ship vnorms", (*vertices)->mem.used);
+	luary_vnorm_dump(log, *vertices, "Ship vnorms", (*vertices)->mem.used);
 	finally:
-	status = luary_freevecf4(&f4, status);
-	status = luary_freeuint32(&ioffsets, status);
-	status = luary_freeuint32(&indices, status);
+	status = luary_vecf4_free(&f4, status);
+	status = luary_uint32_free(&ioffsets, status);
+	status = luary_uint32_free(&indices, status);
 	return status;
 }
 

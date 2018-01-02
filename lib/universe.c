@@ -7,7 +7,7 @@
 #include "universe.h"
 
 
-int mkuniverse(lulog *log, universe **universe, size_t programs_size) {
+int universe_mk(lulog *log, universe **universe, size_t programs_size) {
 	int status = LU_OK;
 	LU_ALLOC(log, *universe, 1);
 	LU_ALLOC_SIZE(log, (*universe)->programs, programs_size);
@@ -16,10 +16,10 @@ int mkuniverse(lulog *log, universe **universe, size_t programs_size) {
 	return status;
 }
 
-int free_universe(universe **universe, int prev_status) {
+int universe_free(universe **universe, int prev_status) {
 	int status = LU_OK;
 	if (universe && *universe) {
-		status = free_world(&(*universe)->flight, status);
+		status = world_free(&(*universe)->flight, status);
 		free((*universe)->programs);
 		free(*universe);
 		*universe = NULL;

@@ -6,7 +6,7 @@
 
 #include "lu/log.h"
 #include "lu/internal.h"
-#include "lu/vectors.h"
+#include "lu/gl/vectors.h"
 
 #include "glfw.h"
 

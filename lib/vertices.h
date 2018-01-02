@@ -2,7 +2,7 @@
 #ifndef HP_VERTICES_H
 #define HP_VERTICES_H
 
-#include "lu/vectors.h"
+#include "lu/gl/vectors.h"
 #include "lu/arrays.h"
 #include "lu/data/fxyzw.h"
 #include "lu/data/ijz.h"
@@ -20,11 +20,11 @@ typedef struct luary_vnorm {
     lumem mem;
 } luary_vnorm;
 
-int luary_mkvnorm(lulog *log, luary_vnorm **vnorm, size_t n);
-int luary_freevnorm(luary_vnorm **vnorm, int prev_status);
-int luary_reservevnorm(lulog *log, luary_vnorm *vnorm, size_t n);
-int luary_pushvnorm(lulog *log, luary_vnorm *vnorm, luglv *v, luglv *n);
-int luary_dumpvnorm(lulog *log, luary_vnorm *vnorm, const char *name, size_t nlines);
+int luary_vnorm_mk(lulog *log, luary_vnorm **vnorm, size_t n);
+int luary_vnorm_free(luary_vnorm **vnorm, int prev_status);
+int luary_vnorm_reserve(lulog *log, luary_vnorm *vnorm, size_t n);
+int luary_vnorm_push(lulog *log, luary_vnorm *vnorm, luglv *v, luglv *n);
+int luary_vnorm_dump(lulog *log, luary_vnorm *vnorm, const char *name, size_t nlines);
 
 int strips(lulog *log, luary_ijz *ijz,
         luary_uint32 **indices, luary_uint32 **offsets, luary_uint32 **counts);

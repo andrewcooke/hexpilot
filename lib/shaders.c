@@ -57,10 +57,10 @@ int compile_shader_from_string(lulog *log, GLenum shader_type, const char *sourc
 		goto finally;
 	}
 	if (!*shaders) {
-		try(luary_mkuint32(log, shaders, 1))
+		try(luary_uint32_mk(log, shaders, 1))
 	}
-	try(luary_pushuint32(log, *shaders, shader))
-    				luinfo(log, "Compiled %s shader", shader_type_str(log, shader_type));
+	try(luary_uint32_push(log, *shaders, shader));
+	luinfo(log, "Compiled %s shader", shader_type_str(log, shader_type));
 	finally:
 	return status;
 }
@@ -99,7 +99,7 @@ int free_shaders(lulog *log, luary_uint32 **shaders, int prev_status) {
 		}
 	}
 	finally:
-	status = luary_freeuint32(shaders, status);
+	status = luary_uint32_free(shaders, status);
 	return lu_both(prev_status, status);
 }
 

@@ -24,12 +24,12 @@ typedef struct world {
     after *after;
 } world;
 
-int mkworld(lulog *log, world **world, size_t n_variables, size_t data_size,
+int world_mk(lulog *log, world **world, size_t n_variables, size_t data_size,
 		GLFWwindow *window, respond *respond, update *update, before *before, after *after);
-int free_world(world **world, int status);
-int push_model(lulog *log, world *world, model *model);
+int world_free(world **world, int status);
+int model_push(lulog *log, world *world, model *model);
 
-int update_world(lulog *log, double delta, world *world);
-int display_world(lulog *log, void *programs, world *world);
+int world_update(lulog *log, double delta, world *world);
+int world_display(lulog *log, void *programs, world *world);
 
 #endif

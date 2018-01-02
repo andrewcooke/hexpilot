@@ -17,23 +17,23 @@ static int init_keys(lulog *log, user_action *action) {
 	try(set_keys(log, &k, "+/-", 61, 1, 45, 0,
 			15, 10, 0,
 			0.1, 10, camera_zoom));
-	try(luary_pushcontrol(log, action->controls, &k, 1));
+	try(luary_control_push(log, action->controls, &k, 1));
 	try(set_keys(log, &k, "left/right", 262, 0, 263, 0,
 			0.3, 5, 5,
 			-0.5, 0.5, ship_rotation));
-	try(luary_pushcontrol(log, action->controls, &k, 0));
+	try(luary_control_push(log, action->controls, &k, 0));
 	try(set_keys(log, &k, "up/down",
 			265, 0, 264, 0,
 			2, 10, 0,
 			0, 4, ship_speed));
-	try(luary_pushcontrol(log, action->controls, &k, 0));
+	try(luary_control_push(log, action->controls, &k, 0));
 	finally:
 	return status;
 }
 
 static int respond_to_user(lulog *log, double dt, user_action *action, float *variables) {
 	int status = LU_OK, width, height;
-	try(update_controls(log, dt, action->controls, variables));
+	try(controls_update(log, dt, action->controls, variables));
 	glfwGetFramebufferSize(action->window, &width, &height);
 	gl_try(glViewport(0, 0, width, height));
 	variables[buffer_x] = width; variables[buffer_y] = height;
@@ -68,14 +68,14 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
 	int status = LU_OK;
 	model *model = NULL;
 	luary_vnorm *vertices = NULL;
-	try(mkmodel(log, &model, &send_hex_data, &draw_triangle_edges));
+	try(model_mk(log, &model, &send_hex_data, &draw_triangle_edges));
 	try(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts));
 	try(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
 			vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices));
 	try(interleaved_vnorm_vao(log, model->vertices, &model->vao));
-	push_model(log, world, model);
+	try(model_push(log, world, model));
 	finally:
-	status = luary_freevnorm(&vertices, status);
+	status = luary_vnorm_free(&vertices, status);
 	return status;
 }
 
@@ -101,14 +101,14 @@ static int build_ship(lulog *log, programs *programs, world *world) {
 	int status = LU_OK;
 	model *model = NULL;
 	luary_vnorm *vertices = NULL;
-	try(mkmodel(log, &model, &send_ship_data, &draw_triangle_edges));
+	try(model_mk(log, &model, &send_ship_data, &draw_triangle_edges));
 	try(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts));
 	try(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
 			vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices));
 	try(interleaved_vnorm_vao(log, model->vertices, &model->vao));
-	push_model(log, world, model);
+	try(model_push(log, world, model));
 	finally:
-	status = luary_freevnorm(&vertices, status);
+	status = luary_vnorm_free(&vertices, status);
 	return status;
 }
 
@@ -120,7 +120,8 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
 	gl_try(GLuint index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
 	gl_try(glUniformBlockBinding(programs->triangle_edges, index, 1))
 	gl_try(glBindBufferBase(GL_UNIFORM_BUFFER, 1, world->geometry_buffer->name))
-	finally:return status;
+	finally:
+	return status;
 }
 
 /**
@@ -170,49 +171,49 @@ static int after_display_blur(lulog *log, void *v, world *world) {
 	gl_try(glDisable(GL_DEPTH_TEST))
 
 	// blit from single into tmp1 to resolve anti-aliasing
-	gl_try(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.render))
-	gl_try(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, data->tmp1.render))
+	gl_try(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.render));
+	gl_try(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, data->tmp1.render));
 	gl_try(glBlitFramebuffer(0, 0, data->single.width, data->single.height,
-			0, 0, data->single.width, data->single.height, GL_COLOR_BUFFER_BIT, GL_NEAREST))
+			0, 0, data->single.width, data->single.height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 
-			// add multiple and tmp1 into tmp2
-			gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render))
-			gl_try(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
-			gl_try(glUseProgram(p->merge_frames.name))
-			try(use_uniform_texture(log, p->merge_frames.frame1, data->tmp1.texture))
-			try(use_uniform_texture(log, p->merge_frames.frame2, data->multiple.texture))
-			gl_try(glBindVertexArray(data->quad_vao))
-			gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+	// add multiple and tmp1 into tmp2
+	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render));
+	gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
+	gl_try(glUseProgram(p->merge_frames.name));
+	try(use_uniform_texture(log, p->merge_frames.frame1, data->tmp1.texture));
+	try(use_uniform_texture(log, p->merge_frames.frame2, data->multiple.texture));
+	gl_try(glBindVertexArray(data->quad_vao));
+	gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
-			// copy tmp2 into output
-			gl_try(glBindFramebuffer(GL_FRAMEBUFFER, 0))
-			gl_try(glClear(GL_COLOR_BUFFER_BIT))  // TODO - needed?
-			gl_try(glUseProgram(p->copy_frame.name))
-			try(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture))
-			gl_try(glBindVertexArray(data->quad_vao))
-			gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4))
+	// copy tmp2 into output
+	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+	gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
+	gl_try(glUseProgram(p->copy_frame.name));
+	try(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture));
+	gl_try(glBindVertexArray(data->quad_vao));
+	gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
-			for (int loop = 0; loop < 4; ++loop) {
+	for (int loop = 0; loop < 4; ++loop) {
 
-				// blur tmp2 horizontally into tmp1
-				gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp1.render));
-				gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
-				gl_try(glUseProgram(p->blur.name));
-				try(use_uniform_texture(log, p->blur.frame, data->tmp2.texture));
-				gl_try(glUniform1i(p->blur.horizontal, 1));
-				gl_try(glBindVertexArray(data->quad_vao));
-				gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+		// blur tmp2 horizontally into tmp1
+		gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp1.render));
+		gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
+		gl_try(glUseProgram(p->blur.name));
+		try(use_uniform_texture(log, p->blur.frame, data->tmp2.texture));
+		gl_try(glUniform1i(p->blur.horizontal, 1));
+		gl_try(glBindVertexArray(data->quad_vao));
+		gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
-				// blur tmp1 vertically into tmp2
-				gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render));
-				gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
-				gl_try(glUseProgram(p->blur.name));
-				try(use_uniform_texture(log, p->blur.frame, data->tmp1.texture));
-				gl_try(glUniform1i(p->blur.horizontal, 0));
-				gl_try(glBindVertexArray(data->quad_vao));
-				gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+		// blur tmp1 vertically into tmp2
+		gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render));
+		gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
+		gl_try(glUseProgram(p->blur.name));
+		try(use_uniform_texture(log, p->blur.frame, data->tmp1.texture));
+		gl_try(glUniform1i(p->blur.horizontal, 0));
+		gl_try(glBindVertexArray(data->quad_vao));
+		gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
-			}
+	}
 
 	// copy tmp2 into multiple to save
 	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->multiple.render));
@@ -233,7 +234,7 @@ static int after_display_blur(lulog *log, void *v, world *world) {
 int build_flight_blur(lulog *log, void *v, GLFWwindow *window, world **world) {
 	int status = LU_OK;
 	programs *p = (programs*) v;
-	try(mkworld(log, world, n_variables, sizeof(flight_data), window,
+	try(world_mk(log, world, n_variables, sizeof(flight_data), window,
 			&respond_to_user, &update_geometry, &before_display_blur, &after_display_blur));
 	flight_data *data = (flight_data*)(*world)->data;
 	try(init_frame(log, window, &data->single, 1, 1));

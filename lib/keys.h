@@ -48,13 +48,14 @@ typedef struct user_action {
     luary_control *controls;
 } user_action;
 
-int luary_mkcontrol(lulog *log, luary_control **controls, size_t n);
-int luary_freecontrol(luary_control **controls, int prev_status);
-int luary_reservecontrol(lulog *log, luary_control *controls, size_t n);
-int luary_pushcontrol(lulog *log, luary_control *controls, keys *keys, float x);
-int free_keys(user_action *action);
+int luary_control_mk(lulog *log, luary_control **controls, size_t n);
+int luary_control_free(luary_control **controls, int prev_status);
+int luary_control_res(lulog *log, luary_control *controls, size_t n);
+int luary_control_push(lulog *log, luary_control *controls, keys *keys, float x);
 
-int update_control(lulog *log, double dt, control *control, float *x);
-int update_controls(lulog *log, double dt, luary_control *controls, float *variables);
+int keys_free(user_action *action);
+
+int control_update(lulog *log, double dt, control *control, float *x);
+int controls_update(lulog *log, double dt, luary_control *controls, float *variables);
 
 #endif

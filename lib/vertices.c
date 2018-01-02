@@ -16,20 +16,21 @@
 
 LUARY_MKBASE(vnorm, vnorm, vn)
 
-int luary_pushvnorm(lulog *log, luary_vnorm *vn, luglv *v, luglv *n) {
+int luary_vnorm_push(lulog *log, luary_vnorm *vn, luglv *v, luglv *n) {
 	int status = LU_OK;
-	try(luary_reservevnorm(log, vn, 1));
+	try(luary_vnorm_res(log, vn, 1));
 	for (size_t i = 0; i < 4; ++i) {
 		vn->vn[vn->mem.used][0][i] = (*v)[i];
 		vn->vn[vn->mem.used][1][i] = (*n)[i];
 	}
 	vn->mem.used++;
-	finally:return status;
+	finally:
+	return status;
 }
 
 static char bv[100];
 static char bn[100];
-LUARY_MKDUMP(luary_dumpvnorm, luary_vnorm, "%s/%s",
+LUARY_MKDUMP(luary_vnorm_dump, luary_vnorm, "%s/%s",
 		luglv_str(&ptr->vn[i][0], 100, bv), luglv_str(&ptr->vn[i][1], 100, bn))
 
 static int ijeq(ludta_ij ij1, ludta_ij ij2) {
@@ -48,7 +49,7 @@ static inline int ijz2index(ludta_ijz ijz, ludta_ij bl, ludta_ij tr) {
 	return ij2index(ijz2ij(ijz), bl, tr);
 }
 
-static int mkindex(lulog *log, luary_ijz *ijz, ludta_ij bl, ludta_ij tr,
+static int index_mk(lulog *log, luary_ijz *ijz, ludta_ij bl, ludta_ij tr,
 		size_t **index) {
 	int status = LU_OK;
 	size_t nx = tr.i - bl.i + 1, ny = tr.j - bl.j + 1;
@@ -98,7 +99,7 @@ static int addpoints(lulog *log, luary_ijz *ijz, size_t *current,
 						pprev->i, pprev->j, pnext->i, pnext->j)
                 														*current = *current + 1;
 			}
-			try(luary_pushuint32(log, indices, next-1)); // correct for 0/NULL
+			try(luary_uint32_push(log, indices, next-1)); // correct for 0/NULL
 			counts->i[counts->mem.used-1]++;
 			pprev = pnext; nextisup = !nextisup;
 		} else {
@@ -124,11 +125,11 @@ static int addstrip(lulog *log, luary_ijz *ijz, size_t *current, size_t *index,
 		// here the initial triangle looks like \/ and (l-r) is CCW.
 		// if we want CW front face then we need to add an extra point
 		// at the start (a degenerate triangle).
-		try(luary_pushuint32(log, offsets, indices->mem.used));
-		try(luary_pushuint32(log, indices, i0-1)); // correct for 0/NULL
-		try(luary_pushuint32(log, indices, i0-1)); // correct for 0/NULL
-		try(luary_pushuint32(log, indices, *current));
-		try(luary_pushuint32(log, counts, 3));
+		try(luary_uint32_push(log, offsets, indices->mem.used));
+		try(luary_uint32_push(log, indices, i0-1)); // correct for 0/NULL
+		try(luary_uint32_push(log, indices, i0-1)); // correct for 0/NULL
+		try(luary_uint32_push(log, indices, *current));
+		try(luary_uint32_push(log, counts, 3));
 		try(addpoints(log, ijz, current, p1, 1, index, bl, tr, indices, counts));
 	} else {
 		// here the initial triangle looks like /\ and (l-r) is CW.
@@ -142,10 +143,10 @@ static int addstrip(lulog *log, luary_ijz *ijz, size_t *current, size_t *index,
 					p3->i, p3->j, p1->i, p1->j, ijz->ijz[*current + 1].i, ijz->ijz[*current + 1].j);
 		}
 		if (p2 && p3) {
-			try(luary_pushuint32(log, offsets, indices->mem.used));
-			try(luary_pushuint32(log, indices, *current));
-			try(luary_pushuint32(log, indices, i2 - 1)); // correct for 0/NULL
-			try(luary_pushuint32(log, counts, 2));
+			try(luary_uint32_push(log, offsets, indices->mem.used));
+			try(luary_uint32_push(log, indices, *current));
+			try(luary_uint32_push(log, indices, i2 - 1)); // correct for 0/NULL
+			try(luary_uint32_push(log, counts, 2));
 			try(addpoints(log, ijz, current, p2, 0, index, bl, tr, indices, counts));
 		} else {
 			*current = *current+1;
@@ -162,10 +163,10 @@ int strips(lulog *log, luary_ijz *ijz,
 	size_t *index = NULL;
 	try(lutle_range(log, ijz, &bl, &tr, NULL));
 	bl.i--; bl.j--; tr.i++; tr.j++;  // add border for failed lookups
-	try(mkindex(log, ijz, bl, tr, &index));
-	try(luary_mkuint32(log, indices, 4 * ijz->mem.used));  // guess some overhead
-	try(luary_mkuint32(log, offsets, tr.j - bl.j + 1));  // optimistic?
-	try(luary_mkuint32(log, counts, tr.j - bl.j + 1));  // optimistic?
+	try(index_mk(log, ijz, bl, tr, &index));
+	try(luary_uint32_mk(log, indices, 4 * ijz->mem.used));  // guess some overhead
+	try(luary_uint32_mk(log, offsets, tr.j - bl.j + 1));  // optimistic?
+	try(luary_uint32_mk(log, counts, tr.j - bl.j + 1));  // optimistic?
 	size_t current = 0;
 	while (current < ijz->mem.used) {
 		try(addstrip(log, ijz, &current, index, bl, tr, *indices, *offsets, *counts));
@@ -178,13 +179,13 @@ int strips(lulog *log, luary_ijz *ijz,
 
 int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw) {
 	int status = LU_OK;
-	try(luary_mkfxyzw(log, fxyzw, ijz->mem.used));
+	try(luary_fxyzw_mk(log, fxyzw, ijz->mem.used));
 	for (size_t i = 0; i < ijz->mem.used; ++i) {
 		ludta_ijz *p = &ijz->ijz[i];
 		float x = (p->i + p->j * cos(M_PI/3)) * step;
 		float y = p->j * sin(M_PI/3) * step;
 		float z = p->z;
-		try(luary_pushfxyzw(log, *fxyzw, x, y, z, 1.0f));
+		try(luary_fxyzw_push(log, *fxyzw, x, y, z, 1.0f));
 	}
 	finally:
 	return status;
@@ -192,7 +193,7 @@ int ijz2fxyzw(lulog *log, luary_ijz *ijz, float step, luary_fxyzw **fxyzw) {
 
 int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
 	int status = LU_OK;
-	try(luary_mkvecf4(log, f4, ijz->mem.used));
+	try(luary_vecf4_mk(log, f4, ijz->mem.used));
 	float lo[] = {0, 0, ijz->ijz[0].z}, hi[] = {0, 0, ijz->ijz[0].z};
 	for (size_t i = 0; i < ijz->mem.used; ++i) {
 		ludta_ijz *p = &ijz->ijz[i];
@@ -202,7 +203,7 @@ int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
 		hi[1] = max(hi[1], y); lo[1] = min(lo[1], y);
 		float z = p->z;
 		hi[2] = max(hi[2], z); lo[2] = min(lo[2], z);
-		try(luary_pushvecf4(log, *f4, x, y, z, 1.0f));
+		try(luary_vecf4_push(log, *f4, x, y, z, 1.0f));
 	}
 	ludebug(log, "Data cover range %0.2f - %0.2f, %0.2f - %0.2f, %0.2f - %0.2f",
 			lo[0], hi[0], lo[1], hi[1], lo[2], hi[2]);
@@ -212,9 +213,9 @@ int ijz2vecf4(lulog *log, luary_ijz *ijz, float step, luary_vecf4 **f4) {
 
 int offsets2void(lulog *log, luary_uint32 *in, size_t chunk, luary_void **out) {
 	int status = LU_OK;
-	try(luary_mkvoid(log, out, in->mem.used));
+	try(luary_void_mk(log, out, in->mem.used));
 	for (size_t i = 0; i < in->mem.used; ++i) {
-		try(luary_pushvoid(log, *out, (void*)(chunk * in->i[i])));
+		try(luary_void_push(log, *out, (void*)(chunk * in->i[i])));
 	}
 	finally:return status;
 }
@@ -253,7 +254,7 @@ int uniquify(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
 			if (indices->i[k] >= large) {
 				ludta_ijz v = vertices->ijz[indices->i[k]];
 				indices->i[k] = vertices->mem.used;
-				try(luary_pushijz(log, vertices, v.i, v.j, v.z));
+				try(luary_ijz_push(log, vertices, v.i, v.j, v.z));
 			}
 		}
 	}
@@ -266,7 +267,7 @@ int uniquify(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
 int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
 		luary_uint32 *counts, luary_vecf4 *vertices, luary_vnorm **vnorms) {
 	int status = LU_OK;
-	try(luary_mkvnorm(log, vnorms, vertices->mem.used));
+	try(luary_vnorm_mk(log, vnorms, vertices->mem.used));
 	for (size_t i = 0; i < offsets->mem.used; ++i) {
 		size_t offset = offsets->i[i];
 		for (size_t j = 0; j < counts->i[i]; ++j) {
@@ -286,7 +287,7 @@ int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
 				n[3] = 0;
 			}
 			assert(k == (*vnorms)->mem.used, HP_ERR, log, "Vertex gap (%zu/%zu)", k, (*vnorms)->mem.used);
-			try(luary_pushvnorm(log, *vnorms, p0, &n));
+			try(luary_vnorm_push(log, *vnorms, p0, &n));
 		}
 	}
 	finally:
@@ -296,9 +297,9 @@ int normals(lulog *log, luary_uint32 *indices, luary_uint32 *offsets,
 
 int uint2int(lulog *log, luary_uint32 *in, luary_int32 **out) {
 	int status = LU_OK;
-	try(luary_mkint32(log, out, in->mem.used));
+	try(luary_int32_mk(log, out, in->mem.used));
 	for (size_t i = 0; i < in->mem.used; ++i) {
-		try(luary_pushint32(log, *out, in->i[i]));
+		try(luary_int32_push(log, *out, in->i[i]));
 	}
 	finally:
 	return status;
