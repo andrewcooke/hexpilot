@@ -14,7 +14,7 @@
 static lulog *LOG = NULL;
 
 static void on_error(int error, const char *message) {
-    luerror(LOG, "GLFW: %s (code %d)", error, message);
+    luerror(LOG, "GLFW: %s (code %d)", message, error);
 }
 
 int init_glfw(lulog *log) {

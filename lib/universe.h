@@ -7,7 +7,7 @@
 
 typedef struct universe {
     lulog *log;
-    void * programs;
+    void *programs;
     world *flight;  // TODO - should be more general
 } universe;
 

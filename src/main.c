@@ -13,16 +13,17 @@
 
 static int init_opengl(lulog *log) {
 	int status = LU_OK;
-	gl_try(glEnable(GL_CULL_FACE))
-	gl_try(glCullFace(GL_BACK))
-	gl_try(glFrontFace(GL_CW))
-	gl_try(glEnable(GL_DEPTH_TEST))
-	gl_try(glDepthMask(GL_TRUE))
-	gl_try(glDepthFunc(GL_LEQUAL))
-	gl_try(glDepthRange(0.0f, 1.0f))
-	gl_try(glEnable(GL_MULTISAMPLE))
-	gl_try(glClearColor(0, 0, 0, 1))
-	finally:return status;
+	gl_try(glEnable(GL_CULL_FACE));
+	gl_try(glCullFace(GL_BACK));
+	gl_try(glFrontFace(GL_CW));
+	gl_try(glEnable(GL_DEPTH_TEST));
+	gl_try(glDepthMask(GL_TRUE));
+	gl_try(glDepthFunc(GL_LEQUAL));
+	gl_try(glDepthRange(0.0f, 1.0f));
+	gl_try(glEnable(GL_MULTISAMPLE));
+	gl_try(glClearColor(0, 0, 0, 1));
+	finally:
+	return status;
 }
 
 static int main_with_glfw(lulog *log) {
