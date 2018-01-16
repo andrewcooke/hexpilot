@@ -70,8 +70,8 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
 	luary_vnorm *vertices = NULL;
 	try(model_mk(log, &model, &send_hex_data, &draw_triangle_edges));
 	try(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts));
-	try(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
-			vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices));
+	try(buffer_mk(log, &model->vertices, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+			vertices->vn, vertices->mem.used * sizeof(*vertices->vn)));
 	try(interleaved_vnorm_vao(log, model->vertices, &model->vao));
 	try(model_push(log, world, model));
 	finally:
@@ -103,8 +103,8 @@ static int build_ship(lulog *log, programs *programs, world *world) {
 	luary_vnorm *vertices = NULL;
 	try(model_mk(log, &model, &send_ship_data, &draw_triangle_edges));
 	try(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts));
-	try(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
-			vertices->vn, vertices->mem.used, sizeof(*vertices->vn), &model->vertices));
+	try(buffer_mk(log, &model->vertices, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+			vertices->vn, vertices->mem.used * sizeof(*vertices->vn)));
 	try(interleaved_vnorm_vao(log, model->vertices, &model->vao));
 	try(model_push(log, world, model));
 	finally:
@@ -114,8 +114,8 @@ static int build_ship(lulog *log, programs *programs, world *world) {
 
 static int build_geometry(lulog *log, programs *programs, world *world) {
 	int status = LU_OK;
-	try(load_buffer(log, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
-			NULL, 1, sizeof(geometry_buffer), &world->geometry_buffer));
+	try(buffer_mk(log, &world->geometry_buffer, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
+			NULL, sizeof(geometry_buffer)));
 	// http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
 	gl_try(GLuint index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
 	gl_try(glUniformBlockBinding(programs->triangle_edges, index, 1))
@@ -130,14 +130,14 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
 static int build_render(lulog *log, programs *programs, flight_data *data) {
 	int status = LU_OK;
 	float quad[] = {-1,-1, -1,1, 1,-1, 1,1};
-	try(load_buffer(log, GL_ARRAY_BUFFER, GL_STATIC_DRAW, quad, 1, sizeof(quad), &data->quad_buffer));
+	try(buffer_mk(log, &data->quad_buffer, GL_ARRAY_BUFFER, GL_STATIC_DRAW, quad, sizeof(quad)));
 	gl_try(glGenVertexArrays(1, &data->quad_vao));
 	gl_try(glBindVertexArray(data->quad_vao));
-	try(bind_buffer(log, data->quad_buffer));
+	try(buffer_bind(log, data->quad_buffer));
 	gl_try(glEnableVertexAttribArray(0));
 	gl_try(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0));
 	finally:
-	status = lu_both(status, unbind_buffer(log, data->quad_buffer));
+	status = lu_both(status, buffer_unbind(log, data->quad_buffer));
 	return status;
 }
 
