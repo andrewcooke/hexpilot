@@ -70,7 +70,7 @@ static int build_hexagon(lulog *log, programs *programs, world *world) {
 	luary_vnorm *vertices = NULL;
 	try(model_mk(log, &model, &send_hex_data, &draw_triangle_edges));
 	try(hexagon_vnormal_strips(log, 0, 5, 10, 0.4, 1, &vertices, &model->offsets, &model->counts));
-	try(buffer_mk(log, &model->vertices, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+	try(data_buffer_mk(log, &model->vertices, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
 			vertices->vn, vertices->mem.used * sizeof(*vertices->vn)));
 	try(interleaved_vnorm_vao(log, model->vertices, &model->vao));
 	try(model_push(log, world, model));
@@ -103,7 +103,7 @@ static int build_ship(lulog *log, programs *programs, world *world) {
 	luary_vnorm *vertices = NULL;
 	try(model_mk(log, &model, &send_ship_data, &draw_triangle_edges));
 	try(ship_vnormal_strips(log, 0.03, &vertices, &model->offsets, &model->counts));
-	try(buffer_mk(log, &model->vertices, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+	try(data_buffer_mk(log, &model->vertices, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
 			vertices->vn, vertices->mem.used * sizeof(*vertices->vn)));
 	try(interleaved_vnorm_vao(log, model->vertices, &model->vao));
 	try(model_push(log, world, model));
@@ -114,7 +114,7 @@ static int build_ship(lulog *log, programs *programs, world *world) {
 
 static int build_geometry(lulog *log, programs *programs, world *world) {
 	int status = LU_OK;
-	try(buffer_mk(log, &world->geometry_buffer, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
+	try(data_buffer_mk(log, &world->geometry_buffer, GL_UNIFORM_BUFFER, GL_STREAM_DRAW,
 			NULL, sizeof(geometry_buffer)));
 	// http://learnopengl.com/#!Advanced-OpenGL/Advanced-GLSL
 	gl_try(GLuint index = glGetUniformBlockIndex(programs->triangle_edges, "geometry"))
@@ -130,14 +130,14 @@ static int build_geometry(lulog *log, programs *programs, world *world) {
 static int build_render(lulog *log, programs *programs, flight_data *data) {
 	int status = LU_OK;
 	float quad[] = {-1,-1, -1,1, 1,-1, 1,1};
-	try(buffer_mk(log, &data->quad_buffer, GL_ARRAY_BUFFER, GL_STATIC_DRAW, quad, sizeof(quad)));
+	try(data_buffer_mk(log, &data->quad_buffer, GL_ARRAY_BUFFER, GL_STATIC_DRAW, quad, sizeof(quad)));
 	gl_try(glGenVertexArrays(1, &data->quad_vao));
 	gl_try(glBindVertexArray(data->quad_vao));
-	try(buffer_bind(log, data->quad_buffer));
+	try(data_buffer_bind(log, data->quad_buffer));
 	gl_try(glEnableVertexAttribArray(0));
 	gl_try(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0));
 	finally:
-	status = lu_both(status, buffer_unbind(log, data->quad_buffer));
+	status = lu_both(status, data_buffer_unbind(log, data->quad_buffer));
 	return status;
 }
 
@@ -145,12 +145,12 @@ static int before_display_blur(lulog *log, void *programs, world *world) {
 	int status = LU_OK;
 	flight_data *data = (flight_data*)world->data;
 
-	try(rescale_frame(log, world->action->window, &data->single));
-	try(rescale_frame(log, world->action->window, &data->tmp1));
-	try(rescale_frame(log, world->action->window, &data->tmp2));
-	try(rescale_frame(log, world->action->window, &data->multiple));
+	try(frame_buffer_rescale(log, &data->single, world->action->window));
+	try(frame_buffer_rescale(log, &data->tmp1, world->action->window));
+	try(frame_buffer_rescale(log, &data->tmp2, world->action->window));
+	try(frame_buffer_rescale(log, &data->multiple, world->action->window));
 
-	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->single.render));
+	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->single.name));
 	gl_try(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	finally:
 	return status;
@@ -171,13 +171,13 @@ static int after_display_blur(lulog *log, void *v, world *world) {
 	gl_try(glDisable(GL_DEPTH_TEST))
 
 	// blit from single into tmp1 to resolve anti-aliasing
-	gl_try(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.render));
-	gl_try(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, data->tmp1.render));
+	gl_try(glBindFramebuffer(GL_READ_FRAMEBUFFER, data->single.name));
+	gl_try(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, data->tmp1.name));
 	gl_try(glBlitFramebuffer(0, 0, data->single.width, data->single.height,
 			0, 0, data->single.width, data->single.height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 
 	// add multiple and tmp1 into tmp2
-	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render));
+	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.name));
 	gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
 	gl_try(glUseProgram(p->merge_frames.name));
 	try(use_uniform_texture(log, p->merge_frames.frame1, data->tmp1.texture));
@@ -196,7 +196,7 @@ static int after_display_blur(lulog *log, void *v, world *world) {
 	for (int loop = 0; loop < 4; ++loop) {
 
 		// blur tmp2 horizontally into tmp1
-		gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp1.render));
+		gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp1.name));
 		gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
 		gl_try(glUseProgram(p->blur.name));
 		try(use_uniform_texture(log, p->blur.frame, data->tmp2.texture));
@@ -205,7 +205,7 @@ static int after_display_blur(lulog *log, void *v, world *world) {
 		gl_try(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 		// blur tmp1 vertically into tmp2
-		gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.render));
+		gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->tmp2.name));
 		gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
 		gl_try(glUseProgram(p->blur.name));
 		try(use_uniform_texture(log, p->blur.frame, data->tmp1.texture));
@@ -216,7 +216,7 @@ static int after_display_blur(lulog *log, void *v, world *world) {
 	}
 
 	// copy tmp2 into multiple to save
-	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->multiple.render));
+	gl_try(glBindFramebuffer(GL_FRAMEBUFFER, data->multiple.name));
 	gl_try(glClear(GL_COLOR_BUFFER_BIT));  // TODO - needed?
 	gl_try(glUseProgram(p->copy_frame.name));
 	try(use_uniform_texture(log, p->copy_frame.frame, data->tmp2.texture));
@@ -237,10 +237,10 @@ int build_flight_blur(lulog *log, void *v, GLFWwindow *window, world **world) {
 	try(world_mk(log, world, n_variables, sizeof(flight_data), window,
 			&respond_to_user, &update_geometry, &before_display_blur, &after_display_blur));
 	flight_data *data = (flight_data*)(*world)->data;
-	try(init_frame(log, window, &data->single, 1, 1));
-	try(init_frame(log, window, &data->multiple, 0, 0));
-	try(init_frame(log, window, &data->tmp1, 0, 0));
-	try(init_frame(log, window, &data->tmp2, 0, 0));
+	try(frame_buffer_mk(log, &data->single, window, 1, 1));
+	try(frame_buffer_mk(log, &data->multiple, window, 0, 0));
+	try(frame_buffer_mk(log, &data->tmp1, window, 0, 0));
+	try(frame_buffer_mk(log, &data->tmp2, window, 0, 0));
 	try(init_keys(log, (*world)->action));
 	try(init_geometry(log, (*world)->variables));
 	try(build_render(log, p, data));

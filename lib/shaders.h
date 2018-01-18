@@ -6,8 +6,8 @@
 #include "lu/arrays.h"
 
 #include "glad.h"
-#include "buffers.h"
 #include "data/uint32.h"
+#include "data_buffers.h"
 
 
 const char *shader_type_str(lulog *log, GLenum shader_type);
@@ -21,6 +21,6 @@ int free_shaders(lulog *log, luary_uint32 **shaders, int status);
 int set_uniform(lulog *log, GLuint program, const char *name, GLuint *uniform, GLuint index);
 int use_uniform_texture(lulog *log, GLuint uniform, GLuint texture);
 
-int interleaved_vnorm_vao(lulog *log, buffer *buffer, GLuint *vao);
+int interleaved_vnorm_vao(lulog *log, data_buffer *buffer, GLuint *vao);
 
 #endif

@@ -4,9 +4,9 @@
 
 #include "lu/data/int32.h"
 
-#include "buffers.h"
 #include "keys.h"
 #include "data/uint32.h"
+#include "data_buffers.h"
 
 
 struct model;
@@ -18,7 +18,7 @@ typedef int draw(lulog *log, struct model *model, struct programs *programs);
 
 typedef struct model {
     GLuint vao;
-    buffer *vertices;
+    data_buffer *vertices;
     luary_int32 *offsets;
     luary_uint32 *counts;
     luglc colour;

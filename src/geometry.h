@@ -4,8 +4,8 @@
 
 #include "lu/log.h"
 
+#include "../lib/data_buffers.h"
 #include "glad.h"
-#include "buffers.h"
 #include "glfw.h"
 
 struct world;

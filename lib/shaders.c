@@ -124,18 +124,18 @@ int use_uniform_texture(lulog *log, GLuint uniform, GLuint texture) {
 }
 
 
-int interleaved_vnorm_vao(lulog *log, buffer *buffer, GLuint *vao) {
+int interleaved_vnorm_vao(lulog *log, data_buffer *buffer, GLuint *vao) {
 	int status = LU_OK;
 	gl_try(glGenVertexArrays(1, vao))
 	gl_try(glBindVertexArray(*vao))
-	try(buffer_bind(log, buffer))
+	try(data_buffer_bind(log, buffer))
 	gl_try(glEnableVertexAttribArray(0))
 	gl_try(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 32, 0))
 	gl_try(glEnableVertexAttribArray(1))
 	gl_try(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 32, (void*)16))
 	finally:
 	GL_CLEAN(glBindVertexArray(0))
-	status = lu_both(status, buffer_unbind(log, buffer));
+	status = lu_both(status, data_buffer_unbind(log, buffer));
 	return status;
 }
 

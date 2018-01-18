@@ -15,7 +15,7 @@ typedef int after(lulog *log, void *programs, struct world *world);
 typedef struct world {
     float *variables;
     void *data;
-    buffer *geometry_buffer;
+    data_buffer *geometry_buffer;
     user_action *action;
     luary_model *models;
     respond *respond;
