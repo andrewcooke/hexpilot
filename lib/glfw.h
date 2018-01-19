@@ -7,12 +7,9 @@
 #include "glad.h"
 #include <GLFW/glfw3.h>
 
-#include "keys.h"
-
-int init_glfw(lulog *log);
-int create_glfw_context(lulog *log, GLFWwindow **window);
-int load_opengl_functions(lulog *log);
-int set_window_callbacks(lulog *log, GLFWwindow *window, user_action *action);
+int glfw_init(lulog *log, GLFWwindow **window);
+int glfw_set_key_callback(lulog *log, GLFWwindow *window, GLFWkeyfun callback, void *data);
+int glfw_close(int status);
 
 typedef struct timing {
     double previous;

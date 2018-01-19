@@ -3,6 +3,7 @@
 #define HP_GEOMETRY_H
 
 #include "lu/log.h"
+#include "lu/gl/matrices.h"
 
 #include "../lib/data_buffers.h"
 #include "glad.h"

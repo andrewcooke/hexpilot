@@ -9,6 +9,31 @@
 #include "worlds.h"
 
 
+void keys_callback(GLFWwindow *window, int key, int scancode, int act, int mods) {
+    user_action *action = glfwGetWindowUserPointer(window);
+    double now = glfwGetTime();
+    for (size_t i = 0; i < action->controls->mem.used; ++i) {
+        for (size_t j = 0; j < 2; ++j) {
+            if (key == action->controls->c[i].k.keys[j] &&
+                    mods == action->controls->c[i].k.mods[j]) {
+                switch(act) {
+                case GLFW_PRESS:
+                    ludebug(action->log, "Pressed %s (%d/%d)",
+                            action->controls->c[i].k.name, key, mods);
+                    action->controls->c[i].v.pressed[j] = now;
+                    break;
+                case GLFW_RELEASE:
+                    action->controls->c[i].v.released[j] = now;
+                    break;
+                }
+                return;
+            }
+        }
+    }
+    if (act == GLFW_PRESS) ludebug(action->log, "Unused key (%d/%d)", key, mods);
+}
+
+
 int set_keys(lulog *log, keys *keys, const char *name,
 		int key0, int mod0, int key1, int mod1,
 		float force, float kv, float kx, float lo, float hi,

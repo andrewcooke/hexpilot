@@ -53,6 +53,7 @@ int luary_control_free(luary_control **controls, int prev_status);
 int luary_control_res(lulog *log, luary_control *controls, size_t n);
 int luary_control_push(lulog *log, luary_control *controls, keys *keys, float x);
 
+void keys_callback(GLFWwindow *window, int key, int scancode, int act, int mods);
 int keys_free(user_action *action);
 
 int control_update(lulog *log, double dt, control *control, float *x);

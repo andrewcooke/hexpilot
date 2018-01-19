@@ -11,7 +11,7 @@
 #include "programs.h"
 
 
-static int init_opengl(lulog *log) {
+static int opengl_init(lulog *log) {
 	int status = LU_OK;
 	gl_try(glEnable(GL_CULL_FACE));
 	gl_try(glCullFace(GL_BACK));
@@ -26,16 +26,20 @@ static int init_opengl(lulog *log) {
 	return status;
 }
 
-static int main_with_glfw(lulog *log) {
+int main(int argc, char** argv) {
 
 	int status = LU_OK;
+	lulog *log = NULL;
 	GLFWwindow *window = NULL;
 	universe *universe = NULL;
 	timing clock;
 
-	try(create_glfw_context(log, &window));
-	try(load_opengl_functions(log));
-	try(init_opengl(log));
+	try(lulog_stderr_mk(&log, lulog_level_debug));
+	// is this always true?  unclear to me, but we use pre-built uint32 arrays
+	assert(sizeof(GLuint) == sizeof(uint32_t), HP_ERR, log,
+			"Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(uint32_t))
+	try(glfw_init(log, &window));
+	try(opengl_init(log));
 
 	try(universe_mk(log, &universe, sizeof(programs)));
 
@@ -57,23 +61,9 @@ static int main_with_glfw(lulog *log) {
 	ludebug(log, "Clean finally");
 
 	finally:
-	glfwTerminate();
 	// TODO - need to free world buffers etc
 	status = universe_free(&universe, status);
-	return status;
-}
-
-
-int main(int argc, char** argv) {
-	int status = LU_OK;
-	lulog *log = NULL;
-	try(lulog_stderr_mk(&log, lulog_level_debug));
-	// is this always true?  unclear to me, but we use pre-built uint32 arrays
-	assert(sizeof(GLuint) == sizeof(uint32_t), HP_ERR, log,
-			"Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(uint32_t))
-	try(init_glfw(log));
-	try(main_with_glfw(log));
-	finally:
+	status = glfw_close(status);
 	if (log) status = log->free(&log, status);
 	return status ? 1 : 0;
 }

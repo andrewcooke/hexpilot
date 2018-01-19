@@ -12,37 +12,45 @@
 
 
 static lulog *LOG = NULL;
+static int STATUS = LU_OK;
+
+#define glfw_try(operation) operation; {\
+	if (STATUS) {\
+		status = HP_ERR_GLFW;\
+		goto finally;\
+	}}
 
 static void on_error(int error, const char *message) {
     luerror(LOG, "GLFW: %s (code %d)", message, error);
+    STATUS = error;
 }
 
-int init_glfw(lulog *log) {
+static int init_glfw(lulog *log) {
     int status = LU_OK;
     LOG = log;
-    glfwSetErrorCallback(on_error);
-    assert(glfwInit(), HP_ERR_GLFW, log, "Could not start GLFW");
+    glfw_try(glfwSetErrorCallback(on_error));
+    glfw_try(glfwInit());
     finally:
 	return status;
 }
 
-int create_glfw_context(lulog *log, GLFWwindow **window) {
+static int create_glfw_context(lulog *log, GLFWwindow **window) {
     int status = LU_OK;
     // not clear to me to what extent these duplicate or conflict with glad
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfw_try(glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3));
+    glfw_try(glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3));
+    glfw_try(glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1));
+    glfw_try(glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE));
+    glfw_try(glfwWindowHint(GLFW_SAMPLES, 4));
     assert(*window = glfwCreateWindow(320, 320, "hexpilot", NULL, NULL),
             HP_ERR_GLFW, log, "Could not create window");
-    glfwMakeContextCurrent(*window);
-    glfwSwapInterval(1);  // 0 to see raw fps
+    glfw_try(glfwMakeContextCurrent(*window));
+    glfw_try(glfwSwapInterval(1));  // 0 to see raw fps
     finally:
 	return status;
 }
 
-int load_opengl_functions(lulog *log) {
+static int load_opengl_functions(lulog *log) {
     int status = LU_OK;
     assert(gladLoadGLLoader((GLADloadproc) glfwGetProcAddress),
             HP_ERR_GLAD, log, "Could not load OpenGL via glad");
@@ -54,36 +62,29 @@ int load_opengl_functions(lulog *log) {
 	return status;
 }
 
-static void key_callback(GLFWwindow *window, int key, int scancode, int act, int mods) {
-    user_action *action = glfwGetWindowUserPointer(window);
-    double now = glfwGetTime();
-    for (size_t i = 0; i < action->controls->mem.used; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
-            if (key == action->controls->c[i].k.keys[j] &&
-                    mods == action->controls->c[i].k.mods[j]) {
-                switch(act) {
-                case GLFW_PRESS:
-                    ludebug(action->log, "Pressed %s (%d/%d)",
-                            action->controls->c[i].k.name, key, mods);
-                    action->controls->c[i].v.pressed[j] = now;
-                    break;
-                case GLFW_RELEASE:
-                    action->controls->c[i].v.released[j] = now;
-                    break;
-                }
-                return;
-            }
-        }
-    }
-    if (act == GLFW_PRESS) ludebug(action->log, "Unused key (%d/%d)", key, mods);
+
+int glfw_init(lulog *log, GLFWwindow **window) {
+	int status = LU_OK;
+	try(init_glfw(log));
+	try(create_glfw_context(log, window));
+	try(load_opengl_functions(log));
+	finally:
+	return status;
 }
 
-int set_window_callbacks(lulog *log, GLFWwindow *window, user_action *action) {
-    int status = LU_OK;
-    glfwSetWindowUserPointer(window, action);
-    glfwSetKeyCallback(window, &key_callback);
-    finally:
+int glfw_set_key_callback(lulog *log, GLFWwindow *window, GLFWkeyfun callback, void *data) {
+	int status = LU_OK;
+    glfw_try(glfwSetWindowUserPointer(window, data));
+    glfw_try(glfwSetKeyCallback(window, callback));
+	finally:
 	return status;
+}
+
+int glfw_close(int prev) {
+	int status = LU_OK;
+	glfw_try(glfwTerminate());
+	finally:
+	return lu_both(prev, status);
 }
 
 

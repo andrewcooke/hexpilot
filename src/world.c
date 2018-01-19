@@ -247,7 +247,7 @@ int build_flight_blur(lulog *log, void *v, GLFWwindow *window, world **world) {
 	try(build_geometry(log, p, *world));
 	try(build_hexagon(log, p, *world));
 	try(build_ship(log, p, *world));
-	try(set_window_callbacks(log, window, (*world)->action));
+	try(glfw_set_key_callback(log, window, keys_callback, (*world)->action));
 	finally:
 	return status;
 }
