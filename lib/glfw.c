@@ -17,21 +17,13 @@ static int STATUS = LU_OK;
 #define glfw_try(operation) operation; {\
 	if (STATUS) {\
 		status = HP_ERR_GLFW;\
+		STATUS = LU_OK;\
 		goto finally;\
 	}}
 
 static void on_error(int error, const char *message) {
     luerror(LOG, "GLFW: %s (code %d)", message, error);
     STATUS = error;
-}
-
-static int init_glfw(lulog *log) {
-    int status = LU_OK;
-    LOG = log;
-    glfw_try(glfwSetErrorCallback(on_error));
-    glfw_try(glfwInit());
-    finally:
-	return status;
 }
 
 static int create_glfw_context(lulog *log, GLFWwindow **window) {
@@ -65,7 +57,8 @@ static int load_opengl_functions(lulog *log) {
 
 int glfw_init(lulog *log, GLFWwindow **window) {
 	int status = LU_OK;
-	try(init_glfw(log));
+    glfw_try(glfwSetErrorCallback(on_error));
+    glfw_try(glfwInit());
 	try(create_glfw_context(log, window));
 	try(load_opengl_functions(log));
 	finally:
@@ -80,40 +73,41 @@ int glfw_set_key_callback(lulog *log, GLFWwindow *window, GLFWkeyfun callback, v
 	return status;
 }
 
-int glfw_close(int prev) {
+int glfw_final(int prev) {
 	int status = LU_OK;
 	glfw_try(glfwTerminate());
 	finally:
+	STATUS = LU_OK;
+	LOG = NULL;
 	return lu_both(prev, status);
 }
 
 
-int init_timing(lulog *log, timing *clock) {
+int glfw_timing_init(lulog *log, glfw_timing *clock) {
     int status = LU_OK;
-    timing zero = {};
+    glfw_timing zero = {};
     *clock = zero;
-    clock->previous = clock->seconds = glfwGetTime();
+    clock->last_update = clock->fps_interval_start = glfwGetTime();
     finally:
 	return status;
 }
 
-double update_timing(lulog *log, timing *clock) {
+double glfw_timing_update(lulog *log, glfw_timing *clock) {
     double now = glfwGetTime();
-    if (now > clock->seconds+1) {
-        double fps = clock->frame_count / (now - clock->seconds);
-        if (abs(fps - clock->fps) > 0.1 * clock->fps) {
+    if (now > clock->fps_interval_start+1) {
+        double fps = clock->frame_count / (now - clock->fps_interval_start);
+        if (abs(fps - clock->fps) > clock->fps / 60.0) {
             // by default glfw syncs to 60fps (more exactly,
             // whatever freq the monitor uses).  see glfw.c
             // to enable free-spinning.
             clock->fps = fps;
             ludebug(log, "FPS: %0.1f", fps);
         }
-        clock->seconds = now;
+        clock->fps_interval_start = now;
         clock->frame_count = 0;
     }
-    double delta = now - clock->previous;
-    clock->previous = now;
+    double delta = now - clock->last_update;
+    clock->last_update = now;
     clock->frame_count++;
     return delta;
 }
-

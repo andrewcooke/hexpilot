@@ -11,7 +11,7 @@
 /**
  * @file
  *
- * @brief Wrapper round OpenGL (data) buffers.
+ * @brief Wrapper around OpenGL (data) buffers.
  *
  * An OpenGL buffer is a chunk of memory that is shared with the GPU.
  * Here the interface is simplified with the following assumptions:

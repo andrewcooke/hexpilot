@@ -8,7 +8,7 @@
 /**
  * @file
  *
- * @brief Wrapper round OpenGL frame buffers.
+ * @brief Wrapper around OpenGL frame buffers.
  *
  * An OpenGL frame buffer is an in-memory "display surface".  It's
  * a container for a texture and an optional depth buffer.

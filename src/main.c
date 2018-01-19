@@ -11,7 +11,7 @@
 #include "programs.h"
 
 
-static int opengl_init(lulog *log) {
+static int set_opengl_options(lulog *log) {
 	int status = LU_OK;
 	gl_try(glEnable(GL_CULL_FACE));
 	gl_try(glCullFace(GL_BACK));
@@ -32,14 +32,14 @@ int main(int argc, char** argv) {
 	lulog *log = NULL;
 	GLFWwindow *window = NULL;
 	universe *universe = NULL;
-	timing clock;
+	glfw_timing clock;
 
 	try(lulog_stderr_mk(&log, lulog_level_debug));
 	// is this always true?  unclear to me, but we use pre-built uint32 arrays
 	assert(sizeof(GLuint) == sizeof(uint32_t), HP_ERR, log,
 			"Unexpected int size (%zu != %zu)", sizeof(GLuint), sizeof(uint32_t))
 	try(glfw_init(log, &window));
-	try(opengl_init(log));
+	try(set_opengl_options(log));
 
 	try(universe_mk(log, &universe, sizeof(programs)));
 
@@ -50,9 +50,9 @@ int main(int argc, char** argv) {
 
 	try(build_flight_blur(log, universe->programs, window, &universe->flight));
 
-	try(init_timing(log, &clock));
+	try(glfw_timing_init(log, &clock));
 	while (!glfwWindowShouldClose(window)) {
-		double delta = update_timing(log, &clock);
+		double delta = glfw_timing_update(log, &clock);
 		try(world_update(log, delta, universe->flight));
 		try(world_display(log, universe->programs, universe->flight));
 		glfwSwapBuffers(window);
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 	finally:
 	// TODO - need to free world buffers etc
 	status = universe_free(&universe, status);
-	status = glfw_close(status);
+	status = glfw_final(status);
 	if (log) status = log->free(&log, status);
 	return status ? 1 : 0;
 }
